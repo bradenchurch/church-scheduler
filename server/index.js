@@ -128,7 +128,7 @@ app.get('/api/availability/:leaderId', async (req, res) => {
 });
 
 // GET /api/bookings/all
-app.get('/api/bookings/all', requireAuth, requireAdmin, async (req, res) => {
+app.get('/api/bookings/all', async (req, res) => {
 
   try {
     const { data, error } = await supabase
