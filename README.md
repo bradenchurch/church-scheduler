@@ -1,24 +1,16 @@
-# EQ Presidency Scheduler
+# React + Vite
 
-A Google Apps Script + Sheets tool that eliminates the scheduling back-and-forth for quarterly Elders Quorum Presidency ↔ Companionship interviews.
+This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
 
-**Status:** V1 architecture draft — no code written yet.
+Currently, two official plugins are available:
 
-**Tech:** Google Apps Script + Google Sheets + Google Calendar. 100% Google ecosystem.
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
-See **[ARCHITECTURE.md](./ARCHITECTURE.md)** for the full spec.
+## React Compiler
 
----
+The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
 
-## What's actually built
-Nothing yet — just the spec.
+## Expanding the Oxlint configuration
 
-## What needs to happen next
-1. Create the new Apps Script project (script.google.com → New project)
-2. Create the bound Google Sheet (the four tabs: Leaders, Companionships, Availability, Bookings)
-3. Pull in the `Code.gs` skeleton + sheets config
-4. Manually add the first quarter's data (3 leaders, ~20 companionships)
-5. Deploy as Web App, generate the three leader booking links + per-companionship booking links
-6. Print QR codes for the leader cards
-
-I'll write the code in the next pass once you've red-lined the architecture.
+If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
