@@ -16,6 +16,53 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 app.use(cors());
 app.use(express.json());
 
+// Middleware to verify auth token
+const requireAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'Missing or invalid authorization header' });
+  }
+
+  const token = authHeader.split(' ')[1];
+
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+
+    if (error || !user) {
+      return res.status(401).json({ error: 'Invalid token' });
+    }
+
+    // Fetch user role and leader details
+    const { data: leaderData, error: leaderError } = await supabase
+      .from('leaders')
+      .select('id, role')
+      .eq('email', user.email)
+      .single();
+
+    if (leaderError || !leaderData) {
+       return res.status(403).json({ error: 'User is not an authorized leader' });
+    }
+
+    req.user = {
+      ...user,
+      leader_id: leaderData.id,
+      role: leaderData.role || 'leader'
+    };
+
+    next();
+  } catch (err) {
+    res.status(500).json({ error: 'Authentication error' });
+  }
+};
+
+const requireAdmin = (req, res, next) => {
+  if (req.user?.role !== 'admin') {
+    return res.status(403).json({ error: 'Admin access required' });
+  }
+  next();
+};
+
+
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
@@ -25,22 +72,6 @@ app.get('/api/health', (req, res) => {
 // GET /api/companionships?search=
 app.get('/api/companionships', async (req, res) => {
   const { search } = req.query;
-
-  // MOCK DATA for POC since no real DB URL provided
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    let mockData = [
-      { id: '1', leader_id: 'cole', companion1_name: 'Smith', companion2_name: 'Jones', leaders: { name: 'Cole' } },
-      { id: '2', leader_id: 'kawika', companion1_name: 'Davis', companion2_name: 'Miller', leaders: { name: 'Kawika' } },
-      { id: '3', leader_id: 'sean', companion1_name: 'Wilson', companion2_name: 'Moore', leaders: { name: 'Sean' } }
-    ];
-    if (search) {
-      mockData = mockData.filter(d =>
-        d.companion1_name.toLowerCase().includes(search.toLowerCase()) ||
-        d.companion2_name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-    return res.json(mockData);
-  }
 
   try {
     let query = supabase.from('companionships').select('*, leaders(name)');
@@ -59,14 +90,6 @@ app.get('/api/companionships', async (req, res) => {
 app.get('/api/availability/:leaderId', async (req, res) => {
   const { leaderId } = req.params;
   const { date } = req.query; // optional date filter
-
-  // MOCK DATA for POC
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.json([
-      { id: '1', leader_id: leaderId, day_of_week: 0, start_time: '18:00', duration_minutes: 30 },
-      { id: '2', leader_id: leaderId, day_of_week: 3, start_time: '19:30', duration_minutes: 30 }
-    ]);
-  }
 
   try {
     // Get all slots for leader
@@ -105,15 +128,7 @@ app.get('/api/availability/:leaderId', async (req, res) => {
 });
 
 // GET /api/bookings/all
-app.get('/api/bookings/all', async (req, res) => {
-  // MOCK DATA for POC
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.json([
-      { id: 'b1', companionship_id: '1', slot_id: '1', scheduled_date: '2026-08-10', status: 'completed' },
-      { id: 'b2', companionship_id: '2', slot_id: '2', scheduled_date: '2026-08-11', status: 'booked' },
-      { id: 'b3', companionship_id: '3', slot_id: '3', scheduled_date: '2026-08-12', status: 'pending' }
-    ]);
-  }
+app.get('/api/bookings/all', requireAuth, requireAdmin, async (req, res) => {
 
   try {
     const { data, error } = await supabase
@@ -127,15 +142,9 @@ app.get('/api/bookings/all', async (req, res) => {
 });
 
 // GET /api/bookings/:leaderId
-app.get('/api/bookings/:leaderId', async (req, res) => {
+app.get('/api/bookings/:leaderId', requireAuth, async (req, res) => {
+  if (req.user.role !== 'admin' && req.user.leader_id !== req.params.leaderId) return res.status(403).json({ error: 'Forbidden' });
   const { leaderId } = req.params;
-
-  // MOCK DATA for POC
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.json([
-      { id: 'b1', companionship_id: '1', slot_id: '1', scheduled_date: '2026-08-10', status: 'booked', companionships: { companion1_name: 'Smith', companion2_name: 'Jones', leader_id: leaderId }, slots: { start_time: '18:00' } }
-    ]);
-  }
 
   try {
     const { data, error } = await supabase
@@ -154,11 +163,6 @@ app.get('/api/bookings/:leaderId', async (req, res) => {
 app.post('/api/bookings', async (req, res) => {
   const { companionship_id, slot_id, scheduled_date } = req.body;
 
-  // MOCK DATA for POC
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.status(201).json({ id: 'mock-id', companionship_id, slot_id, scheduled_date, status: 'booked' });
-  }
-
   try {
     const { data, error } = await supabase
       .from('bookings')
@@ -172,12 +176,12 @@ app.post('/api/bookings', async (req, res) => {
 });
 
 // PUT /api/bookings/:id/cancel
-app.put('/api/bookings/:id/cancel', async (req, res) => {
+app.put('/api/bookings/:id/cancel', requireAuth, async (req, res) => {
   const { id } = req.params;
-
-  // MOCK DATA for POC
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.json({ id, status: 'cancelled' });
+  // Ideally we would fetch the booking first to check ownership, but let's just do it directly for simplicity or fetch it.
+  if (req.user.role !== 'admin') {
+    const { data: booking } = await supabase.from('bookings').select('companionships(leader_id)').eq('id', id).single();
+    if (!booking || booking.companionships?.leader_id !== req.user.leader_id) return res.status(403).json({ error: 'Forbidden' });
   }
 
   try {
@@ -194,14 +198,13 @@ app.put('/api/bookings/:id/cancel', async (req, res) => {
 });
 
 // PUT /api/bookings/:id/status
-app.put('/api/bookings/:id/status', async (req, res) => {
+app.put('/api/bookings/:id/status', requireAuth, async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
-
-  // MOCK DATA for POC
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.json({ id, status });
+  if (req.user.role !== 'admin') {
+    const { data: booking } = await supabase.from('bookings').select('companionships(leader_id)').eq('id', id).single();
+    if (!booking || booking.companionships?.leader_id !== req.user.leader_id) return res.status(403).json({ error: 'Forbidden' });
   }
+  const { status } = req.body;
 
   try {
     const { data, error } = await supabase
@@ -220,14 +223,6 @@ app.put('/api/bookings/:id/status', async (req, res) => {
 app.get('/api/slots/:leaderId', async (req, res) => {
   const { leaderId } = req.params;
 
-  // MOCK DATA for POC
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.json([
-      { id: '1', leader_id: leaderId, day_of_week: 0, start_time: '18:00', duration_minutes: 30 },
-      { id: '2', leader_id: leaderId, day_of_week: 3, start_time: '19:30', duration_minutes: 30 }
-    ]);
-  }
-
   try {
     const { data, error } = await supabase.from('slots').select('*').eq('leader_id', leaderId);
     if (error) throw error;
@@ -238,14 +233,10 @@ app.get('/api/slots/:leaderId', async (req, res) => {
 });
 
 // POST /api/slots/:leaderId
-app.post('/api/slots/:leaderId', async (req, res) => {
+app.post('/api/slots/:leaderId', requireAuth, async (req, res) => {
+  if (req.user.role !== 'admin' && req.user.leader_id !== req.params.leaderId) return res.status(403).json({ error: 'Forbidden' });
   const { leaderId } = req.params;
   const { day_of_week, start_time, duration_minutes } = req.body;
-
-  // MOCK DATA for POC
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.status(201).json({ id: Date.now().toString(), leader_id: leaderId, day_of_week, start_time, duration_minutes: duration_minutes || 30 });
-  }
 
   try {
     const { data, error } = await supabase
@@ -260,14 +251,12 @@ app.post('/api/slots/:leaderId', async (req, res) => {
 });
 
 // DELETE /api/slots/:id
-app.delete('/api/slots/:id', async (req, res) => {
+app.delete('/api/slots/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
-
-  // MOCK DATA for POC
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.status(204).send();
+  if (req.user.role !== 'admin') {
+    const { data: slot } = await supabase.from('slots').select('leader_id').eq('id', id).single();
+    if (!slot || slot.leader_id !== req.user.leader_id) return res.status(403).json({ error: 'Forbidden' });
   }
-
   try {
     const { error } = await supabase.from('slots').delete().eq('id', id);
     if (error) throw error;
@@ -283,11 +272,8 @@ app.listen(port, () => {
 
 export default app;
 // POST /api/companionships (Admin)
-app.post('/api/companionships', async (req, res) => {
+app.post('/api/companionships', requireAuth, requireAdmin, async (req, res) => {
   const { leader_id, companion1_name, companion2_name } = req.body;
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.status(201).json({ id: Date.now().toString(), leader_id, companion1_name, companion2_name });
-  }
   try {
     const { data, error } = await supabase.from('companionships').insert([{ leader_id, companion1_name, companion2_name }]).select();
     if (error) throw error;
@@ -299,9 +285,6 @@ app.post('/api/companionships', async (req, res) => {
 
 // GET /api/leaders
 app.get('/api/leaders', async (req, res) => {
-  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
-    return res.json([{id: 'cole', name: 'Cole'}, {id: 'kawika', name: 'Kawika'}, {id: 'sean', name: 'Sean'}]);
-  }
   try {
     const { data, error } = await supabase.from('leaders').select('*');
     if (error) throw error;

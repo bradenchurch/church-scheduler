@@ -4,6 +4,9 @@ import Dashboard from './pages/Dashboard';
 import Book from './pages/Book';
 import Leader from './pages/Leader';
 import Admin from './pages/Admin';
+import Login from './pages/Login';
+import AuthCallback from './pages/AuthCallback';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
@@ -18,8 +21,26 @@ function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/book" element={<Book />} />
-          <Route path="/leader/:leaderId" element={<Leader />} />
-          <Route path="/admin" element={<Admin />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+
+          {/* Protected Routes */}
+          <Route
+            path="/leader"
+            element={
+              <ProtectedRoute requireRole="leader">
+                <Leader />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requireRole="admin">
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </main>
     </div>
