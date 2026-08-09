@@ -1,20 +1,27 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Admin() {
   const [leaders, setLeaders] = useState([]);
   const [companionships, setCompanionships] = useState([]);
   const [newComp, setNewComp] = useState({ companion1_name: '', companion2_name: '', leader_id: '' });
+  const { token } = useAuth();
 
   useEffect(() => {
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
     fetch('/api/leaders').then(r => r.json()).then(setLeaders).catch(() => []);
-    fetch('/api/companionships').then(r => r.json()).then(setCompanionships).catch(() => []);
-  }, []);
+    fetch('/api/companionships', { headers }).then(r => r.json()).then(setCompanionships).catch(() => []);
+  }, [token]);
 
   const handleAddComp = async (e) => {
     e.preventDefault();
     const res = await fetch('/api/companionships', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
       body: JSON.stringify(newComp)
     });
     if (res.ok) {

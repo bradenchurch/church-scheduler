@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
+import { signOut } from '../lib/auth';
 
 export default function Dashboard() {
   const [stats, setStats] = useState([]);
   const [companionships, setCompanionships] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { user, role, token } = useAuth();
 
   useEffect(() => {
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+
     Promise.all([
-      fetch('/api/companionships').then(res => res.json()),
-      fetch('/api/bookings/all').then(res => res.json()).catch(() => [])
+      fetch('/api/companionships').then(res => res.json()).catch(() => []), // Public endpoint
+      fetch('/api/bookings/all', { headers }).then(res => res.json()).catch(() => [])
     ]).then(([compData, bookingData]) => {
 
       const bookingsByComp = {};
@@ -48,7 +53,7 @@ export default function Dashboard() {
       setCompanionships(enrichedComps);
       setLoading(false);
     });
-  }, []);
+  }, [token]);
 
   if (loading) return <div className="p-4">Loading dashboard...</div>;
 
@@ -144,13 +149,23 @@ export default function Dashboard() {
 
       <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200 mt-8">
         <h2 className="text-xl font-bold mb-4">Quick Links</h2>
-        <div className="space-y-2">
+        <div className="space-y-4">
           <Link to="/book" className="block text-blue-600 hover:underline">Go to Companion Booking Page</Link>
-          <div className="flex gap-4 flex-wrap">
-             <Link to="/leader/cole" className="text-stone-600 hover:underline">Cole's Page</Link>
-             <Link to="/leader/kawika" className="text-stone-600 hover:underline">Kawika's Page</Link>
-             <Link to="/leader/sean" className="text-stone-600 hover:underline">Sean's Page</Link>
-             <Link to="/admin" className="text-stone-600 hover:underline">Admin</Link>
+
+          <div className="flex gap-4 flex-wrap items-center">
+            {user ? (
+              <>
+                <Link to="/leader" className="text-stone-600 hover:underline">My Leader Page</Link>
+                {role === 'admin' && (
+                  <Link to="/admin" className="text-stone-600 hover:underline">Admin Panel</Link>
+                )}
+                <button onClick={() => signOut()} className="text-red-600 hover:underline text-sm ml-auto">
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <Link to="/login" className="text-stone-600 hover:underline">Leader Login</Link>
+            )}
           </div>
         </div>
       </div>

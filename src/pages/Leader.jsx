@@ -1,46 +1,48 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Leader() {
-  const { leaderId } = useParams();
+  const { leaderId, token, user } = useAuth();
   const [slots, setSlots] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // For the POC, we'll assume leaderId string (like "cole") maps to a UUID via lookup or mock.
-  // In a real app we'd fetch the UUID based on the name. For simplicity, we just fetch with the string
-  // if the DB supports it or assume leaderId is the UUID. Let's mock a UUID resolution if needed,
-  // but to keep it simple we'll just make the API call. The backend expects a UUID, so we'll need to handle that.
-  // For now, we will just display a static skeleton if the API fails with invalid UUID.
-
   useEffect(() => {
-    // Attempt to fetch, in real app leaderId param would be the UUID or we'd resolve it.
+    if (!leaderId) return;
+
+    const headers = { 'Authorization': `Bearer ${token}` };
+
     Promise.all([
-      fetch(`/api/slots/${leaderId}`).then(res => res.json()).catch(() => []),
-      fetch(`/api/bookings/${leaderId}`).then(res => res.json()).catch(() => [])
+      fetch(`/api/slots/${leaderId}`, { headers }).then(res => res.json()).catch(() => []),
+      fetch(`/api/bookings/${leaderId}`, { headers }).then(res => res.json()).catch(() => [])
     ]).then(([sData, bData]) => {
       if (Array.isArray(sData)) setSlots(sData);
       if (Array.isArray(bData)) setBookings(bData);
       setLoading(false);
     });
-  }, [leaderId]);
+  }, [leaderId, token]);
 
   const [newSlotDay, setNewSlotDay] = useState(0);
   const [newSlotTime, setNewSlotTime] = useState('19:00');
   const [addingSlot, setAddingSlot] = useState(false);
 
   const handleBulkComplete = async () => {
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
+
     // Mark all booked as completed
     const pendingBookings = bookings.filter(b => b.status === 'booked' || b.status === 'pending');
     for (const b of pendingBookings) {
       await fetch(`/api/bookings/${b.id}/status`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ status: 'completed' })
       });
     }
     // Refresh
-    const res = await fetch(`/api/bookings/${leaderId}`);
+    const res = await fetch(`/api/bookings/${leaderId}`, { headers: { 'Authorization': `Bearer ${token}` }});
     const bData = await res.json();
     if (Array.isArray(bData)) setBookings(bData);
   };
@@ -64,9 +66,13 @@ export default function Leader() {
 
   const handleAddSlot = async (e) => {
     e.preventDefault();
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    };
     const res = await fetch(`/api/slots/${leaderId}`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers,
       body: JSON.stringify({ day_of_week: newSlotDay, start_time: newSlotTime, duration_minutes: 30 })
     });
     if (res.ok) {
@@ -77,18 +83,22 @@ export default function Leader() {
   };
 
   const handleRemoveSlot = async (slotId) => {
-    const res = await fetch(`/api/slots/${slotId}`, { method: 'DELETE' });
+    const headers = { 'Authorization': `Bearer ${token}` };
+    const res = await fetch(`/api/slots/${slotId}`, { method: 'DELETE', headers });
     if (res.ok) {
       setSlots(slots.filter(s => s.id !== slotId));
     }
   };
 
   if (loading) return <div className="p-4">Loading...</div>;
+  if (!leaderId) return <div className="p-4">Leader ID not found. Ensure your email matches a leader record.</div>;
+
+  const displayName = user?.email?.split('@')[0] || leaderId;
 
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
       <div>
-        <h2 className="text-2xl font-bold mb-4 capitalize">{leaderId}'s Dashboard</h2>
+        <h2 className="text-2xl font-bold mb-4 capitalize">{displayName}'s Dashboard</h2>
 
         <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200 mb-8">
           <div className="flex justify-between items-center mb-4">
