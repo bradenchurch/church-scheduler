@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 16px; max-width: 600px; margin: 0 auto; }
+  h1 { font-size: 18px; }
+  .meta { background: #f5f5f5; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+  input[type="datetime-local"] { padding: 8px; font-size: 14px; }
+  .controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  button.action { padding: 10px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer; }
+  button.action:hover { background: #357ab8; }
+  button.del { padding: 6px 10px; background: #eee; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 12px; }
+  .slot-list { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
+  .slot-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; }
+  .empty { padding: 16px; text-align: center; color: #888; }
+  .feedback { margin-top: 12px; padding: 12px; border-radius: 6px; }
+  .ok { background: #e6f7e6; color: #060; }
+  .err { background: #fbe6e6; color: #c00; }
+</style>
+</head>
+<body>
+<h1>📅 Your Interview Availability</h1>
+
+<div class="meta">
+  <div>Hello, <strong><?= leader.Name ?></strong></div>
+  <div>District: <?= leader.District ?></div>
+  <div>Quarter: <?= getCurrentQuarter() ?></div>
+  <div style="margin-top: 8px; color: #555;">
+    Add 30-minute windows when you're free for companionship interviews.<br>
+    Companionships assigned to you will see these times when they click their link.
+  </div>
+</div>
+
+<div class="controls">
+  <label>New availability slot:
+    <input type="datetime-local" id="newSlot" />
+  </label>
+  <button class="action" onclick="addSlot()">+ Add slot</button>
+</div>
+
+<h2>Your open slots</h2>
+<div id="slotList">
+  <? if (slots.length === 0) { ?>
+    <div class="empty">No slots yet. Add some above.</div>
+  <? } else { ?>
+    <div class="slot-list">
+      <? slots.forEach(s => { ?>
+        <div class="slot-row">
+          <span><?= s.startDisplay ?></span>
+          <button class="del" onclick="del('<?= s.slotId ?>')">✕ remove</button>
+        </div>
+      <? }); ?>
+    </div>
+  <? } ?>
+</div>
+
+<div id="feedback"></div>
+
+<script>
+  function addSlot() {
+    const v = document.getElementById('newSlot').value;
+    if (!v) {
+      flash('Pick a date+time first.', 'err');
+      return;
+    }
+    const iso = new Date(v).toISOString();
+    google.script.run
+      .withSuccessHandler(() => { flash('Slot added.', 'ok'); setTimeout(() => location.reload(), 800); })
+      .withFailureHandler(e => flash(e.message || e.toString(), 'err'))
+      .addSlot_('<?= leader.LeaderId ?>', iso);
+  }
+
+  function del(slotId) {
+    if (!confirm('Remove this slot?')) return;
+    google.script.run
+      .withSuccessHandler(() => { flash('Slot removed.', 'ok'); setTimeout(() => location.reload(), 800); })
+      .withFailureHandler(e => flash(e.message || e.toString(), 'err'))
+      .deleteSlot_(slotId);
+  }
+
+  function flash(msg, kind) {
+    document.getElementById('feedback').innerHTML = '<div class="feedback ' + kind + '">' + msg + '</div>';
+  }
+</script>
+</body>
+</html>

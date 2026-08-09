@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; padding: 16px; max-width: 600px; margin: 0 auto; }
+  h1 { font-size: 18px; }
+  .meta { background: #f5f5f5; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+  .comp-name { font-weight: 600; }
+  .slot-list { display: flex; flex-direction: column; gap: 8px; }
+  .slot-button {
+    display: block; width: 100%; padding: 14px 16px; border: 1px solid #ddd;
+    border-radius: 8px; background: white; cursor: pointer; text-align: left;
+    font-size: 14px; transition: background 0.15s;
+  }
+  .slot-button:hover { background: #f0f7ff; border-color: #4a90e2; }
+  .empty { padding: 24px; text-align: center; color: #888; }
+  .confirmation { background: #e6f7e6; padding: 16px; border-radius: 8px; }
+  .error { background: #fbe6e6; padding: 12px; border-radius: 8px; color: #c00; }
+  input[type="datetime-local"] { padding: 8px; font-size: 14px; width: 100%; }
+  .controls { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+  button.action { padding: 10px 16px; background: #4a90e2; color: white; border: none; border-radius: 6px; cursor: pointer; }
+  button.action:hover { background: #357ab8; }
+</style>
+</head>
+<body>
+<h1>📅 EQ Presidency Interview — Book a Time</h1>
+
+<div class="meta">
+  <div>Companionship: <span class="comp-name"><?= companionship.Elder1Name ?> & <?= companionship.Elder2Name ?></span></div>
+  <div>Interviewer: <span class="comp-name"><?= leader.Name || 'unassigned' ?></span></div>
+  <div>Quarter: <?= companionship.Quarter ?></div>
+  <? if (companionship.Status === 'Booked') { ?>
+    <div style="color: #c00; margin-top: 8px;">⚠️ This companionship is already booked.</div>
+  <? } ?>
+</div>
+
+<? if (companionship.Status !== 'Booked') { ?>
+  <? if (slots.length === 0) { ?>
+    <div class="empty">
+      No available times from this interviewer yet.<br>
+      Check back soon.
+    </div>
+  <? } else { ?>
+    <p>Tap a time that works for both of you:</p>
+    <div class="slot-list">
+      <? slots.forEach(s => { ?>
+        <button class="slot-button" onclick="book('<?= s.slotId ?>')">
+          <?= s.startDisplay ?>
+        </button>
+      <? }); ?>
+    </div>
+  <? } ?>
+<? } ?>
+
+<div id="result"></div>
+
+<script>
+  function book(slotId) {
+    document.querySelectorAll('.slot-button').forEach(b => b.disabled = true);
+    document.getElementById('result').innerHTML = '<p>Booking…</p>';
+    google.script.run
+      .withSuccessHandler(onSuccess)
+      .withFailureHandler(onFailure)
+      .bookSlot_('<?= companionship.CompanionshipId ?>', slotId);
+  }
+
+  function onSuccess(res) {
+    document.getElementById('result').innerHTML =
+      '<div class="confirmation">' +
+      '<strong>✅ Booked!</strong><br>' +
+      'Your interview is confirmed for:<br>' +
+      '<strong>' + res.slotDisplay + '</strong><br>' +
+      'Interviewer: ' + (res.interviewerName || '') + '<br><br>' +
+      'A calendar invite has been added. We\'ll send a reminder the day before.' +
+      '</div>';
+  }
+
+  function onFailure(err) {
+    document.getElementById('result').innerHTML =
+      '<div class="error">' +
+      '<strong>Could not book.</strong><br>' +
+      (err.message || err.toString()) +
+      '<br><br>Please <a href="javascript:location.reload()">refresh</a> and try another time.' +
+      '</div>';
+  }
+</script>
+</body>
+</html>
