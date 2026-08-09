@@ -10,7 +10,7 @@ const port = process.env.PORT || 3001;
 
 // Supabase config
 const supabaseUrl = process.env.SUPABASE_URL || 'https://example.supabase.co';
-const supabaseKey = process.env.SUPABASE_KEY || 'public-anon-key';
+const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || 'public-anon-key';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 app.use(cors());
