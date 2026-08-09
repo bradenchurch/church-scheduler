@@ -3,6 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Book from './pages/Book';
 import Leader from './pages/Leader';
+import Admin from './pages/Admin';
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/book" element={<Book />} />
           <Route path="/leader/:leaderId" element={<Leader />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </main>
     </div>

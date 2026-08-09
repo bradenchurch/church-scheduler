@@ -282,3 +282,31 @@ app.listen(port, () => {
 });
 
 export default app;
+// POST /api/companionships (Admin)
+app.post('/api/companionships', async (req, res) => {
+  const { leader_id, companion1_name, companion2_name } = req.body;
+  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
+    return res.status(201).json({ id: Date.now().toString(), leader_id, companion1_name, companion2_name });
+  }
+  try {
+    const { data, error } = await supabase.from('companionships').insert([{ leader_id, companion1_name, companion2_name }]).select();
+    if (error) throw error;
+    res.status(201).json(data[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/leaders
+app.get('/api/leaders', async (req, res) => {
+  if (!process.env.SUPABASE_URL || process.env.SUPABASE_URL === 'https://example.supabase.co') {
+    return res.json([{id: 'cole', name: 'Cole'}, {id: 'kawika', name: 'Kawika'}, {id: 'sean', name: 'Sean'}]);
+  }
+  try {
+    const { data, error } = await supabase.from('leaders').select('*');
+    if (error) throw error;
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});

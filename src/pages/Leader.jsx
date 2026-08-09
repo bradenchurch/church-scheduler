@@ -45,6 +45,23 @@ export default function Leader() {
     if (Array.isArray(bData)) setBookings(bData);
   };
 
+  
+  const handleCopyDigest = () => {
+    const pendingBookings = bookings.filter(b => b.status === 'booked' || b.status === 'pending');
+    if (pendingBookings.length === 0) {
+      alert('No upcoming interviews to copy.');
+      return;
+    }
+    const text = "*Upcoming Interviews for " + leaderId.charAt(0).toUpperCase() + leaderId.slice(1) + "*\n\n" +
+      pendingBookings.map(b => {
+        return "- " + b.companionships?.companion1_name + " & " + b.companionships?.companion2_name + ": " + b.scheduled_date + " at " + b.slots?.start_time.slice(0,5);
+      }).join('\n');
+    
+    navigator.clipboard.writeText(text).then(() => {
+      alert('Weekly digest copied to clipboard!');
+    });
+  };
+
   const handleAddSlot = async (e) => {
     e.preventDefault();
     const res = await fetch(`/api/slots/${leaderId}`, {
@@ -76,12 +93,22 @@ export default function Leader() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200 mb-8">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-xl font-bold">Current Bookings</h3>
-            <button
-              onClick={handleBulkComplete}
-              className="bg-stone-800 text-white px-4 py-2 rounded text-sm font-semibold"
-            >
-              Bulk Mark Complete
-            </button>
+            
+            <div className="flex gap-2">
+              <button
+                onClick={handleCopyDigest}
+                className="bg-stone-200 text-stone-800 px-4 py-2 rounded text-sm font-semibold hover:bg-stone-300"
+              >
+                Copy Digest
+              </button>
+              <button
+                onClick={handleBulkComplete}
+                className="bg-stone-800 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-stone-700"
+              >
+                Bulk Mark Complete
+              </button>
+            </div>
+
           </div>
 
           <div className="space-y-2">

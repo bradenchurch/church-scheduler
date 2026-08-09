@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 -- Schema for EQ Presidency Scheduler
 
 CREATE TABLE IF NOT EXISTS leaders (

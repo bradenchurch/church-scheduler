@@ -150,6 +150,7 @@ export default function Dashboard() {
              <Link to="/leader/cole" className="text-stone-600 hover:underline">Cole's Page</Link>
              <Link to="/leader/kawika" className="text-stone-600 hover:underline">Kawika's Page</Link>
              <Link to="/leader/sean" className="text-stone-600 hover:underline">Sean's Page</Link>
+             <Link to="/admin" className="text-stone-600 hover:underline">Admin</Link>
           </div>
         </div>
       </div>
