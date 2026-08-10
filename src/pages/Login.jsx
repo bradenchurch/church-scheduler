@@ -25,8 +25,11 @@ export default function Login() {
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white p-8 rounded-lg shadow-sm border border-stone-200 mt-12">
-      <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
+    <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-sm border border-warm-border mt-12">
+      <div className="text-center mb-6">
+        <h2 className="text-2xl font-serif font-bold text-burgundy">Long Valley 2nd Ward</h2>
+        <p className="text-sm text-stone-500 mt-1">Leader Login</p>
+      </div>
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-stone-700 mb-1">Email</label>
@@ -35,18 +38,21 @@ export default function Login() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border border-stone-300 rounded focus:ring-stone-500 focus:border-stone-500"
+            className="w-full p-2 border-[1.5px] border-warm-border rounded-md focus:border-burgundy focus:ring focus:ring-burgundy-ghost outline-none transition-all"
             placeholder="your@email.com"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-stone-800 text-white p-2 rounded hover:bg-stone-700 disabled:opacity-50"
+          className="w-full bg-burgundy text-white p-2 rounded-md font-semibold hover:bg-burgundy-light transition-colors disabled:opacity-50"
         >
           {loading ? 'Sending link...' : 'Send Magic Link'}
         </button>
       </form>
+      <p className="text-xs text-stone-500 text-center mt-6">
+        You'll receive a magic link in your email to sign in securely. No password required.
+      </p>
       {message && (
         <div className={`mt-4 p-3 rounded text-sm ${message.startsWith('Error') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
           {message}
