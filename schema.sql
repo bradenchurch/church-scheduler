@@ -7,8 +7,13 @@ CREATE TABLE IF NOT EXISTS leaders (
   name TEXT NOT NULL,
   email TEXT NOT NULL,
   google_calendar_id TEXT,
-  active BOOLEAN DEFAULT true
+  active BOOLEAN DEFAULT true,
+  phone TEXT
 );
+
+-- Idempotent: bring forward the phone column on databases where leaders was
+-- created before this column was added (Aug 2026).
+ALTER TABLE leaders ADD COLUMN IF NOT EXISTS phone TEXT;
 
 CREATE TABLE IF NOT EXISTS companionships (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
