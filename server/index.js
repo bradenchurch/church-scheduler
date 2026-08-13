@@ -306,6 +306,19 @@ app.get('/api/companions', async (req, res) => {
   try {
     const { companionships, presidencyByDistrict } = getRoster();
 
+    // Enrich with the DB leader_id (assigned presidency member id). The static
+    // roster only carries the presidency member's name; the companionships table
+    // holds the authoritative leader_id used for routing submissions.
+    let leaderById = new Map();
+    const { data: dbComps, error: dbErr } = await supabase
+      .from('companionships')
+      .select('id, leader_id');
+    if (dbErr) {
+      console.error('[companions] leader_id lookup failed:', dbErr.message);
+    } else {
+      leaderById = new Map((dbComps || []).map((c) => [c.id, c.leader_id]));
+    }
+
     const byDistrict = new Map();
     for (const comp of companionships) {
       if (!byDistrict.has(comp.district)) byDistrict.set(comp.district, []);
@@ -314,16 +327,20 @@ app.get('/api/companions', async (req, res) => {
 
     const districts = [...byDistrict.entries()]
       .sort((a, b) => a[0] - b[0])
-      .map(([districtNumber, comps]) => ({
-        district_number: districtNumber,
-        presidency_member:
-          presidencyByDistrict.get(districtNumber) ||
-          { name: comps[0]?.presidency_member || '', email: '', phone: '' },
-        companionships: comps.map((comp) => ({
-          id: comp.id,
-          ...splitCompanions(comp.companions),
-        })),
-      }));
+      .map(([districtNumber, comps]) => {
+        const presidency = presidencyByDistrict.get(districtNumber) ||
+          { name: comps[0]?.presidency_member || '', email: '', phone: '' };
+        const presidencyLeaderId = comps.map((c) => leaderById.get(c.id)).find(Boolean) || null;
+        return {
+          district_number: districtNumber,
+          presidency_member: { ...presidency, id: presidencyLeaderId },
+          companionships: comps.map((comp) => ({
+            id: comp.id,
+            assigned_to: leaderById.get(comp.id) || null,
+            ...splitCompanions(comp.companions),
+          })),
+        };
+      });
 
     res.json({ ward, districts });
   } catch (error) {
@@ -375,6 +392,89 @@ app.get('/api/families', async (req, res) => {
         presidencyByDistrict.get(comp.district) ||
         { name: comp.presidency_member || '', email: '', phone: '' },
       families,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/chapel/submit — anonymous chapel-side companion visit submission.
+// Body: { companionship_id, companion_name, families_visited?, visit_notes?,
+//         preferred_slot_date?, preferred_slot_time? }
+// Validates the companionship exists, looks up its assigned leader, and inserts
+// a chapel_submissions row routed to that presidency member's queue.
+app.post('/api/chapel/submit', async (req, res) => {
+  const {
+    companionship_id,
+    companion_name,
+    families_visited,
+    visit_notes,
+    preferred_slot_date,
+    preferred_slot_time,
+  } = req.body || {};
+
+  if (!companionship_id) {
+    return res.status(400).json({ error: 'companionship_id is required' });
+  }
+  if (!companion_name || !String(companion_name).trim()) {
+    return res.status(400).json({ error: 'companion_name is required' });
+  }
+
+  try {
+    // Validate the companionship and resolve its assigned presidency member.
+    const { data: comp, error: compErr } = await supabase
+      .from('companionships')
+      .select('id, leader_id')
+      .eq('id', companionship_id)
+      .maybeSingle();
+    if (compErr) throw compErr;
+    if (!comp) {
+      return res.status(404).json({ error: 'companionship_not_found' });
+    }
+
+    const leaderId = comp.leader_id || null;
+
+    // District number comes from the static roster (companionships table has no
+    // district column); fall back to 0 if the roster and DB ever drift.
+    const rosterComp = getRoster().companionships.find((c) => c.id === companionship_id);
+    const districtNumber = rosterComp?.district ?? 0;
+
+    let presidency = null;
+    if (leaderId) {
+      const { data: leader, error: leaderErr } = await supabase
+        .from('leaders')
+        .select('id, name, email, phone')
+        .eq('id', leaderId)
+        .maybeSingle();
+      if (leaderErr) throw leaderErr;
+      if (leader) {
+        presidency = { name: leader.name, email: leader.email, phone: leader.phone || '' };
+      }
+    }
+
+    const row = {
+      companionship_id,
+      companion_name: String(companion_name).trim(),
+      district_number: districtNumber,
+      assigned_to: leaderId,
+      families_visited: families_visited || null,
+      visit_notes: visit_notes || null,
+      preferred_slot_date: preferred_slot_date || null,
+      preferred_slot_time: preferred_slot_time || null,
+    };
+
+    const { data: inserted, error: insErr } = await supabase
+      .from('chapel_submissions')
+      .insert([row])
+      .select()
+      .single();
+    if (insErr) throw insErr;
+
+    res.status(201).json({
+      ok: true,
+      submission_id: inserted.id,
+      assigned_to: leaderId,
+      presidency_member: presidency || { name: '', email: '', phone: '' },
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -449,42 +549,31 @@ app.get('/api/admin/roster', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// GET /api/availability/:leaderId?date=
+// GET /api/availability/:leaderId — returns the leader's contact info plus their
+// recurring weekly slots. Used by the chapel companion flow (SlotPicker) to offer
+// preferred meeting times, and by the booking page.
 app.get('/api/availability/:leaderId', async (req, res) => {
   const { leaderId } = req.params;
-  const { date } = req.query; // optional date filter
 
   try {
-    // Get all slots for leader
-    let slotsQuery = supabase.from('slots').select('*').eq('leader_id', leaderId);
+    const [leaderRes, slotsRes] = await Promise.all([
+      supabase.from('leaders').select('id, name, email, phone').eq('id', leaderId).maybeSingle(),
+      supabase.from('slots').select('id, day_of_week, start_time, duration_minutes').eq('leader_id', leaderId).order('day_of_week').order('start_time'),
+    ]);
 
-    // Get all bookings for leader to find taken slots
-    let bookingsQuery = supabase.from('bookings')
-      .select('slot_id, scheduled_date')
-      .in('status', ['pending', 'booked'])
-      .not('slot_id', 'is', null);
-
-    // Join not fully supported without relation on non-fk, so we filter in app
-    // For a real app, maybe a more complex join. Here we just fetch slots and taken bookings.
-
-    const [slotsRes, bookingsRes] = await Promise.all([slotsQuery, bookingsQuery]);
-
+    if (leaderRes.error) throw leaderRes.error;
     if (slotsRes.error) throw slotsRes.error;
-    if (bookingsRes.error) throw bookingsRes.error;
-
-    // Filter out slots that are already booked for the given date (if date provided)
-    // Actually, "availability" usually returns all slots with an indicator, or just available ones.
-    // The requirement is simple: GET /api/availability/:leaderId
-    // Let's just return slots. The client can filter if needed, or we filter out if date matches.
-    let availableSlots = slotsRes.data;
-    if (date) {
-      const takenSlotIds = bookingsRes.data
-        .filter(b => b.scheduled_date === date)
-        .map(b => b.slot_id);
-      availableSlots = availableSlots.filter(s => !takenSlotIds.includes(s.id));
+    if (!leaderRes.data) {
+      return res.status(404).json({ error: 'leader_not_found' });
     }
 
-    res.json(availableSlots);
+    res.json({
+      leader_id: leaderRes.data.id,
+      name: leaderRes.data.name,
+      email: leaderRes.data.email,
+      phone: leaderRes.data.phone || '',
+      slots: slotsRes.data || [],
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

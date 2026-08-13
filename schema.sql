@@ -104,6 +104,30 @@ CREATE TABLE IF NOT EXISTS confirmation_log (
 ALTER TABLE oauth_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE confirmation_log ENABLE ROW LEVEL SECURITY;
 
+-- Chapel-side companion visit submissions (Phase B1, anonymous flow).
+-- A companion scans the chapel QR, picks their name, optionally picks a
+-- preferred meeting slot, reports which families they visited, and submits.
+-- The submission routes to their companionship's assigned presidency member.
+CREATE TABLE IF NOT EXISTS chapel_submissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  companionship_id UUID REFERENCES companionships(id) ON DELETE CASCADE,
+  companion_name TEXT NOT NULL,
+  district_number INTEGER NOT NULL,
+  assigned_to TEXT REFERENCES leaders(id),
+  families_visited JSONB,
+  visit_notes TEXT,
+  preferred_slot_date DATE,
+  preferred_slot_time TIME,
+  presidency_notes TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'completed', 'cancelled')),
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reviewed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_chapel_submissions_assigned ON chapel_submissions(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_chapel_submissions_status ON chapel_submissions(status);
+CREATE INDEX IF NOT EXISTS idx_chapel_submissions_companionship ON chapel_submissions(companionship_id);
+
 -- =============================================================
 -- Ministering roster: households + members + companionship links
 -- (Phase A1). Seeded by seed.sql (deterministic, idempotent).
