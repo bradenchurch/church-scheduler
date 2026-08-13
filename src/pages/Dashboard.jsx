@@ -59,18 +59,23 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-serif font-bold text-burgundy">Long Valley 2nd Ward</h1>
+        <p className="text-lg text-stone-600 mt-1">Elders Quorum Presidency Dashboard</p>
+      </div>
+
       <div>
-        <h2 className="text-2xl font-bold mb-4">Completion Stats</h2>
+        <h2 className="text-2xl font-serif font-bold mb-4 text-burgundy">Completion Stats</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {stats.map(s => {
             const percent = (s.completed / s.total) * 100;
-            let color = 'bg-red-100 text-red-800 border-red-200';
-            if (percent >= 80) color = 'bg-green-100 text-green-800 border-green-200';
-            else if (percent >= 40) color = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+            let color = 'bg-rose-light text-rose border-rose-light';
+            if (percent >= 80) color = 'bg-sage-light text-sage border-sage-light';
+            else if (percent >= 40) color = 'bg-amber-light text-amber border-amber-light';
 
             return (
               <div key={s.leader} className={`p-4 rounded-lg border ${color}`}>
-                <h3 className="font-bold text-lg">{s.leader}</h3>
+                <h3 className="font-serif font-bold text-lg text-burgundy">{s.leader}</h3>
                 <p className="text-2xl font-light">{s.completed} / {s.total}</p>
                 <p className="text-sm opacity-75">{Math.round(percent)}% completed</p>
               </div>
@@ -79,11 +84,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200 mb-8">
-        <h2 className="text-xl font-bold mb-4">Pending Companionships</h2>
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border mb-8">
+        <h2 className="text-xl font-serif font-bold mb-4 text-burgundy">Pending Companionships</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-stone-50 border-b border-stone-200">
+            <thead className="bg-cream border-b border-warm-border">
               <tr>
                 <th className="p-3">Companionship</th>
                 <th className="p-3">Interviewer</th>
@@ -92,13 +97,13 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {companionships.filter(c => c.status === 'pending').slice(0, 10).map(c => (
-                <tr key={c.id} className="border-b border-stone-100">
+                <tr key={c.id} className="border-b border-warm-border/50">
                   <td className="p-3">{c.companion1_name} & {c.companion2_name}</td>
                   <td className="p-3">{c.leaderName}</td>
                   <td className="p-3">
                     <button
                       onClick={() => navigator.clipboard.writeText(`${window.location.origin}/book`)}
-                      className="text-blue-600 hover:underline"
+                      className="text-burgundy font-medium hover:text-burgundy-light underline"
                     >
                       Copy Link
                     </button>
@@ -113,11 +118,11 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-        <h2 className="text-xl font-bold mb-4">All Companionships</h2>
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+        <h2 className="text-xl font-serif font-bold mb-4 text-burgundy">All Companionships</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-stone-50 border-b border-stone-200">
+            <thead className="bg-cream border-b border-warm-border">
               <tr>
                 <th className="p-3">Companionship</th>
                 <th className="p-3">Interviewer</th>
@@ -126,13 +131,13 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {companionships.map(c => (
-                <tr key={c.id} className="border-b border-stone-100">
+                <tr key={c.id} className="border-b border-warm-border/50">
                   <td className="p-3">{c.companion1_name} & {c.companion2_name}</td>
                   <td className="p-3">{c.leaderName}</td>
                   <td className="p-3">
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      c.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      c.status === 'booked' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                      c.status === 'completed' ? 'bg-sage-light text-sage' :
+                      c.status === 'booked' ? 'bg-amber-light text-amber' : 'bg-rose-light text-rose'
                     }`}>
                       {c.status.toUpperCase()}
                     </span>
@@ -147,10 +152,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200 mt-8">
-        <h2 className="text-xl font-bold mb-4">Quick Links</h2>
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border mt-8">
+        <h2 className="text-xl font-serif font-bold mb-4 text-burgundy">Quick Links</h2>
         <div className="space-y-4">
-          <Link to="/book" className="block text-blue-600 hover:underline">Go to Companion Booking Page</Link>
+          <Link to="/book" className="block text-burgundy font-medium hover:text-burgundy-light underline">Go to Companion Booking Page</Link>
 
           <div className="flex gap-4 flex-wrap items-center">
             {user ? (

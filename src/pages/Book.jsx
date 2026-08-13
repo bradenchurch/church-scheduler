@@ -119,20 +119,20 @@ END:VCALENDAR`;
             {lang === 'en' ? 'Español' : 'English'}
           </button>
         </div>
-        <div className="text-center p-8 bg-green-50 border border-green-200 rounded-lg">
-          <h2 className="text-2xl font-bold text-green-800 mb-2">{currentT.booked}</h2>
-          <p className="text-green-700 mb-6">{currentT.scheduled}</p>
+        <div className="text-center p-8 bg-sage-light border border-sage rounded-xl shadow-sm">
+          <h2 className="text-2xl font-serif font-bold text-sage mb-2">{currentT.booked}</h2>
+          <p className="text-sage mb-6 font-medium">{currentT.scheduled}</p>
           
           <div className="flex flex-col gap-3 mb-6">
-            <a href={googleLink} target="_blank" rel="noreferrer" className="bg-blue-600 text-white py-2 px-4 rounded font-semibold hover:bg-blue-700">
+            <a href={googleLink} target="_blank" rel="noreferrer" className="min-h-[44px] bg-burgundy text-white py-2 px-4 rounded-md font-semibold hover:bg-burgundy-light transition-colors">
               {currentT.addToGoogle}
             </a>
-            <a href={icsLink} download="interview.ics" className="bg-stone-200 text-stone-800 py-2 px-4 rounded font-semibold hover:bg-stone-300">
+            <a href={icsLink} download="interview.ics" className="min-h-[44px] bg-transparent border border-burgundy text-burgundy py-2 px-4 rounded-md font-semibold hover:bg-burgundy-ghost transition-colors">
               {currentT.downloadIcs}
             </a>
           </div>
 
-          <button onClick={() => window.location.reload()} className="text-green-700 underline">{currentT.bookAnother}</button>
+          <button onClick={() => window.location.reload()} className="text-burgundy underline hover:text-burgundy-light font-medium">{currentT.bookAnother}</button>
         </div>
       </div>
     );
@@ -147,17 +147,17 @@ END:VCALENDAR`;
       </div>
 
       {!selectedComp ? (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-          <h2 className="text-xl font-bold mb-4 text-center">{currentT.find}</h2>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+          <h2 className="text-xl font-serif font-bold mb-4 text-center text-burgundy">{currentT.find}</h2>
           <form onSubmit={handleSearch} className="flex gap-2 mb-6">
             <input
               type="text"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder={currentT.placeholder}
-              className="flex-1 border border-stone-300 rounded p-2 text-lg"
+              className="min-h-[44px] flex-1 border-[1.5px] border-warm-border rounded-md p-2 text-lg focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
             />
-            <button type="submit" className="bg-stone-800 text-white px-4 rounded font-semibold">{currentT.search}</button>
+            <button type="submit" className="min-h-[44px] bg-burgundy text-white px-4 rounded-md font-semibold hover:bg-burgundy-light transition-colors">{currentT.search}</button>
           </form>
 
           <div className="space-y-2">
@@ -165,7 +165,7 @@ END:VCALENDAR`;
               <button
                 key={c.id}
                 onClick={() => handleSelectComp(c)}
-                className="w-full text-left p-3 border border-stone-200 rounded hover:bg-stone-50"
+                className="w-full text-left p-3 border border-warm-border rounded-lg hover:bg-cream transition-colors"
               >
                 <div className="font-semibold">{c.companion1_name} & {c.companion2_name}</div>
                 <div className="text-sm text-stone-500">{currentT.interviewer}: {c.leaders?.name || 'Assigned Leader'}</div>
@@ -174,9 +174,9 @@ END:VCALENDAR`;
           </div>
         </div>
       ) : (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
           <button onClick={() => setSelectedComp(null)} className="text-sm text-stone-500 mb-4 hover:underline">&larr; {currentT.back}</button>
-          <h2 className="text-xl font-bold mb-2">{currentT.pickTime}</h2>
+          <h2 className="text-xl font-serif font-bold mb-2 text-burgundy">{currentT.pickTime}</h2>
           <p className="text-stone-600 mb-6">{currentT.interviewer}: {selectedComp.leaders?.name}</p>
 
           <div className="space-y-2">
@@ -187,7 +187,7 @@ END:VCALENDAR`;
                 <button
                   key={s.id}
                   onClick={() => handleBook(s)}
-                  className="w-full text-left p-4 border border-stone-200 rounded hover:bg-stone-50 hover:border-stone-400 transition-colors flex justify-between items-center"
+                  className="w-full text-left p-4 border border-warm-border rounded-lg hover:bg-cream hover:border-burgundy transition-all flex justify-between items-center"
                 >
                   <span className="font-medium text-lg">{currentT.days[s.day_of_week]}</span>
                   <span className="text-stone-600">{s.start_time.slice(0,5)}</span>

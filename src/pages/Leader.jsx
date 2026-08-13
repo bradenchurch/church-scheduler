@@ -98,22 +98,22 @@ export default function Leader() {
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
       <div>
-        <h2 className="text-2xl font-bold mb-4 capitalize">{displayName}'s Dashboard</h2>
+        <h2 className="text-2xl font-serif font-bold mb-4 capitalize text-burgundy">{displayName}'s Dashboard</h2>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200 mb-8">
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border mb-8">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-bold">Current Bookings</h3>
+            <h3 className="text-xl font-serif font-bold text-burgundy">Current Bookings</h3>
             
             <div className="flex gap-2">
               <button
                 onClick={handleCopyDigest}
-                className="bg-stone-200 text-stone-800 px-4 py-2 rounded text-sm font-semibold hover:bg-stone-300"
+                className="min-h-[44px] bg-transparent border border-burgundy text-burgundy px-4 py-2 rounded-md hover:bg-burgundy-ghost transition-colors text-sm font-semibold"
               >
                 Copy Digest
               </button>
               <button
                 onClick={handleBulkComplete}
-                className="bg-stone-800 text-white px-4 py-2 rounded text-sm font-semibold hover:bg-stone-700"
+                className="min-h-[44px] bg-burgundy text-white px-4 py-2 rounded-md hover:bg-burgundy-light transition-colors text-sm font-semibold"
               >
                 Bulk Mark Complete
               </button>
@@ -126,15 +126,15 @@ export default function Leader() {
               <p className="text-stone-500 italic">No bookings found.</p>
             ) : (
               bookings.map(b => (
-                <div key={b.id} className="p-4 border border-stone-200 rounded flex justify-between items-center">
+                <div key={b.id} className="p-4 border border-warm-border rounded-lg flex justify-between items-center">
                   <div>
                     <div className="font-semibold">{b.companionships?.companion1_name} & {b.companionships?.companion2_name}</div>
                     <div className="text-sm text-stone-500">{b.scheduled_date} at {b.slots?.start_time}</div>
                   </div>
                   <div>
                     <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      b.status === 'completed' ? 'bg-green-100 text-green-800' :
-                      b.status === 'cancelled' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                      b.status === 'completed' ? 'bg-sage-light text-sage' :
+                      b.status === 'cancelled' ? 'bg-rose-light text-rose' : 'bg-amber-light text-amber'
                     }`}>
                       {b.status.toUpperCase()}
                     </span>
@@ -145,15 +145,15 @@ export default function Leader() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-          <h3 className="text-xl font-bold mb-4">Manage Availability</h3>
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+          <h3 className="text-xl font-serif font-bold mb-4 text-burgundy">Manage Availability</h3>
           <p className="text-stone-500 mb-4 text-sm">Add 30-min slots for your interviews.</p>
           {/* A simple form to add a slot could go here */}
           <div className="space-y-2 mb-4">
              {slots.map(s => {
                 const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
                 return (
-                  <div key={s.id} className="p-3 border border-stone-200 rounded flex justify-between items-center">
+                  <div key={s.id} className="p-3 border border-warm-border rounded-lg flex justify-between items-center">
                     <span>{days[s.day_of_week]} at {s.start_time.slice(0,5)}</span>
                     <button onClick={() => handleRemoveSlot(s.id)} className="text-red-600 text-sm hover:underline">Remove</button>
                   </div>
@@ -164,17 +164,17 @@ export default function Leader() {
           {!addingSlot ? (
             <button
               onClick={() => setAddingSlot(true)}
-              className="w-full py-2 border-2 border-dashed border-stone-300 text-stone-600 rounded font-semibold hover:border-stone-400"
+              className="min-h-[44px] w-full py-2 border-2 border-dashed border-warm-border text-burgundy rounded-lg hover:border-burgundy-light hover:bg-burgundy-ghost transition-colors font-semibold"
             >
               + Add New Slot
             </button>
           ) : (
-            <form onSubmit={handleAddSlot} className="p-4 border border-stone-200 rounded bg-stone-50 space-y-3">
+            <form onSubmit={handleAddSlot} className="p-4 border border-warm-border rounded-xl bg-cream space-y-3">
               <div className="flex gap-4">
                 <select
                   value={newSlotDay}
                   onChange={e => setNewSlotDay(parseInt(e.target.value))}
-                  className="p-2 border border-stone-300 rounded bg-white flex-1"
+                  className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all flex-1"
                 >
                   <option value={0}>Sunday</option>
                   <option value={1}>Monday</option>
@@ -188,12 +188,12 @@ export default function Leader() {
                   type="time"
                   value={newSlotTime}
                   onChange={e => setNewSlotTime(e.target.value)}
-                  className="p-2 border border-stone-300 rounded bg-white flex-1"
+                  className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all flex-1"
                 />
               </div>
               <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setAddingSlot(false)} className="px-4 py-2 text-stone-600 font-semibold hover:underline">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-stone-800 text-white rounded font-semibold">Save Slot</button>
+                <button type="button" onClick={() => setAddingSlot(false)} className="min-h-[44px] px-4 py-2 text-stone-600 font-semibold hover:underline">Cancel</button>
+                <button type="submit" className="min-h-[44px] px-4 py-2 bg-burgundy text-white rounded-md hover:bg-burgundy-light transition-colors font-semibold">Save Slot</button>
               </div>
             </form>
           )}

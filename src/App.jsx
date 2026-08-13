@@ -10,10 +10,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900 font-sans w-full">
-      <header className="bg-white shadow-sm border-b border-stone-200 sticky top-0 z-10">
+    <div className="min-h-screen bg-cream text-stone-900 font-sans w-full">
+      <header className="bg-white shadow-sm border-b border-warm-border sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-semibold text-stone-800">EQ Scheduler</h1>
+          <h1 className="text-xl font-serif text-burgundy font-bold">EQ Scheduler</h1>
         </div>
       </header>
 
