@@ -1,13 +1,31 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { signOut } from '../lib/auth';
+
+const requesterLabel = (r) => {
+  const c = r.companionships;
+  if (c && c.companion1_name && c.companion2_name) return `${c.companion1_name} & ${c.companion2_name}`;
+  if (c && c.companion1_name) return c.companion1_name;
+  if (c && c.companion2_name) return c.companion2_name;
+  return 'Walk-in request';
+};
+
+const formatDate = (ts) => {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+};
 
 export default function Dashboard() {
   const [stats, setStats] = useState([]);
   const [companionships, setCompanionships] = useState([]);
   const [loading, setLoading] = useState(true);
   const { user, role, token } = useAuth();
+  const [queue, setQueue] = useState({ pending: [], assigned: [], completed: [] });
+  const [leadersList, setLeadersList] = useState([]);
+  const [assignTargets, setAssignTargets] = useState({});
+  const [queueError, setQueueError] = useState(false);
 
   useEffect(() => {
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -55,10 +73,144 @@ export default function Dashboard() {
     });
   }, [token]);
 
+  // QR request queue — poll every 30s (authenticated users only).
+  const refreshQueue = useCallback(() => {
+    if (!token) return;
+    fetch('/api/qr/queue', { headers: { 'Authorization': `Bearer ${token}` } })
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('queue ' + res.status))))
+      .then((d) => {
+        setQueue({ pending: d.pending || [], assigned: d.assigned || [], completed: d.completed || [] });
+        setQueueError(false);
+      })
+      .catch(() => setQueueError(true));
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) return;
+    refreshQueue();
+    const id = setInterval(refreshQueue, 30000);
+    return () => clearInterval(id);
+  }, [token, refreshQueue]);
+
+  useEffect(() => {
+    fetch('/api/leaders').then((r) => r.json()).then(setLeadersList).catch(() => []);
+  }, []);
+
+  const handleAssignNow = async (requestId) => {
+    const leaderId = assignTargets[requestId];
+    if (!leaderId || !token) return;
+    const res = await fetch('/api/qr/assign-now', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ request_id: requestId, leader_id: leaderId }),
+    });
+    if (res.ok) {
+      setAssignTargets((prev) => { const n = { ...prev }; delete n[requestId]; return n; });
+      refreshQueue();
+    }
+  };
+
+  const handleAutoAssign = async () => {
+    const res = await fetch('/api/qr/assign-next', { method: 'POST' });
+    if (res.ok) refreshQueue();
+  };
+
   if (loading) return <div className="p-4">Loading dashboard...</div>;
 
   return (
     <div className="space-y-8">
+      {token && (
+        <div className="bg-white p-6 rounded-lg shadow-sm border border-warm-border">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-burgundy">QR Request Queue</h2>
+            {role === 'admin' && (
+              <button
+                onClick={handleAutoAssign}
+                className="min-h-[44px] px-4 py-2 rounded bg-sage text-white text-sm font-semibold hover:opacity-90"
+              >
+                Auto-assign Next
+              </button>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="p-4 rounded-lg bg-gold-light">
+              <p className="text-2xl font-bold text-amber">{queue.pending.length}</p>
+              <p className="text-sm font-semibold text-amber">Pending</p>
+            </div>
+            <div className="p-4 rounded-lg bg-sage-light">
+              <p className="text-2xl font-bold text-sage">{queue.assigned.length}</p>
+              <p className="text-sm font-semibold text-sage">Assigned</p>
+            </div>
+            <div className="p-4 rounded-lg bg-rose-light">
+              <p className="text-2xl font-bold text-rose">{queue.completed.length}</p>
+              <p className="text-sm font-semibold text-rose">Completed this week</p>
+            </div>
+          </div>
+
+          {queueError && (
+            <p className="text-sm text-rose mb-4">Couldn't load the queue. It may be empty or you may not have access.</p>
+          )}
+
+          <h3 className="font-semibold text-brown mb-2">Pending Requests</h3>
+          <div className="space-y-2 mb-6">
+            {queue.pending.length === 0 ? (
+              <p className="text-sm text-stone-500">No pending requests.</p>
+            ) : (
+              queue.pending.map((r) => (
+                <div key={r.id} className="p-3 border border-warm-border rounded flex flex-wrap items-center gap-3">
+                  <div className="flex-1 min-w-[160px]">
+                    <div className="font-semibold">{requesterLabel(r)}</div>
+                    <div className="text-xs text-stone-500">Submitted {formatDate(r.submitted_at)}</div>
+                    {r.notes && <div className="text-xs text-stone-500 italic">{r.notes}</div>}
+                  </div>
+                  {role === 'admin' && (
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={assignTargets[r.id] || ''}
+                        onChange={(e) => setAssignTargets((prev) => ({ ...prev, [r.id]: e.target.value }))}
+                        className="min-h-[44px] p-2 border border-warm-border rounded bg-white text-sm"
+                      >
+                        <option value="">Assign to…</option>
+                        {leadersList.filter((l) => l.active !== false).map((l) => (
+                          <option key={l.id} value={l.id}>{l.name}</option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={() => handleAssignNow(r.id)}
+                        disabled={!assignTargets[r.id]}
+                        className="min-h-[44px] px-3 py-2 rounded bg-burgundy text-white text-sm font-semibold disabled:opacity-40"
+                      >
+                        Assign now
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+
+          <h3 className="font-semibold text-brown mb-2">Assigned</h3>
+          <div className="space-y-2">
+            {queue.assigned.length === 0 ? (
+              <p className="text-sm text-stone-500">No assigned requests.</p>
+            ) : (
+              queue.assigned.map((r) => (
+                <div key={r.id} className="p-3 border border-warm-border rounded flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold">{requesterLabel(r)}</div>
+                    <div className="text-xs text-stone-500">Assigned {formatDate(r.assigned_at)}</div>
+                  </div>
+                  <span className="px-2 py-1 rounded text-xs font-semibold bg-sage-light text-sage">
+                    {r.leaders?.name || 'Unassigned'}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+
       <div>
         <h2 className="text-2xl font-bold mb-4">Completion Stats</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
