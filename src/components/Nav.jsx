@@ -25,6 +25,12 @@ export default function Nav() {
         </Link>
       )}
 
+      {(role === 'admin' || role === 'leader') && (
+        <Link to="/admin/queue" className={linkClass(isActive('/admin/queue'))}>
+          Queue
+        </Link>
+      )}
+
       {role === 'admin' && (
         <>
           <Link to="/admin/roster" className={linkClass(isActive('/admin/roster'))}>

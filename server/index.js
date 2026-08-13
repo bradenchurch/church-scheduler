@@ -553,6 +553,103 @@ app.get('/api/admin/roster', requireAuth, requireAdmin, async (req, res) => {
 // GET /api/availability/:leaderId — returns the leader's contact info plus their
 // recurring weekly slots. Used by the chapel companion flow (SlotPicker) to offer
 // preferred meeting times, and by the booking page.
+// GET /api/admin/queue?status=pending|reviewed|completed|cancelled|all
+// Presidency queue: chapel submissions routed to the current leader (or all
+// submissions for admins). Counselors (role=leader) only see their own
+// district's submissions (assigned_to = their leader id).
+app.get('/api/admin/queue', requireAuth, async (req, res) => {
+  const { status } = req.query;
+  const isAdmin = req.user.role === 'admin';
+
+  if (!isAdmin && req.user.role !== 'leader') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    let query = supabase
+      .from('chapel_submissions')
+      .select('*, leaders(name, email, phone)')
+      .order('submitted_at', { ascending: false });
+
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+
+    // Counselors (role=leader) are scoped to their own district.
+    if (!isAdmin) {
+      query = query.eq('assigned_to', req.user.leader_id);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+
+    const submissions = (data || []).map((s) => ({
+      id: s.id,
+      companionship_id: s.companionship_id,
+      companion_name: s.companion_name,
+      district_number: s.district_number,
+      assigned_to: s.assigned_to,
+      families_visited: s.families_visited,
+      visit_notes: s.visit_notes,
+      preferred_slot_date: s.preferred_slot_date,
+      preferred_slot_time: s.preferred_slot_time,
+      presidency_notes: s.presidency_notes,
+      submitted_at: s.submitted_at,
+      reviewed_at: s.reviewed_at,
+      status: s.status,
+      assigned_presidency_member: s.leaders
+        ? { name: s.leaders.name || '', email: s.leaders.email || '', phone: s.leaders.phone || '' }
+        : null,
+    }));
+
+    res.json({ submissions });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/admin/queue/:id/complete — mark a submission complete with the
+// presidency member's notes. Counselors may only complete their own district's
+// submissions; admins may complete any.
+app.post('/api/admin/queue/:id/complete', requireAuth, async (req, res) => {
+  const { id } = req.params;
+  const { presidency_notes } = req.body || {};
+  const isAdmin = req.user.role === 'admin';
+
+  if (!isAdmin && req.user.role !== 'leader') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  if (typeof presidency_notes !== 'string' || !presidency_notes.trim()) {
+    return res.status(400).json({ error: 'presidency_notes is required' });
+  }
+
+  try {
+    let query = supabase
+      .from('chapel_submissions')
+      .update({
+        status: 'completed',
+        presidency_notes,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq('id', id);
+
+    // Counselors can only complete their own district's submissions.
+    if (!isAdmin) {
+      query = query.eq('assigned_to', req.user.leader_id);
+    }
+
+    const { data, error } = await query.select().maybeSingle();
+    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ error: 'not_found_or_not_yours' });
+    }
+
+    res.json({ ok: true, submission: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/availability/:leaderId', async (req, res) => {
   const { leaderId } = req.params;
 
