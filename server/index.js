@@ -473,6 +473,7 @@ app.post('/api/chapel/submit', async (req, res) => {
     res.status(201).json({
       ok: true,
       submission_id: inserted.id,
+      submitted_at: inserted.submitted_at,
       assigned_to: leaderId,
       presidency_member: presidency || { name: '', email: '', phone: '' },
     });

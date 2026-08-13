@@ -171,6 +171,25 @@ export default function Chapel() {
             member.
           </p>
 
+          {result.submission_id && (
+            <div className="rounded-lg bg-warm-white border border-warm-border p-4 text-left mb-6">
+              <p className="text-xs uppercase tracking-widest text-brown-light mb-1">Reference</p>
+              <button
+                type="button"
+                onClick={() => navigator.clipboard?.writeText(result.submission_id)}
+                title="Tap to copy"
+                className="font-mono text-sm text-burgundy break-all hover:underline"
+              >
+                #{String(result.submission_id).slice(0, 8)}
+              </button>
+              {result.submitted_at && (
+                <p className="mt-1 text-sm text-brown-light">
+                  {new Date(result.submitted_at).toLocaleString()}
+                </p>
+              )}
+            </div>
+          )}
+
           <div className="rounded-lg bg-warm-white border border-warm-border p-4 text-left mb-6">
             <p className="text-xs uppercase tracking-widest text-brown-light mb-1">Assigned to</p>
             <p className="font-semibold text-burgundy">{pm.name || 'Your presidency member'}</p>
