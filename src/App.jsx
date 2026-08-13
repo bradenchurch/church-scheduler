@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Book from './pages/Book';
 import Leader from './pages/Leader';
@@ -9,17 +9,24 @@ import AuthCallback from './pages/AuthCallback';
 import QREntry from './pages/QREntry';
 import ProtectedRoute from './components/ProtectedRoute';
 import Settings from './pages/Settings';
+import Nav from './components/Nav';
+import Me from './pages/Me';
+import AdminRoster from './pages/AdminRoster';
+import AdminCompanionOverride from './pages/AdminCompanionOverride';
 
 function App() {
   return (
     <div className="min-h-screen bg-cream text-stone-900 font-sans w-full">
       <header className="bg-white shadow-sm border-b border-warm-border sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-xl font-serif text-burgundy font-bold">EQ Scheduler</h1>
+        <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center gap-4 flex-wrap">
+          <Link to="/" className="text-xl font-serif text-burgundy font-bold">
+            EQ Scheduler
+          </Link>
+          <Nav />
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8">
+      <main className="max-w-5xl mx-auto px-4 py-8">
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/book" element={<Book />} />
@@ -39,10 +46,34 @@ function App() {
             }
           />
           <Route
+            path="/me"
+            element={
+              <ProtectedRoute requireRole="leader">
+                <Me />
+              </ProtectedRoute>
+            }
+          />
+          <Route
             path="/admin"
             element={
               <ProtectedRoute requireRole="admin">
                 <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/roster"
+            element={
+              <ProtectedRoute requireRole="admin">
+                <AdminRoster />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/companion-override"
+            element={
+              <ProtectedRoute requireRole="admin">
+                <AdminCompanionOverride />
               </ProtectedRoute>
             }
           />
