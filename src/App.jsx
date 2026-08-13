@@ -13,6 +13,7 @@ import Nav from './components/Nav';
 import Me from './pages/Me';
 import AdminRoster from './pages/AdminRoster';
 import AdminCompanionOverride from './pages/AdminCompanionOverride';
+import AdminQueue from './pages/AdminQueue';
 
 function App() {
   return (
@@ -74,6 +75,14 @@ function App() {
             element={
               <ProtectedRoute requireRole="admin">
                 <AdminCompanionOverride />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/queue"
+            element={
+              <ProtectedRoute requireRole="leader">
+                <AdminQueue />
               </ProtectedRoute>
             }
           />

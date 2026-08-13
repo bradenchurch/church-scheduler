@@ -147,3 +147,30 @@ CREATE TABLE IF NOT EXISTS companionship_households (
 CREATE INDEX IF NOT EXISTS idx_households_district ON households(district_number);
 CREATE INDEX IF NOT EXISTS idx_household_members_household ON household_members(household_id);
 CREATE INDEX IF NOT EXISTS idx_companionship_households_household ON companionship_households(household_id);
+
+-- =============================================================
+-- Chapel visit submissions (Phase B1/B2). A companionship records its
+-- ministering visits at the chapel and routes the result to the presidency
+-- member (leader) who oversees their district. Presidency members review the
+-- pending queue and mark submissions complete with their own notes.
+-- =============================================================
+
+CREATE TABLE IF NOT EXISTS chapel_submissions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  companionship_id UUID REFERENCES companionships(id) ON DELETE CASCADE,
+  companion_name TEXT NOT NULL,
+  district_number INTEGER NOT NULL,
+  assigned_to TEXT REFERENCES leaders(id),
+  families_visited JSONB,
+  visit_notes TEXT,
+  preferred_slot_date DATE,
+  preferred_slot_time TIME,
+  presidency_notes TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'completed', 'cancelled')),
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  reviewed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_chapel_submissions_assigned ON chapel_submissions(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_chapel_submissions_status ON chapel_submissions(status);
+CREATE INDEX IF NOT EXISTS idx_chapel_submissions_companionship ON chapel_submissions(companionship_id);
