@@ -33,7 +33,7 @@ export default function Nav() {
           <Link to="/admin/companion-override" className={linkClass(isActive('/admin/companion-override'))}>
             Companion Override
           </Link>
-          <Link to="/admin" className={linkClass(isActive('/admin'))}>
+          <Link to="/admin" className={linkClass(pathname === '/admin')}>
             Admin
           </Link>
         </>
