@@ -37,3 +37,17 @@ CREATE TABLE IF NOT EXISTS config (
   key TEXT PRIMARY KEY,
   value JSONB
 );
+
+-- QR-code interview requests (public chapel entry flow)
+CREATE TABLE IF NOT EXISTS qr_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  companionship_id UUID REFERENCES companionships(id) ON DELETE CASCADE,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'assigned', 'completed', 'expired')),
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  assigned_to TEXT REFERENCES leaders(id),
+  assigned_at TIMESTAMPTZ,
+  notes TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_qr_requests_status ON qr_requests(status);
+CREATE INDEX IF NOT EXISTS idx_qr_requests_companionship ON qr_requests(companionship_id);

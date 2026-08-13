@@ -6,6 +6,7 @@ import Leader from './pages/Leader';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
+import QREntry from './pages/QREntry';
 import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
@@ -23,6 +24,9 @@ function App() {
           <Route path="/book" element={<Book />} />
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
+
+          {/* Public QR entry (no auth) — elders scan a QR at the chapel */}
+          <Route path="/q/:slug" element={<QREntry />} />
 
           {/* Protected Routes */}
           <Route

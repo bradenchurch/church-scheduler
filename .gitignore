@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# lockfiles (npm package-lock.json is canonical for Vercel build)
+pnpm-lock.yaml

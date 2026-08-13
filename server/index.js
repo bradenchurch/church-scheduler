@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import QRCode from 'qrcode';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
@@ -263,6 +264,72 @@ app.delete('/api/slots/:id', requireAuth, async (req, res) => {
     res.status(204).send();
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/ward — public: returns the (single) ward context for the QR page.
+// The app is single-ward today (Long Valley 2nd Ward), so no wards table exists yet.
+app.get('/api/ward/:slug', async (req, res) => {
+  const { slug } = req.params;
+  // Humanize the slug for display; no DB lookup needed until a wards table exists.
+  const name = slug
+    .split('-')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+  res.json({ slug, name });
+});
+
+// POST /api/qr/request — public: elder submits an interview request for their companionship.
+// Routes to the assigned presidency member via companionships.leader_id.
+app.post('/api/qr/request', async (req, res) => {
+  const { companionship_id, notes } = req.body || {};
+
+  if (!companionship_id) {
+    return res.status(400).json({ ok: false, error: 'companionship_id is required' });
+  }
+
+  try {
+    // Resolve the companionship and its assigned leader (presidency member).
+    const { data: companionship, error: compError } = await supabase
+      .from('companionships')
+      .select('id, leader_id, companion1_name, companion2_name')
+      .eq('id', companionship_id)
+      .single();
+
+    if (compError || !companionship) {
+      return res.status(404).json({ ok: false, error: 'Companionship not found' });
+    }
+
+    const { data: inserted, error: insertError } = await supabase
+      .from('qr_requests')
+      .insert([{
+        companionship_id,
+        assigned_to: companionship.leader_id,
+        status: 'pending',
+        notes: notes || null,
+      }])
+      .select();
+
+    if (insertError) throw insertError;
+
+    res.status(201).json({
+      ok: true,
+      request_id: inserted[0].id,
+      assigned_to: companionship.leader_id,
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// GET /api/qr/generate?target=... — returns a QR code (PNG data URL) for a given URL.
+app.get('/api/qr/generate', async (req, res) => {
+  const target = req.query.target || 'https://church-scheduler.vercel.app/q/long-valley-2nd-ward';
+  try {
+    const dataUrl = await QRCode.toDataURL(target, { width: 400, margin: 2 });
+    res.json({ ok: true, url: target, dataUrl });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
   }
 });
 
