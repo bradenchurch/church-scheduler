@@ -14,10 +14,15 @@ CREATE TABLE IF NOT EXISTS companionships (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   leader_id TEXT REFERENCES leaders(id) ON DELETE SET NULL,
   companion1_name TEXT NOT NULL,
-  companion2_name TEXT NOT NULL,
+  companion2_name TEXT,
   companion1_email TEXT,
   companion2_email TEXT
 );
+
+-- Drop NOT NULL on companion2_name so solo companionships can be seeded.
+-- This is idempotent: the constraint was never strict in fresh DBs but the
+-- existing prod schema installed before this PR had it as NOT NULL.
+ALTER TABLE companionships ALTER COLUMN companion2_name DROP NOT NULL;
 
 CREATE TABLE IF NOT EXISTS slots (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
