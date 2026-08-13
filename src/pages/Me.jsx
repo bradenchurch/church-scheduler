@@ -13,6 +13,28 @@ const MOCK_ME = {
 
 const roleTitleFor = (name) => PRESIDENCY_ROLES[name] || null;
 
+function CalendarIcon() {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      className="text-burgundy"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
 export default function Me() {
   const { user, role, leaderId } = useAuth();
 
@@ -21,6 +43,8 @@ export default function Me() {
   const [increment, setIncrement] = useState(15);
   const [saved, setSaved] = useState(false);
   const [blockNote, setBlockNote] = useState(false);
+  const [icalToken, setIcalToken] = useState(null);
+  const [copied, setCopied] = useState(false);
 
   // Try to resolve the real leader name/role from /api/leaders; fall back to mock.
   useEffect(() => {
@@ -34,6 +58,7 @@ export default function Me() {
           const roleTitle = roleTitleFor(me.name) || (role === 'admin' ? 'Secretary' : 'Counselor');
           setProfile({ name: me.name, roleTitle, phone: me.phone || MOCK_ME.phone, email: me.email || user?.email || MOCK_ME.email });
           setContact({ phone: me.phone || MOCK_ME.phone, email: me.email || user?.email || MOCK_ME.email });
+          setIcalToken(me.ical_token || null);
         } else if (user?.email) {
           const fallbackName = user.email.split('@')[0].replace(/[._-]/g, ' ');
           const roleTitle = role === 'admin' ? 'Secretary' : 'Counselor';
@@ -48,6 +73,21 @@ export default function Me() {
   }, [leaderId, role, user]);
 
   const handleSaveContact = () => setSaved(true);
+
+  const feedUrl = icalToken
+    ? `${window.location.origin}/api/cal/${leaderId}.ics?key=${encodeURIComponent(icalToken)}`
+    : '';
+
+  const handleCopyFeedUrl = async () => {
+    if (!feedUrl) return;
+    try {
+      await navigator.clipboard.writeText(feedUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    } catch {
+      setCopied(false);
+    }
+  };
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -116,6 +156,42 @@ export default function Me() {
           Connect calendar
         </Link>
       </div>
+
+      {/* Calendar feed (iCal subscription) */}
+      {icalToken && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+          <div className="flex items-center gap-2 mb-2">
+            <CalendarIcon />
+            <h2 className="text-xl font-serif font-bold text-burgundy">Calendar feed</h2>
+          </div>
+          <p className="text-sm text-brown-light mb-4">
+            Subscribe to your interview schedule — it updates automatically as submissions are assigned.
+          </p>
+
+          <div className="rounded-lg bg-cream border border-warm-border px-4 py-3 mb-4">
+            <p className="text-xs uppercase tracking-widest text-brown-light font-semibold mb-1.5">
+              Subscription URL
+            </p>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 min-w-0 break-all text-xs text-brown">{feedUrl}</code>
+              <button
+                type="button"
+                onClick={handleCopyFeedUrl}
+                className="min-h-[44px] shrink-0 px-4 rounded-lg bg-burgundy text-warm-white text-sm font-semibold hover:bg-burgundy-light transition-colors"
+              >
+                {copied ? 'Copied' : 'Copy URL'}
+              </button>
+            </div>
+            {copied && <p className="text-xs text-sage mt-2">URL copied to clipboard.</p>}
+          </div>
+
+          <div className="space-y-1.5 text-sm text-brown-light">
+            <p><span className="font-semibold text-brown">Google Calendar:</span> Settings → Add calendar → From URL → paste</p>
+            <p><span className="font-semibold text-brown">Apple Calendar:</span> File → New Calendar Subscription → paste</p>
+            <p><span className="font-semibold text-brown">Outlook:</span> Add calendar → Subscribe from web → paste</p>
+          </div>
+        </div>
+      )}
 
       {/* Pending interview requests */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
