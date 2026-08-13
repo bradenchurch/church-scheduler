@@ -5,10 +5,10 @@
 -- Generated deterministically from extracted JSON so this script
 -- is idempotent when re-run (household/member ids are md5-derived).
 --
--- NOTE: companionship_households references companionships(id) using
--- the deterministic ids in companionships.json. The companionships
--- table must be seeded with those same ids first (or the FKs below
--- will fail).
+-- Seeds: companionships (60), households (131), household_members (476),
+-- and companionship_households (128) — all idempotent (ON CONFLICT DO NOTHING).
+-- 6 solo companionships have a NULL companion2_name, so schema.sql must first
+-- drop the NOT NULL on companionships.companion2_name (see schema.sql A1 section).
 -- =============================================================
 
 -- -------------------------------------------------------------
@@ -22,125 +22,125 @@ UPDATE leaders SET email = 'bry13006@gmail.com' WHERE id = 'sean';
 -- Companionships (60 ministerships, 6 solo with NULL companion2_name)
 -- -------------------------------------------------------------
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (ac3fd9d5-dfec-5d20-bcce-2c7061a1567c, cole, 'Austin Behymer', 'Bridger Tower', 'Austin.behymer@gmail.com', 'bridgertower@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('ac3fd9d5-dfec-5d20-bcce-2c7061a1567c', 'cole', 'Austin Behymer', 'Bridger Tower', 'Austin.behymer@gmail.com', 'bridgertower@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (44fb2ee4-0422-5c93-8b98-6b6b41f4ba18, cole, 'Kash Bracken', 'Kenneth Mar Bracken', 'kashbracken@gmail.com', 'kbrackenm@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('44fb2ee4-0422-5c93-8b98-6b6b41f4ba18', 'cole', 'Kash Bracken', 'Kenneth Mar Bracken', 'kashbracken@gmail.com', 'kbrackenm@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (1268264b-e301-531e-a26f-238ad68bcc76, cole, 'Sean Bryan', 'Kason Whitesides', 'bry13006@Gmail.com', 'slips1225@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('1268264b-e301-531e-a26f-238ad68bcc76', 'cole', 'Sean Bryan', 'Kason Whitesides', 'bry13006@Gmail.com', 'slips1225@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (ca5e235e-7b26-52ff-b9c7-f4e3b79ae468, cole, 'Matt Cahoon', 'Colton Wynne', 'mattcahoon.lds@gmail.com', 'coltonwynne3@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('ca5e235e-7b26-52ff-b9c7-f4e3b79ae468', 'cole', 'Matt Cahoon', 'Colton Wynne', 'mattcahoon.lds@gmail.com', 'coltonwynne3@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (89279970-930f-5959-9482-3c7b30c9a7bc, cole, 'Cody Child', 'Ryan Petersen', 'codychild2@gmail.com', 'petersen.430.93@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('89279970-930f-5959-9482-3c7b30c9a7bc', 'cole', 'Cody Child', 'Ryan Petersen', 'codychild2@gmail.com', 'petersen.430.93@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (7e7b4966-73c9-5f3c-8283-86df7e5649ac, cole, 'Treyson Russell Christiansen', 'Kameron Eves', 'D00336276@dmail.dixie.edu', 'KameronEves@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('7e7b4966-73c9-5f3c-8283-86df7e5649ac', 'cole', 'Treyson Russell Christiansen', 'Kameron Eves', 'D00336276@dmail.dixie.edu', 'KameronEves@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (8bd33f7f-831d-57b8-865a-e1e44cd5f261, cole, 'David Arthur Durrant', NULL, 'David.durrant16@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
+  ('8bd33f7f-831d-57b8-865a-e1e44cd5f261', 'cole', 'David Arthur Durrant', NULL, 'David.durrant16@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (934145af-5610-5c66-a3aa-b5698bf35c95, cole, 'Branden Edelmayer', 'Wyatt Miles', 'brandenedelmayer@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
+  ('934145af-5610-5c66-a3aa-b5698bf35c95', 'cole', 'Branden Edelmayer', 'Wyatt Miles', 'brandenedelmayer@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (071e88cf-de88-5d2c-add4-178d23143375, cole, 'Janson Evans', 'William John Valadez', 'evans.janson@gmail.com', 'will.valadez4@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('071e88cf-de88-5d2c-add4-178d23143375', 'cole', 'Janson Evans', 'William John Valadez', 'evans.janson@gmail.com', 'will.valadez4@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (698d4c66-fd47-5e32-8169-3640b48c6297, cole, 'Jacob William Ewell', 'Shawn Kirtpatrik Wood', 'jacobewell7@gmail.com', 'shawnkwoody@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('698d4c66-fd47-5e32-8169-3640b48c6297', 'cole', 'Jacob William Ewell', 'Shawn Kirtpatrik Wood', 'jacobewell7@gmail.com', 'shawnkwoody@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (f28e7df7-7692-5f2e-81f6-62ae60a1cac7, cole, 'Garyn Gulbranson', 'Travis Robinson', 'gklarke@gmail.com', 'robinson.travis20@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('f28e7df7-7692-5f2e-81f6-62ae60a1cac7', 'cole', 'Garyn Gulbranson', 'Travis Robinson', 'gklarke@gmail.com', 'robinson.travis20@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (59d257e8-4036-57fd-827d-3db08bc0a676, cole, 'Benjamin Sidney Hales', 'Kawika Tupuola', 'b3.hales@gmail.com', 'ktups90@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('59d257e8-4036-57fd-827d-3db08bc0a676', 'cole', 'Benjamin Sidney Hales', 'Kawika Tupuola', 'b3.hales@gmail.com', 'ktups90@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (ce07091b-bf91-5fe0-9a61-bc413aec7acd, cole, 'Joshua Bruce Klawitter', 'Raymond Eric Klawitter', 'Josh_klawitter@outlook.com', 'ray_klawitter@yahoo.com') ON CONFLICT (id) DO NOTHING;
+  ('ce07091b-bf91-5fe0-9a61-bc413aec7acd', 'cole', 'Joshua Bruce Klawitter', 'Raymond Eric Klawitter', 'Josh_klawitter@outlook.com', 'ray_klawitter@yahoo.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (c651a8b2-2bbd-5882-aead-133351ddc32e, cole, 'Jason Owen', 'Liam Owen', 'jmowen1605@gmail.com', 'liamowen0724@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('c651a8b2-2bbd-5882-aead-133351ddc32e', 'cole', 'Jason Owen', 'Liam Owen', 'jmowen1605@gmail.com', 'liamowen0724@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (44f52bbe-1f6a-50a6-a4ee-45f2d00d93fd, cole, 'Chase Russell', 'Shane Joseph Wright', 'cruss15@gmail.com', 'shanejwright18@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('44f52bbe-1f6a-50a6-a4ee-45f2d00d93fd', 'cole', 'Chase Russell', 'Shane Joseph Wright', 'cruss15@gmail.com', 'shanejwright18@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (ac4110cf-90f9-5f03-9500-655146c015d5, cole, 'Brennan Sanders', NULL, 'gbsand28@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
+  ('ac4110cf-90f9-5f03-9500-655146c015d5', 'cole', 'Brennan Sanders', NULL, 'gbsand28@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (4ea527fd-c6ac-5627-8d81-6d663b5b3eee, cole, 'Ben Smith', 'Christian Walton', 'bensmith.yyc@gmail.com', 'christian.e.walton@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('4ea527fd-c6ac-5627-8d81-6d663b5b3eee', 'cole', 'Ben Smith', 'Christian Walton', 'bensmith.yyc@gmail.com', 'christian.e.walton@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (d1cff840-f8b4-50bc-bbbc-a4983140a4cb, cole, 'Trent Smith', 'Kenneth Taylor Thompson', 'trentpsmith1993@gmail.com', 'kennythompson12@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('d1cff840-f8b4-50bc-bbbc-a4983140a4cb', 'cole', 'Trent Smith', 'Kenneth Taylor Thompson', 'trentpsmith1993@gmail.com', 'kennythompson12@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (fedcce02-7176-5d6a-9248-cf16d0e8154e, cole, 'Ethan Kamalu Wintch', 'Phil Wintch', 'ethanwintch@gmail.com', 'philwintch@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('fedcce02-7176-5d6a-9248-cf16d0e8154e', 'cole', 'Ethan Kamalu Wintch', 'Phil Wintch', 'ethanwintch@gmail.com', 'philwintch@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (5527f5f8-e05f-556e-a85c-0036d0c88cb4, kawika, 'Jordan Abel', 'Kyle Gearig', 'jabel873@gmail.com', 'Kylegearig@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('5527f5f8-e05f-556e-a85c-0036d0c88cb4', 'kawika', 'Jordan Abel', 'Kyle Gearig', 'jabel873@gmail.com', 'Kylegearig@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (3d951c73-2586-5a86-b767-24cd143b9da1, kawika, 'Nicklas Benson', 'Jason Brown', 'nbenson23@outlook.com', 'jasonbrown3824@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('3d951c73-2586-5a86-b767-24cd143b9da1', 'kawika', 'Nicklas Benson', 'Jason Brown', 'nbenson23@outlook.com', 'jasonbrown3824@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (f6fe5455-2f90-56ae-9a32-f3bdeda8bb38, kawika, 'Izaic Blazzard', 'Oaken Whittaker', 'izaicmblazzard@gmail.com', 'Oakwhid@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('f6fe5455-2f90-56ae-9a32-f3bdeda8bb38', 'kawika', 'Izaic Blazzard', 'Oaken Whittaker', 'izaicmblazzard@gmail.com', 'Oakwhid@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (7fc655a4-d9b9-5bf8-8b63-378b8b2e6e7d, kawika, 'Kroy Lance Bott', 'Walker Moore', 'Froybott@gmail.com', 'walkermoore24@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('7fc655a4-d9b9-5bf8-8b63-378b8b2e6e7d', 'kawika', 'Kroy Lance Bott', 'Walker Moore', 'Froybott@gmail.com', 'walkermoore24@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (8627bdb2-ca7a-55ba-a8eb-b953b70bd7d8, kawika, 'Helaman Burrows', 'Brayden Connole', 'burrowshs@gmail.com', 'brayden.connole@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('8627bdb2-ca7a-55ba-a8eb-b953b70bd7d8', 'kawika', 'Helaman Burrows', 'Brayden Connole', 'burrowshs@gmail.com', 'brayden.connole@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (534b09a0-c136-573a-b0b1-04d839fb4208, kawika, 'Sean Patrick Calkins', 'Luke Evans', 'spcfamily@gmail.com', 'lukept3221@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('534b09a0-c136-573a-b0b1-04d839fb4208', 'kawika', 'Sean Patrick Calkins', 'Luke Evans', 'spcfamily@gmail.com', 'lukept3221@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (b682ff32-c720-555b-b345-b9afcdea4b0e, kawika, 'Cashe Collins', 'Connor Gavin Wood', 'cashecollins@gmail.com', 'connor.wood2014@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('b682ff32-c720-555b-b345-b9afcdea4b0e', 'kawika', 'Cashe Collins', 'Connor Gavin Wood', 'cashecollins@gmail.com', 'connor.wood2014@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (73c90131-7964-5ca5-94ff-d90813768585, kawika, 'Dale Cranney', 'Pakiko Wegesend', 'dalecranney@yahoo.com', 'pakikoooo808@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('73c90131-7964-5ca5-94ff-d90813768585', 'kawika', 'Dale Cranney', 'Pakiko Wegesend', 'dalecranney@yahoo.com', 'pakikoooo808@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (f5fb9923-6f7c-55fc-9904-a4d9b1b026a9, kawika, 'Brian Crichton', NULL, NULL, NULL) ON CONFLICT (id) DO NOTHING;
+  ('f5fb9923-6f7c-55fc-9904-a4d9b1b026a9', 'kawika', 'Brian Crichton', NULL, NULL, NULL) ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (ea44b6ed-1589-515a-8c8c-df8139a0b621, kawika, 'Nick Durst', 'William Samuel Durst', 'nmdurst@gmail.com', 'nmdurst@yahoo.com') ON CONFLICT (id) DO NOTHING;
+  ('ea44b6ed-1589-515a-8c8c-df8139a0b621', 'kawika', 'Nick Durst', 'William Samuel Durst', 'nmdurst@gmail.com', 'nmdurst@yahoo.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (5e9117ba-636b-5978-b843-2b62ced8ed2e, kawika, 'Cole Engemann', 'Bryce Kealer', 'Colengemann10@gmail.com', 'bkealer81@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('5e9117ba-636b-5978-b843-2b62ced8ed2e', 'kawika', 'Cole Engemann', 'Bryce Kealer', 'Colengemann10@gmail.com', 'bkealer81@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (8ac3ef40-30d2-5135-9174-bbc19ae38f72, kawika, 'Joshua Fernquist', 'Kyle Lemperle', 'jrfernquist812@gmail.com', 'kyle.lemperle10@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('8ac3ef40-30d2-5135-9174-bbc19ae38f72', 'kawika', 'Joshua Fernquist', 'Kyle Lemperle', 'jrfernquist812@gmail.com', 'kyle.lemperle10@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (61695e28-a3a1-54b8-b430-ef3bfc5ebad5, kawika, 'Jaxon Hale', 'Austin Ricks', 'halejaxon@gmail.com', 'austinkricks@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('61695e28-a3a1-54b8-b430-ef3bfc5ebad5', 'kawika', 'Jaxon Hale', 'Austin Ricks', 'halejaxon@gmail.com', 'austinkricks@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (2484d3f7-a183-5df0-9e13-052603f916ef, kawika, 'Jayce Jones', 'Dawson John Stoor', 'jonzey32@outlook.com', 'foxrider570@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('2484d3f7-a183-5df0-9e13-052603f916ef', 'kawika', 'Jayce Jones', 'Dawson John Stoor', 'jonzey32@outlook.com', 'foxrider570@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (8db2954d-0001-5741-8636-0b3173a906a1, kawika, 'Caleb Lynch', 'Patrick Lynch', 'uberreggie0322@gmail.com', 'patmanutah@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('8db2954d-0001-5741-8636-0b3173a906a1', 'kawika', 'Caleb Lynch', 'Patrick Lynch', 'uberreggie0322@gmail.com', 'patmanutah@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (7920e712-0d8f-52fc-a7da-b2f00ffff182, kawika, 'Rey Patterson', 'Taylor Dwayne Sullivan', 'rpatter9@gmail.com', 'tsully28@hotmail.com') ON CONFLICT (id) DO NOTHING;
+  ('7920e712-0d8f-52fc-a7da-b2f00ffff182', 'kawika', 'Rey Patterson', 'Taylor Dwayne Sullivan', 'rpatter9@gmail.com', 'tsully28@hotmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (e0fd2310-278d-56e1-8328-3a3d4f877597, kawika, 'Stetson Rigby', NULL, 'stetsonrigby@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
+  ('e0fd2310-278d-56e1-8328-3a3d4f877597', 'kawika', 'Stetson Rigby', NULL, 'stetsonrigby@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (c57f764b-dd30-5978-8a6d-37f7970510f5, kawika, 'Kyle Sorensen', 'Nathan Gordon Willard', 'hangtimekls@gmail.com', 'willard.nathang1198@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('c57f764b-dd30-5978-8a6d-37f7970510f5', 'kawika', 'Kyle Sorensen', 'Nathan Gordon Willard', 'hangtimekls@gmail.com', 'willard.nathang1198@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (60b4987b-df99-5187-b1ad-fd6547144a90, kawika, 'Cody Sorenson', 'Dillan Sorenson', 'cjsorensen88@gmail.com', 'fiberglass291@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('60b4987b-df99-5187-b1ad-fd6547144a90', 'kawika', 'Cody Sorenson', 'Dillan Sorenson', 'cjsorensen88@gmail.com', 'fiberglass291@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (a02653e0-f49e-5b8e-ac06-8802cfa7a95c, sean, 'Zach Adair', 'Daniel Pettus', 'Zack.m.adair@gmail.com', 'dannypettus3@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('a02653e0-f49e-5b8e-ac06-8802cfa7a95c', 'sean', 'Zach Adair', 'Daniel Pettus', 'Zack.m.adair@gmail.com', 'dannypettus3@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (2d563312-8786-5f43-a54a-b14e3e4eaa7f, sean, 'Ethan Adams', 'Cole Chollet', 'ethan1833adams@gmail.com', 'cole.chollet1@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('2d563312-8786-5f43-a54a-b14e3e4eaa7f', 'sean', 'Ethan Adams', 'Cole Chollet', 'ethan1833adams@gmail.com', 'cole.chollet1@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (7fb134b4-d08a-56e3-bab4-d604b32a8ba2, sean, 'Tyler Baker', 'Devin Harris', 'tgbaker7@yahoo.com', 'devinrayharris52@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('7fb134b4-d08a-56e3-bab4-d604b32a8ba2', 'sean', 'Tyler Baker', 'Devin Harris', 'tgbaker7@yahoo.com', 'devinrayharris52@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (cd481e87-6fb7-5860-94a5-a879d7027c54, sean, 'Torsten Bangerter', 'Mckay Hyer', 'torbangerter@gmail.com', 'mckay.hyer@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('cd481e87-6fb7-5860-94a5-a879d7027c54', 'sean', 'Torsten Bangerter', 'Mckay Hyer', 'torbangerter@gmail.com', 'mckay.hyer@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (c73a7312-261c-5eed-be85-fd03e8f3cee7, sean, 'Kory Andrew Barden', 'Joe Gibbons', 'kory.barden@gmail.com', 'joe@utahmarine.com') ON CONFLICT (id) DO NOTHING;
+  ('c73a7312-261c-5eed-be85-fd03e8f3cee7', 'sean', 'Kory Andrew Barden', 'Joe Gibbons', 'kory.barden@gmail.com', 'joe@utahmarine.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (efc50e6a-96b5-5c6e-99f9-44c3b83de024, sean, 'Jordan Bell', 'Adam Ruben', 'jordanbell@designanywhere.org', 'adamruben@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('efc50e6a-96b5-5c6e-99f9-44c3b83de024', 'sean', 'Jordan Bell', 'Adam Ruben', 'jordanbell@designanywhere.org', 'adamruben@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (d10341cc-169b-5fd2-9c0d-4dfea8cbcf3d, sean, 'Cody Bond', 'Wade Bringhurst', 'codytbond@gmail.com', 'skipperwade12@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('d10341cc-169b-5fd2-9c0d-4dfea8cbcf3d', 'sean', 'Cody Bond', 'Wade Bringhurst', 'codytbond@gmail.com', 'skipperwade12@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (ce36b6c6-8e75-5e7e-8193-e932698952af, sean, 'Michael Bresciani', 'Kade Montoya', NULL, 'Montoyakade@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('ce36b6c6-8e75-5e7e-8193-e932698952af', 'sean', 'Michael Bresciani', 'Kade Montoya', NULL, 'Montoyakade@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (2c5e8843-f3db-5314-89f7-74c954fe5f14, sean, 'Bradley Nelson Brewer', 'Jared Christensen', 'brewer01@gmail.com', 'churchofjesuschrist.5f954@simplelogin.com') ON CONFLICT (id) DO NOTHING;
+  ('2c5e8843-f3db-5314-89f7-74c954fe5f14', 'sean', 'Bradley Nelson Brewer', 'Jared Christensen', 'brewer01@gmail.com', 'churchofjesuschrist.5f954@simplelogin.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (402284f3-06a3-5241-85c9-b356fd169813, sean, 'Braden Church', 'Landon Fisher', 'bradenchurch@gmail.com', 'lannyfish@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('402284f3-06a3-5241-85c9-b356fd169813', 'sean', 'Braden Church', 'Landon Fisher', 'bradenchurch@gmail.com', 'lannyfish@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (9e922f4c-b0aa-5d78-98ec-da35a2aac97f, sean, 'Matt Clark', 'Zander Gates', 'mattc2592@gmail.com', 'zzandergates@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('9e922f4c-b0aa-5d78-98ec-da35a2aac97f', 'sean', 'Matt Clark', 'Zander Gates', 'mattc2592@gmail.com', 'zzandergates@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (274c06ec-d794-5bab-9117-1ecf4294b5a0, sean, 'Julian Cloward', 'Nicholas J Cloward', 'julian.cloward@icloud.com', NULL) ON CONFLICT (id) DO NOTHING;
+  ('274c06ec-d794-5bab-9117-1ecf4294b5a0', 'sean', 'Julian Cloward', 'Nicholas J Cloward', 'julian.cloward@icloud.com', NULL) ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (437b5958-a221-59e3-b948-20c254bf6cac, sean, 'Anthony Clark Iakopo Crichton', 'Donald Brad Crichton', 'antbryc@icloud.com', 'bubucrichton@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('437b5958-a221-59e3-b948-20c254bf6cac', 'sean', 'Anthony Clark Iakopo Crichton', 'Donald Brad Crichton', 'antbryc@icloud.com', 'bubucrichton@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (33ac0cf3-0cd8-5261-a0bf-8798bf12f6e3, sean, 'Preston Echols', 'Dillon Casey Gubler', 'prestonechols54@gmail.com', 'dillongubler@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('33ac0cf3-0cd8-5261-a0bf-8798bf12f6e3', 'sean', 'Preston Echols', 'Dillon Casey Gubler', 'prestonechols54@gmail.com', 'dillongubler@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (13961677-edbe-5bf6-856e-f1c2150bdb69, sean, 'Joe Fellmeth', 'Warren Robert Wegesend', 'jlfellmeth@gmail.com', 'wgsnd1@yahoo.com') ON CONFLICT (id) DO NOTHING;
+  ('13961677-edbe-5bf6-856e-f1c2150bdb69', 'sean', 'Joe Fellmeth', 'Warren Robert Wegesend', 'jlfellmeth@gmail.com', 'wgsnd1@yahoo.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (d632a927-a230-575e-a0b8-f0ca9bf99383, sean, 'Ryan Goodall', 'Dane Stewart', 'ryan_goodall16@yahoo.com', 'dstewy14@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('d632a927-a230-575e-a0b8-f0ca9bf99383', 'sean', 'Ryan Goodall', 'Dane Stewart', 'ryan_goodall16@yahoo.com', 'dstewy14@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (c6696425-dc12-5300-ba7c-1def1c225e20, sean, 'Ryan Mann', NULL, 'rymann26@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
+  ('c6696425-dc12-5300-ba7c-1def1c225e20', 'sean', 'Ryan Mann', NULL, 'rymann26@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (aefab318-0347-56a5-a5b4-da5c95c35c1f, sean, 'Domanic Michael McKeighan', 'Kashden Walker', 'domckeighan@gmail.com', 'Kashdenswade@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('aefab318-0347-56a5-a5b4-da5c95c35c1f', 'sean', 'Domanic Michael McKeighan', 'Kashden Walker', 'domckeighan@gmail.com', 'Kashdenswade@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (b91b6949-3f37-5861-ac77-99e74d818f0b, sean, 'Matthew Nielson', 'Ekana Wegesend', 'matthew.j.nielson@gmail.com', 'wegesend01@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('b91b6949-3f37-5861-ac77-99e74d818f0b', 'sean', 'Matthew Nielson', 'Ekana Wegesend', 'matthew.j.nielson@gmail.com', 'wegesend01@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (d2c63266-6932-57ee-b6b2-713df1630c48, sean, 'Elijah Todd Rigby', 'Tyler Warner', 'eligby70@gmail.com', 'warner.tyler42@gmail.com') ON CONFLICT (id) DO NOTHING;
+  ('d2c63266-6932-57ee-b6b2-713df1630c48', 'sean', 'Elijah Todd Rigby', 'Tyler Warner', 'eligby70@gmail.com', 'warner.tyler42@gmail.com') ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (fd14aee4-72d6-533e-bcf6-9070f55713b1, sean, 'Hyrum Sorensen', NULL, 'hyrumgary@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
+  ('fd14aee4-72d6-533e-bcf6-9070f55713b1', 'sean', 'Hyrum Sorensen', NULL, 'hyrumgary@gmail.com', NULL) ON CONFLICT (id) DO NOTHING;
 INSERT INTO companionships (id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email) VALUES
-  (a5c7cfd9-c3b3-5538-b130-d0e6a2a59ac4, sean, 'Devin Twede', 'Preston Robert Twede', 'twedesoccer@hotmail.com', '27twedeprer@washk12.org') ON CONFLICT (id) DO NOTHING;
+  ('a5c7cfd9-c3b3-5538-b130-d0e6a2a59ac4', 'sean', 'Devin Twede', 'Preston Robert Twede', 'twedesoccer@hotmail.com', '27twedeprer@washk12.org') ON CONFLICT (id) DO NOTHING;
 
 -- -------------------------------------------------------------
 -- Households

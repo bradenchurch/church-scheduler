@@ -104,6 +104,10 @@ ALTER TABLE confirmation_log ENABLE ROW LEVEL SECURITY;
 -- (Phase A1). Seeded by seed.sql (deterministic, idempotent).
 -- =============================================================
 
+-- 6 solo companionships have a NULL companion2_name. Drop the NOT NULL so
+-- seed.sql can insert them (idempotent — re-running is a no-op notice).
+ALTER TABLE companionships ALTER COLUMN companion2_name DROP NOT NULL;
+
 CREATE TABLE IF NOT EXISTS households (
   id UUID PRIMARY KEY,
   ward_slug TEXT NOT NULL,
