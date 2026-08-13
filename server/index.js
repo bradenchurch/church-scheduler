@@ -302,7 +302,7 @@ app.get('/api/companionships', async (req, res) => {
 // GET /api/companions?ward=long-valley-2nd-ward — public: all companionships
 // grouped by district, with companionship pair info.
 app.get('/api/companions', async (req, res) => {
-  const ward = (req.query.ward || 'long-valley-2nd-ward').trim();
+  const ward = String(req.query.ward || 'long-valley-2nd-ward').trim();
   try {
     const { companionships, presidencyByDistrict } = getRoster();
 
