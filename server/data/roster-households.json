@@ -1,0 +1,4939 @@
+{
+  "ward": "long-valley-2nd-ward",
+  "stake": "washington-utah-long-valley",
+  "districts": [
+    {
+      "district": 1,
+      "president": {
+        "name": "Chollet, Cole",
+        "first_name": "Cole",
+        "last_name": "Chollet",
+        "phone": "435-218-1455",
+        "email": "cole.chollet1@gmail.com"
+      },
+      "households": [
+        {
+          "id": "96645ab5-1a42-5175-dc02-23b9d9522cfd",
+          "name": "Evans Family",
+          "family_name": "Evans",
+          "head": {
+            "first_name": "Luke",
+            "last_name": "Evans",
+            "phone": "801-857-9204",
+            "email": "lukept3221@gmail.com",
+            "address": "1865 S Tower Bridge Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Bailey",
+              "last_name": "Evans",
+              "gender": "F",
+              "birthday_partial": "2 Jun",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "d0fd944c-488e-184e-8a44-88249d2c51d7",
+          "name": "Mann Family",
+          "family_name": "Mann",
+          "head": {
+            "first_name": "Ryan",
+            "last_name": "Mann",
+            "phone": "385-209-3307",
+            "email": "rymann26@gmail.com",
+            "address": "1529 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Zoe Ann",
+              "last_name": "Mann",
+              "gender": "F",
+              "birthday_partial": "8 Aug",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Ivy Ann",
+              "last_name": "Mann",
+              "gender": "F",
+              "birthday_partial": "25 Oct",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "22775cfa-5412-5486-7448-44238101f704",
+          "name": "Walker Family",
+          "family_name": "Walker",
+          "head": {
+            "first_name": "Kashden",
+            "last_name": "Walker",
+            "phone": "435-229-0794",
+            "email": "kashdenswade@gmail.com",
+            "address": "1940 S Wolverine Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Abby Marie",
+              "last_name": "Walker",
+              "gender": "F",
+              "birthday_partial": "14 Oct",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Wrenlee",
+              "last_name": "Walker",
+              "gender": "F",
+              "birthday_partial": "12 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Ozzlynn Marie",
+              "last_name": "Walker",
+              "gender": "F",
+              "birthday_partial": "2 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Wrenlee D",
+              "last_name": "Walker",
+              "gender": "F",
+              "birthday_partial": "12 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "73ab2d85-5755-8d29-97aa-acb36b9142b6",
+          "name": "Collins Family",
+          "family_name": "Collins",
+          "head": {
+            "first_name": "Cashe",
+            "last_name": "Collins",
+            "phone": "435-229-9647",
+            "email": "cashecollins@gmail.com",
+            "address": "1885 S Cyclone Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3773"
+          },
+          "members": [
+            {
+              "first_name": "Dana Emily",
+              "last_name": "Collins",
+              "gender": "F",
+              "birthday_partial": "14 Jan",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Jack Edward",
+              "last_name": "Collins",
+              "gender": "M",
+              "birthday_partial": "12 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "a006d811-ce8b-3709-724b-25cfec5aeb5c",
+          "name": "Bond Family",
+          "family_name": "Bond",
+          "head": {
+            "first_name": "Cody",
+            "last_name": "Bond",
+            "phone": "503-508-5380",
+            "email": "codytbond@gmail.com",
+            "address": "1447 S. Ripple Rock Drive",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Coryn Margaret Leutogi Taualii",
+              "last_name": "Bond",
+              "gender": "F",
+              "birthday_partial": "8 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Easton James Taualii",
+              "last_name": "Bond",
+              "gender": "M",
+              "birthday_partial": "18 Dec",
+              "role": "child"
+            },
+            {
+              "first_name": "Dawson Juelen Lalomalava",
+              "last_name": "Bond",
+              "gender": "F",
+              "birthday_partial": "13 Sep",
+              "role": "child"
+            },
+            {
+              "first_name": "Titan Turner Opapo",
+              "last_name": "Bond",
+              "gender": "M",
+              "birthday_partial": "29 Jun",
+              "role": "child"
+            },
+            {
+              "first_name": "Layton Ruth Leutogi",
+              "last_name": "Bond",
+              "gender": "F",
+              "birthday_partial": "6 Feb",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "fa7cbbc2-1407-d763-a2eb-d89d687a7749",
+          "name": "Clark Family",
+          "family_name": "Clark",
+          "head": {
+            "first_name": "Matt",
+            "last_name": "Clark",
+            "phone": "763-442-4377",
+            "email": "mattc2592@gmail.com",
+            "address": "1731 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "McKell",
+              "last_name": "Clark",
+              "gender": "F",
+              "birthday_partial": "14 Sep",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Ryker Thomas",
+              "last_name": "Clark",
+              "gender": "M",
+              "birthday_partial": "11 Jan",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "0759fc18-cde9-8319-3159-682d5f89fa8e",
+          "name": "Crichton Family",
+          "family_name": "Crichton",
+          "head": {
+            "first_name": "Donald Brad",
+            "last_name": "Crichton",
+            "phone": "435-862-3198",
+            "email": "bubucrichton@gmail.com",
+            "address": "1889 S Tower Bridge Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Casie Dee",
+              "last_name": "Crichton",
+              "gender": "F",
+              "birthday_partial": "21 May",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Anthony Clark Iakopo",
+              "last_name": "Crichton",
+              "gender": "M",
+              "birthday_partial": "2 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Brian",
+              "last_name": "Crichton",
+              "gender": "M",
+              "birthday_partial": "24 Jul",
+              "role": "child"
+            },
+            {
+              "first_name": "Teuila Tiare",
+              "last_name": "Crichton",
+              "gender": "F",
+              "birthday_partial": "6 Jun",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "beb7c01e-dede-b84f-4359-9b6b07e1bd30",
+          "name": "Sharp Family",
+          "family_name": "Sharp",
+          "head": {
+            "first_name": "Ben",
+            "last_name": "Sharp",
+            "phone": "435-225-2847",
+            "email": "bsharpj@gmail.com",
+            "address": "1532 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Jayden Ilean",
+              "last_name": "Sharp",
+              "gender": "F",
+              "birthday_partial": "24 Sep",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Bronson Mack",
+              "last_name": "Sharp",
+              "gender": "M",
+              "birthday_partial": "22 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Wren Hazel",
+              "last_name": "Sharp",
+              "gender": "F",
+              "birthday_partial": "3 Jan",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "ccc4acd2-9612-56b6-e698-9c7a7eebe07d",
+          "name": "Blazzard Family",
+          "family_name": "Blazzard",
+          "head": {
+            "first_name": "Izaic",
+            "last_name": "Blazzard",
+            "phone": "435-619-5454",
+            "email": "izaicmblazzard@gmail.com",
+            "address": "1621 S Star Springs Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3692"
+          },
+          "members": [
+            {
+              "first_name": "Hannah",
+              "last_name": "Blazzard",
+              "gender": "F",
+              "birthday_partial": "19 Dec",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Sullivan James",
+              "last_name": "Blazzard",
+              "gender": "M",
+              "birthday_partial": "12 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Juniper Ann",
+              "last_name": "Blazzard",
+              "gender": "F",
+              "birthday_partial": "3 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Iverson Max",
+              "last_name": "Blazzard",
+              "gender": "M",
+              "birthday_partial": "19 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Eleanor Rose",
+              "last_name": "Blazzard",
+              "gender": "F",
+              "birthday_partial": "19 Nov",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "eef19663-4883-2e3b-fe5a-2ab09698a25c",
+          "name": "Wright Family",
+          "family_name": "Wright",
+          "head": {
+            "first_name": "Shane Joseph",
+            "last_name": "Wright",
+            "phone": "435-862-1073",
+            "email": "shanejwright18@gmail.com",
+            "address": "1547 S Wagon Box Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3635"
+          },
+          "members": [
+            {
+              "first_name": "Mindy",
+              "last_name": "Wright",
+              "gender": "F",
+              "birthday_partial": "9 Aug",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Titan Shane",
+              "last_name": "Wright",
+              "gender": "M",
+              "birthday_partial": "20 Oct",
+              "role": "child"
+            },
+            {
+              "first_name": "Haven Grace",
+              "last_name": "Wright",
+              "gender": "F",
+              "birthday_partial": "12 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "8f9ec472-114b-9234-d910-2eabab4519ab",
+          "name": "Dunyon Family",
+          "family_name": "Dunyon",
+          "head": {
+            "first_name": "Kevin",
+            "last_name": "Dunyon",
+            "phone": "719-648-0745",
+            "email": "kadunyon@gmail.com",
+            "address": "1902 S Swamp Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3800"
+          },
+          "members": [
+            {
+              "first_name": "Mariah Lee",
+              "last_name": "Dunyon",
+              "gender": "F",
+              "birthday_partial": "3 May",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Avery Mae",
+              "last_name": "Dunyon",
+              "gender": "F",
+              "birthday_partial": "10 Sep",
+              "role": "child"
+            },
+            {
+              "first_name": "Emmett Thomas",
+              "last_name": "Dunyon",
+              "gender": "M",
+              "birthday_partial": "28 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "c2d934e8-304f-f570-d96c-e5ca4fa9a265",
+          "name": "Everitt Family",
+          "family_name": "Everitt",
+          "head": {
+            "first_name": "Jared",
+            "last_name": "Everitt",
+            "phone": "435-669-2380",
+            "email": "jeveritt77@gmail.com",
+            "address": "1474 S Ripple Rock Drive",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Ashley",
+              "last_name": "King",
+              "gender": "F",
+              "birthday_partial": "2 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Bryton",
+              "last_name": "King",
+              "gender": "M",
+              "birthday_partial": "4 Jul",
+              "role": "child"
+            },
+            {
+              "first_name": "Brylee",
+              "last_name": "King",
+              "gender": "F",
+              "birthday_partial": "4 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Raegan Lucy",
+              "last_name": "King",
+              "gender": "F",
+              "birthday_partial": "8 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Rowan Michael",
+              "last_name": "King",
+              "gender": "M",
+              "birthday_partial": "15 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Cougar Braxton",
+              "last_name": "King",
+              "gender": "M",
+              "birthday_partial": "19 Mar",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "PDF shows 'Washingtion' (typo). King children may be wards of state (foster/guardianship)."
+        },
+        {
+          "id": "e9313d29-8897-6b23-df6a-f6ad681881c8",
+          "name": "Thompson Family",
+          "family_name": "Thompson",
+          "head": {
+            "first_name": "Kenneth Taylor",
+            "last_name": "Thompson",
+            "phone": "435-879-9034",
+            "email": "kennythompson12@gmail.com",
+            "address": "1649 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3637"
+          },
+          "members": [
+            {
+              "first_name": "Hannah Katherine",
+              "last_name": "Thompson",
+              "gender": "F",
+              "birthday_partial": "22 Jun",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Annie Lynne",
+              "last_name": "Thompson",
+              "gender": "F",
+              "birthday_partial": "10 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "3528dc69-9aa7-f86b-8e31-ee15dd6785af",
+          "name": "Miles Family",
+          "family_name": "Miles",
+          "head": {
+            "first_name": "Wyatt",
+            "last_name": "Miles",
+            "phone": "435-705-0180",
+            "email": "",
+            "address": "1632 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3637"
+          },
+          "members": [
+            {
+              "first_name": "Launi",
+              "last_name": "Miles",
+              "gender": "F",
+              "birthday_partial": "8 Nov",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Bridger",
+              "last_name": "Miles",
+              "gender": "M",
+              "birthday_partial": "25 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Braden",
+              "last_name": "Seaich",
+              "gender": "M",
+              "birthday_partial": "26 Sep",
+              "role": "other"
+            },
+            {
+              "first_name": "Bowden",
+              "last_name": "Miles",
+              "gender": "M",
+              "birthday_partial": "30 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Brinley",
+              "last_name": "Miles",
+              "gender": "F",
+              "birthday_partial": "19 Feb",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Seaich (Braden) has a different surname (step/ward)."
+        },
+        {
+          "id": "16dd67cc-a1df-f41b-5f35-5b0a70a38b5b",
+          "name": "Nielson Family",
+          "family_name": "Nielson",
+          "head": {
+            "first_name": "Matthew",
+            "last_name": "Nielson",
+            "phone": "385-312-4385",
+            "email": "matthew.j.nielson@gmail.com",
+            "address": "2953 E Corral Hollow Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Madison Marie",
+              "last_name": "Nielson",
+              "gender": "F",
+              "birthday_partial": "8 Mar",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Janae Marie",
+              "last_name": "Nielson",
+              "gender": "F",
+              "birthday_partial": "3 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Jonah Brady",
+              "last_name": "Nielson",
+              "gender": "M",
+              "birthday_partial": "3 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "20bc3941-dd22-64b4-91e1-d8d6c4c4210b",
+          "name": "Bell Family",
+          "family_name": "Bell",
+          "head": {
+            "first_name": "Jordan",
+            "last_name": "Bell",
+            "phone": "801-388-0153",
+            "email": "jordanbell@designanywhere.org",
+            "address": "1898 South Tower Bridge Dr.",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Kendall Morgan",
+              "last_name": "Bell",
+              "gender": "F",
+              "birthday_partial": "19 Jan",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Gwen Analynn",
+              "last_name": "Bell",
+              "gender": "F",
+              "birthday_partial": "26 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Jack Anthony",
+              "last_name": "Bell",
+              "gender": "M",
+              "birthday_partial": "28 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "PDF shows 'Washingot' (typo)."
+        },
+        {
+          "id": "f2551914-7a7e-e51e-e2d9-adb372efcbaf",
+          "name": "Lynch Family",
+          "family_name": "Lynch",
+          "head": {
+            "first_name": "Patrick",
+            "last_name": "Lynch",
+            "phone": "385-207-5082",
+            "email": "patmanutah@gmail.com",
+            "address": "1572 S Star Springs Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3636"
+          },
+          "members": [
+            {
+              "first_name": "Christina",
+              "last_name": "Lynch",
+              "gender": "F",
+              "birthday_partial": "1 Feb",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Scout Addison",
+              "last_name": "Lynch",
+              "gender": "F",
+              "birthday_partial": "4 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Peyton Royal",
+              "last_name": "Lynch",
+              "gender": "M",
+              "birthday_partial": "15 Apr",
+              "role": "child"
+            },
+            {
+              "first_name": "Caleb",
+              "last_name": "Lynch",
+              "gender": "M",
+              "birthday_partial": "22 Mar",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "098864cc-a55c-ad94-ce72-8555680b377d",
+          "name": "Bott Family",
+          "family_name": "Bott",
+          "head": {
+            "first_name": "Kroy Lance",
+            "last_name": "Bott",
+            "phone": "801-913-6137",
+            "email": "froybott@gmail.com",
+            "address": "1693 S Devils Garden Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Allie Marie",
+              "last_name": "Bott",
+              "gender": "F",
+              "birthday_partial": "18 Oct",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Luna Marie",
+              "last_name": "Bott",
+              "gender": "F",
+              "birthday_partial": "8 Sep",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "1cc82462-4f9b-8d6a-b063-64a8fa947efd",
+          "name": "Adams Family",
+          "family_name": "Adams",
+          "head": {
+            "first_name": "Ethan",
+            "last_name": "Adams",
+            "phone": "318-780-1657",
+            "email": "ethan1833adams@gmail.com",
+            "address": "1513 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Beth",
+              "last_name": "Adams",
+              "gender": "F",
+              "birthday_partial": "14 Apr",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Everett Sterling",
+              "last_name": "Adams",
+              "gender": "M",
+              "birthday_partial": "31 Dec",
+              "role": "child"
+            },
+            {
+              "first_name": "Masie Beth",
+              "last_name": "Adams",
+              "gender": "F",
+              "birthday_partial": "6 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "925b246b-7534-0602-dd05-b23f2f156ba3",
+          "name": "Aycock Family",
+          "family_name": "Aycock",
+          "head": {
+            "first_name": "Rodney James",
+            "last_name": "Aycock",
+            "phone": "435-789-6690",
+            "email": "",
+            "address": "1836 S Wolverine Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3718"
+          },
+          "members": [
+            {
+              "first_name": "Kristy",
+              "last_name": "Aycock",
+              "gender": "F",
+              "birthday_partial": "8 Apr",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Kylen Robert",
+              "last_name": "Aycock",
+              "gender": "M",
+              "birthday_partial": "2 Jun",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "f9cb24b7-7998-9e5d-0724-1d5d244efffd",
+          "name": "Kealer Family",
+          "family_name": "Kealer",
+          "head": {
+            "first_name": "Bryce",
+            "last_name": "Kealer",
+            "phone": "623-696-1870",
+            "email": "bkealer81@gmail.com",
+            "address": "1845 S Wolverine Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3718"
+          },
+          "members": [
+            {
+              "first_name": "Abbie Marissa",
+              "last_name": "Kealer",
+              "gender": "F",
+              "birthday_partial": "19 Jan",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Quin Avery",
+              "last_name": "Kealer",
+              "gender": "F",
+              "birthday_partial": "13 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Remi Drew",
+              "last_name": "Kealer",
+              "gender": "F",
+              "birthday_partial": "26 Aug",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "bd8d05e4-b77a-c4fa-5978-f09cd663ef2a",
+          "name": "Behymer Family",
+          "family_name": "Behymer",
+          "head": {
+            "first_name": "Austin",
+            "last_name": "Behymer",
+            "phone": "435-429-9843",
+            "email": "austin.behymer@gmail.com",
+            "address": "1884 S Tower Bridge Dr.",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Karla Gabriela",
+              "last_name": "Behymer",
+              "gender": "F",
+              "birthday_partial": "12 Nov",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Nathaniel Ace Wesson",
+              "last_name": "Behymer",
+              "gender": "M",
+              "birthday_partial": "8 Aug",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "b326bcbd-8436-6fa4-cd7c-0539ab8f8c1b",
+          "name": "Davis Family",
+          "family_name": "Davis",
+          "head": {
+            "first_name": "Carter",
+            "last_name": "Davis",
+            "phone": "801-560-5107",
+            "email": "carterman112@gmail.com",
+            "address": "1905 S Swamp Mesa Dr.",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Madison Kathleen",
+              "last_name": "Davis",
+              "gender": "F",
+              "birthday_partial": "10 Apr",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "fade445d-9cac-cf1d-137e-9d36d9c453be",
+          "name": "Brady Family",
+          "family_name": "Brady",
+          "head": {
+            "first_name": "Cody Dean",
+            "last_name": "Brady",
+            "phone": "801-691-9579",
+            "email": "stoptheo15@gmail.com",
+            "address": "1480 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3683"
+          },
+          "members": [
+            {
+              "first_name": "Brittney",
+              "last_name": "Brady",
+              "gender": "F",
+              "birthday_partial": "13 Dec",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Jaxon Terry",
+              "last_name": "Anderson",
+              "gender": "M",
+              "birthday_partial": "18 Feb",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Anderson (Jaxon Terry) listed under Brady household (different surname)."
+        },
+        {
+          "id": "3aaa65a4-ec5c-0740-0d0a-fcf4620c7cba",
+          "name": "Gates Family",
+          "family_name": "Gates",
+          "head": {
+            "first_name": "Zander",
+            "last_name": "Gates",
+            "phone": "801-915-4205",
+            "email": "zzandergates@gmail.com",
+            "address": "1587 S WAGON BOX WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3691"
+          },
+          "members": [
+            {
+              "first_name": "Ciara Camille",
+              "last_name": "Gates",
+              "gender": "F",
+              "birthday_partial": "22 Apr",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Evie James",
+              "last_name": "Gates",
+              "gender": "F",
+              "birthday_partial": "1 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "f17c0a87-d6a7-9b1e-0e29-1e01b3986186",
+          "name": "Valadez Family",
+          "family_name": "Valadez",
+          "head": {
+            "first_name": "William John",
+            "last_name": "Valadez",
+            "phone": "435-619-0588",
+            "email": "will.valadez4@gmail.com",
+            "address": "1746 S DEVILS GARDEN LN",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Chloe Nicole",
+              "last_name": "Valadez",
+              "gender": "F",
+              "birthday_partial": "20 May",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "a87985b5-cb47-8f33-66ac-356bc5f90f1e",
+          "name": "Billingsley Family",
+          "family_name": "Billingsley",
+          "head": {
+            "first_name": "Kamilie",
+            "last_name": "Billingsley",
+            "phone": "801-735-1063",
+            "email": "kamilie.billingsley@gmail.com",
+            "address": "1583 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Ezra James",
+              "last_name": "Billingsley",
+              "gender": "M",
+              "birthday_partial": "7 Jun",
+              "role": "child"
+            },
+            {
+              "first_name": "Hattie Ann",
+              "last_name": "Billingsley",
+              "gender": "F",
+              "birthday_partial": "28 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Millie May",
+              "last_name": "Billingsley",
+              "gender": "F",
+              "birthday_partial": "28 Jan",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Single-parent household (Kamilie is head)."
+        },
+        {
+          "id": "7d6e4b1e-f6f0-7498-eed0-f6a8090e1ef7",
+          "name": "Goodall Family",
+          "family_name": "Goodall",
+          "head": {
+            "first_name": "Ryan",
+            "last_name": "Goodall",
+            "phone": "435-668-7078",
+            "email": "ryan_goodall16@yahoo.com",
+            "address": "1465 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3683"
+          },
+          "members": [
+            {
+              "first_name": "Viviana",
+              "last_name": "Goodall",
+              "gender": "F",
+              "birthday_partial": "8 Jun",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "b94b2c4e-caad-e475-d021-ba1cdd1e2d63",
+          "name": "Parker Family",
+          "family_name": "Parker",
+          "head": {
+            "first_name": "Kylie Michelle",
+            "last_name": "Parker",
+            "phone": "435-817-8255",
+            "email": "kyliempj@gmail.com",
+            "address": "1550 S Wagon Box Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3635"
+          },
+          "members": [
+            {
+              "first_name": "Tate Liam",
+              "last_name": "Johnson",
+              "gender": "M",
+              "birthday_partial": "14 Jun",
+              "role": "child"
+            },
+            {
+              "first_name": "Mia Grace",
+              "last_name": "Johnson",
+              "gender": "F",
+              "birthday_partial": "21 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Axton Taylor",
+              "last_name": "Johnson",
+              "gender": "M",
+              "birthday_partial": "20 Sep",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Johnson children listed under Parker household."
+        },
+        {
+          "id": "20d5610c-ed05-097f-bad6-abac3577d334",
+          "name": "Bistline Family",
+          "family_name": "Bistline",
+          "head": {
+            "first_name": "Sherry",
+            "last_name": "Bistline",
+            "phone": "435-868-1420",
+            "email": "",
+            "address": "1683 S Devils Garden Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Brianna",
+              "last_name": "Carrington",
+              "gender": "F",
+              "birthday_partial": "18 Dec",
+              "role": "child"
+            },
+            {
+              "first_name": "Makayla",
+              "last_name": "Carrington",
+              "gender": "F",
+              "birthday_partial": "28 Sep",
+              "role": "child"
+            },
+            {
+              "first_name": "Jacob",
+              "last_name": "Carrington",
+              "gender": "M",
+              "birthday_partial": "20 Oct",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Carrington children under Bistline household."
+        },
+        {
+          "id": "fd2275b5-65ee-cb22-9b79-b4367edbe104",
+          "name": "Mayfield Family",
+          "family_name": "Mayfield",
+          "head": {
+            "first_name": "Amanda",
+            "last_name": "Mayfield",
+            "phone": "801-707-1032",
+            "email": "amayfield2906@gmail.com",
+            "address": "1832 S WOLVERINE WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3718"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "2ba5f0cd-11f9-d1f1-a706-a8dcee17bc15",
+          "name": "Baker Family",
+          "family_name": "Baker",
+          "head": {
+            "first_name": "Tyler",
+            "last_name": "Baker",
+            "phone": "661-733-5430",
+            "email": "tgbaker7@yahoo.com",
+            "address": "1634 S Star Springs Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3692"
+          },
+          "members": [
+            {
+              "first_name": "Ariel",
+              "last_name": "Baker",
+              "gender": "F",
+              "birthday_partial": "22 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Arthur Chase",
+              "last_name": "Baker",
+              "gender": "M",
+              "birthday_partial": "1 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Peter",
+              "last_name": "Baker",
+              "gender": "M",
+              "birthday_partial": "15 Sep",
+              "role": "child"
+            },
+            {
+              "first_name": "Ruby",
+              "last_name": "Baker",
+              "gender": "F",
+              "birthday_partial": "29 Jan",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "9e55f014-608f-51ad-3514-4b5ce700aa40",
+          "name": "Klawitter Family",
+          "family_name": "Klawitter",
+          "head": {
+            "first_name": "Raymond Eric",
+            "last_name": "Klawitter",
+            "phone": "435-669-6603",
+            "email": "ray_klawitter@yahoo.com",
+            "address": "1850 S Tower Bridge Drive",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Candace",
+              "last_name": "Klawitter",
+              "gender": "F",
+              "birthday_partial": "15 Jun",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Isela Michelle",
+              "last_name": "Klawitter",
+              "gender": "F",
+              "birthday_partial": "6 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Joshua Bruce",
+              "last_name": "Klawitter",
+              "gender": "M",
+              "birthday_partial": "6 May",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "c3ba71f2-0a74-c29f-f5e5-b0ed47797b32",
+          "name": "Durst Family",
+          "family_name": "Durst",
+          "head": {
+            "first_name": "Nick",
+            "last_name": "Durst",
+            "phone": "719-688-1345",
+            "email": "nmdurst@gmail.com",
+            "address": "1597 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Michelle",
+              "last_name": "Durst",
+              "gender": "F",
+              "birthday_partial": "23 Jun",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Eleanor Evelyn",
+              "last_name": "Durst",
+              "gender": "F",
+              "birthday_partial": "14 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "William Samuel",
+              "last_name": "Durst",
+              "gender": "M",
+              "birthday_partial": "11 Jul",
+              "role": "child"
+            },
+            {
+              "first_name": "Avery Sue",
+              "last_name": "Durst",
+              "gender": "F",
+              "birthday_partial": "28 Oct",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "81f8bbe4-f78e-e78d-50d1-d84128e64122",
+          "name": "Hicken Family",
+          "family_name": "Hicken",
+          "head": {
+            "first_name": "Reese",
+            "last_name": "Hicken",
+            "phone": "949-899-4417",
+            "email": "reesehicken@gmail.com",
+            "address": "1849 S Tower Bridge Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3772"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "db1b4adf-7453-633b-c3fc-c3c62f8bd0f5",
+          "name": "Moore Family",
+          "family_name": "Moore",
+          "head": {
+            "first_name": "Walker",
+            "last_name": "Moore",
+            "phone": "801-472-8281",
+            "email": "walkermoore24@gmail.com",
+            "address": "1978 S Wolverine Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3774"
+          },
+          "members": [
+            {
+              "first_name": "Hanna",
+              "last_name": "Moore",
+              "gender": "F",
+              "birthday_partial": "8 Feb",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Jonsie",
+              "last_name": "Moore",
+              "gender": "F",
+              "birthday_partial": "26 Feb",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "af595157-1d2d-37cb-8e60-56339d1a00a9",
+          "name": "Bracken Family",
+          "family_name": "Bracken",
+          "head": {
+            "first_name": "Kenneth Mar",
+            "last_name": "Bracken",
+            "phone": "435-619-2532",
+            "email": "kbrackenm@gmail.com",
+            "address": "1589 S Star Springs Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3636"
+          },
+          "members": [
+            {
+              "first_name": "Jennifer Lynn",
+              "last_name": "Bracken",
+              "gender": "F",
+              "birthday_partial": "30 Sep",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Kash",
+              "last_name": "Bracken",
+              "gender": "M",
+              "birthday_partial": "27 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "2ab130e7-2bee-771a-a254-09bfa275200f",
+          "name": "Montoya Family",
+          "family_name": "Montoya",
+          "head": {
+            "first_name": "Kade",
+            "last_name": "Montoya",
+            "phone": "801-870-9518",
+            "email": "montoyakade@gmail.com",
+            "address": "1461 S. Ripple Rock",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Mary Frances",
+              "last_name": "Montoya",
+              "gender": "F",
+              "birthday_partial": "16 Sep",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Charleston Mae",
+              "last_name": "Montoya",
+              "gender": "F",
+              "birthday_partial": "28 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Georgiana Kay",
+              "last_name": "Montoya",
+              "gender": "F",
+              "birthday_partial": "17 Oct",
+              "role": "child"
+            },
+            {
+              "first_name": "Adelheid Lynn",
+              "last_name": "Montoya",
+              "gender": "F",
+              "birthday_partial": "10 Jun",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "583481a1-3cd6-a5f3-4903-981f13301636",
+          "name": "Abel Family",
+          "family_name": "Abel",
+          "head": {
+            "first_name": "Jordan",
+            "last_name": "Abel",
+            "phone": "435-574-7475",
+            "email": "jabel873@gmail.com",
+            "address": "1627 S STAR SPRINGS DR",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3692"
+          },
+          "members": [
+            {
+              "first_name": "Kaylee",
+              "last_name": "Abel",
+              "gender": "F",
+              "birthday_partial": "8 May",
+              "role": "spouse"
+            },
+            {
+              "first_name": "McKenna Jean",
+              "last_name": "Abel",
+              "gender": "F",
+              "birthday_partial": "13 Jul",
+              "role": "child"
+            },
+            {
+              "first_name": "Addison Kay",
+              "last_name": "Abel",
+              "gender": "F",
+              "birthday_partial": "16 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Austin Robert",
+              "last_name": "Abel",
+              "gender": "M",
+              "birthday_partial": "10 Jul",
+              "role": "child"
+            },
+            {
+              "first_name": "Joslyn",
+              "last_name": "Abel",
+              "gender": "F",
+              "birthday_partial": "14 Feb",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "13dcc3a5-c557-454a-2021-c7451d9c0d13",
+          "name": "Hunt Family",
+          "family_name": "Hunt",
+          "head": {
+            "first_name": "Stefany",
+            "last_name": "Hunt",
+            "phone": "435-862-1764",
+            "email": "shunt292@gmail.com",
+            "address": "1649 S Star Springs Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3692"
+          },
+          "members": [
+            {
+              "first_name": "Maverix Kelly",
+              "last_name": "Hunt",
+              "gender": "M",
+              "birthday_partial": "27 Oct",
+              "role": "child"
+            },
+            {
+              "first_name": "Roczen Dallas",
+              "last_name": "Hunt",
+              "gender": "M",
+              "birthday_partial": "4 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Zoey Rosalyn",
+              "last_name": "Hunt",
+              "gender": "F",
+              "birthday_partial": "27 Oct",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Single-parent household (Stefany is head)."
+        },
+        {
+          "id": "63474269-6e6a-689c-2769-fc25458c740a",
+          "name": "Willard Family",
+          "family_name": "Willard",
+          "head": {
+            "first_name": "Nathan Gordon",
+            "last_name": "Willard",
+            "phone": "801-369-2976",
+            "email": "willard.nathang1198@gmail.com",
+            "address": "1594 S WAGON BOX WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3691"
+          },
+          "members": [
+            {
+              "first_name": "Sydney Jolie",
+              "last_name": "Willard",
+              "gender": "F",
+              "birthday_partial": "19 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Lany LaRose",
+              "last_name": "Willard",
+              "gender": "F",
+              "birthday_partial": "25 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Marcus James",
+              "last_name": "Willard",
+              "gender": "M",
+              "birthday_partial": "12 Dec",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "9c194d07-9184-4c02-8351-73a3eda25318",
+          "name": "Matt Cahoon (companion)",
+          "family_name": "Cahoon",
+          "head": {
+            "first_name": "Matt",
+            "last_name": "Cahoon",
+            "phone": "702-217-9164",
+            "email": "mattcahoon.lds@gmail.com",
+            "address": "1659 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3693"
+          },
+          "members": [],
+          "category": "cross_district",
+          "notes": "Cross-district companion; home household in District 3."
+        }
+      ]
+    },
+    {
+      "district": 2,
+      "president": {
+        "name": "Tupuola, Kawika",
+        "first_name": "Kawika",
+        "last_name": "Tupuola",
+        "phone": "801-889-5280",
+        "email": "ktups90@gmail.com"
+      },
+      "households": [
+        {
+          "id": "3dd868f3-5d17-d02b-7e38-e90a3d7994d7",
+          "name": "Connole Family",
+          "family_name": "Connole",
+          "head": {
+            "first_name": "Brayden",
+            "last_name": "Connole",
+            "phone": "760-650-6351",
+            "email": "brayden.connole@gmail.com",
+            "address": "1682 S Devils Garden Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Katelin",
+              "last_name": "Connole",
+              "gender": "F",
+              "birthday_partial": "13 Jan",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Quinby Everett",
+              "last_name": "Connole",
+              "gender": "F",
+              "birthday_partial": "26 Apr",
+              "role": "child"
+            },
+            {
+              "first_name": "Cordelia Jo",
+              "last_name": "Connole",
+              "gender": "F",
+              "birthday_partial": "4 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Aila Elizabeth",
+              "last_name": "Connole",
+              "gender": "F",
+              "birthday_partial": "12 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Hazel Anne",
+              "last_name": "Connole",
+              "gender": "F",
+              "birthday_partial": "21 Oct",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "b054d5a9-8be2-1437-3b3f-b17c61da56c0",
+          "name": "Slade Family",
+          "family_name": "Slade",
+          "head": {
+            "first_name": "Logan Timothy",
+            "last_name": "Slade",
+            "phone": "435-236-1086",
+            "email": "",
+            "address": "1484 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3683"
+          },
+          "members": [
+            {
+              "first_name": "Kacei",
+              "last_name": "Slade",
+              "gender": "F",
+              "birthday_partial": "14 Aug",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Ryklynn Mae",
+              "last_name": "Slade",
+              "gender": "F",
+              "birthday_partial": "6 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Stetsen Jay",
+              "last_name": "Slade",
+              "gender": "M",
+              "birthday_partial": "14 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Brecken Clay",
+              "last_name": "Slade",
+              "gender": "M",
+              "birthday_partial": "28 Jun",
+              "role": "child"
+            },
+            {
+              "first_name": "Kaysen Timothy",
+              "last_name": "Slade",
+              "gender": "M",
+              "birthday_partial": "15 Mar",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "041cbe74-5fe2-812b-db28-b9bb54997bc7",
+          "name": "Bangerter Family",
+          "family_name": "Bangerter",
+          "head": {
+            "first_name": "Torsten",
+            "last_name": "Bangerter",
+            "phone": "801-851-0854",
+            "email": "torbangerter@gmail.com",
+            "address": "2786 E Fireweed Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3885"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "14fcb729-7b29-0d0f-a7d2-57250359dae6",
+          "name": "Engemann Family",
+          "family_name": "Engemann",
+          "head": {
+            "first_name": "Cole",
+            "last_name": "Engemann",
+            "phone": "801-361-2369",
+            "email": "colengemann10@gmail.com",
+            "address": "1502 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Lydia Marguerite",
+              "last_name": "Engemann",
+              "gender": "F",
+              "birthday_partial": "20 Sep",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Andi Dianna",
+              "last_name": "Engemann",
+              "gender": "F",
+              "birthday_partial": "29 Sep",
+              "role": "child"
+            },
+            {
+              "first_name": "Owyn Brittney",
+              "last_name": "Engemann",
+              "gender": "F",
+              "birthday_partial": "27 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Ivory Betty",
+              "last_name": "Engemann",
+              "gender": "F",
+              "birthday_partial": "16 Sep",
+              "role": "child"
+            },
+            {
+              "first_name": "Cal Jacoby",
+              "last_name": "Engemann",
+              "gender": "M",
+              "birthday_partial": "17 Nov",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "def4dcdf-de94-ba90-8148-782afcb9182e",
+          "name": "Bayles Family",
+          "family_name": "Bayles",
+          "head": {
+            "first_name": "Jared",
+            "last_name": "Bayles",
+            "phone": "",
+            "email": "",
+            "address": "1751 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3717"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "e12c28e3-8941-4c65-3826-de76a5682579",
+          "name": "Gallacci Family",
+          "family_name": "Gallacci",
+          "head": {
+            "first_name": "Justine",
+            "last_name": "Gallacci",
+            "phone": "509-431-5352",
+            "email": "jmgallacci@gmail.com",
+            "address": "2925 E CORRAL HOLLOW DR",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3756"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "fba76880-9fe0-b5fc-c699-5264a4e4dce7",
+          "name": "Hadlock Family",
+          "family_name": "Hadlock",
+          "head": {
+            "first_name": "Sydni",
+            "last_name": "Hadlock",
+            "phone": "435-668-3221",
+            "email": "sydnihall13@gmail.com",
+            "address": "1530 S Wagon Box Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3635"
+          },
+          "members": [
+            {
+              "first_name": "Knixon",
+              "last_name": "Weichers",
+              "gender": "M",
+              "birthday_partial": "30 May",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Weichers (Knixon) listed under Hadlock household."
+        },
+        {
+          "id": "ee3f891b-e345-6da6-bfbe-b877f3497d59",
+          "name": "Hales Family",
+          "family_name": "Hales",
+          "head": {
+            "first_name": "Benjamin Sidney",
+            "last_name": "Hales",
+            "phone": "385-375-9058",
+            "email": "b3.hales@gmail.com",
+            "address": "1574 S WAGON BOX WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3691"
+          },
+          "members": [
+            {
+              "first_name": "Brooke Lynn",
+              "last_name": "Hales",
+              "gender": "F",
+              "birthday_partial": "27 Feb",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Samuel Tucker",
+              "last_name": "Hales",
+              "gender": "M",
+              "birthday_partial": "10 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Ryan Robert",
+              "last_name": "Hales",
+              "gender": "M",
+              "birthday_partial": "26 Sep",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "f04e79be-cf19-dbed-86de-bf5befe48b00",
+          "name": "West Family",
+          "family_name": "West",
+          "head": {
+            "first_name": "Milli",
+            "last_name": "West",
+            "phone": "435-668-5933",
+            "email": "milliwest7@gmail.com",
+            "address": "1855 S Cyclone Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3773"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "c481e6e2-732d-1eb7-0240-e8e24d2f253e",
+          "name": "Ewell Family",
+          "family_name": "Ewell",
+          "head": {
+            "first_name": "Jacob William",
+            "last_name": "Ewell",
+            "phone": "909-658-5370",
+            "email": "jacobewell7@gmail.com",
+            "address": "1638 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Lucille Lynne",
+              "last_name": "Ewell",
+              "gender": "F",
+              "birthday_partial": "9 May",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Jay William",
+              "last_name": "Ewell",
+              "gender": "M",
+              "birthday_partial": "18 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Clark Allan",
+              "last_name": "Ewell",
+              "gender": "M",
+              "birthday_partial": "21 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "0cd029e9-b7ad-a67e-1db7-7ea320c746a1",
+          "name": "Sorensen Family",
+          "family_name": "Sorensen",
+          "head": {
+            "first_name": "Kyle",
+            "last_name": "Sorensen",
+            "phone": "435-559-8629",
+            "email": "hangtimekls@gmail.com",
+            "address": "2802 Fireweed LN",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Naomi Eden",
+              "last_name": "Sorensen",
+              "gender": "F",
+              "birthday_partial": "21 Sep",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": "PDF shows zip 84790 (likely typo for 84780)."
+        },
+        {
+          "id": "c7be6ffe-1b5b-ae99-9891-8ea427f3902f",
+          "name": "Harris Family",
+          "family_name": "Harris",
+          "head": {
+            "first_name": "Devin",
+            "last_name": "Harris",
+            "phone": "435-421-9158",
+            "email": "devinrayharris52@gmail.com",
+            "address": "1555 S Wagon Box Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3635"
+          },
+          "members": [
+            {
+              "first_name": "Alyssa Lynn",
+              "last_name": "Harris",
+              "gender": "F",
+              "birthday_partial": "14 Nov",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Chloe Anne",
+              "last_name": "Harris",
+              "gender": "F",
+              "birthday_partial": "23 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Sophie Jane",
+              "last_name": "Harris",
+              "gender": "F",
+              "birthday_partial": "14 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "2a768d87-a769-7fd9-65ab-e538feac4acf",
+          "name": "Whitesides Family",
+          "family_name": "Whitesides",
+          "head": {
+            "first_name": "Kason",
+            "last_name": "Whitesides",
+            "phone": "435-922-8141",
+            "email": "slips1225@gmail.com",
+            "address": "1884 S WOLVERINE WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3718"
+          },
+          "members": [
+            {
+              "first_name": "Emmilyn",
+              "last_name": "Whitesides",
+              "gender": "F",
+              "birthday_partial": "8 Sep",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Hayes Adam",
+              "last_name": "Whiteside",
+              "gender": "M",
+              "birthday_partial": "4 Oct",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "PDF spells child 'Whiteside' (no s) vs family 'Whitesides'."
+        },
+        {
+          "id": "142fc850-57d9-bfe3-6770-bf7b662b94cf",
+          "name": "Hyer Family",
+          "family_name": "Hyer",
+          "head": {
+            "first_name": "Mckay",
+            "last_name": "Hyer",
+            "phone": "435-632-1380",
+            "email": "mckay.hyer@gmail.com",
+            "address": "2173 S Wolverine Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3887"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "3e2cbc53-a863-beb5-9096-144760305b0f",
+          "name": "Lewis Family",
+          "family_name": "Lewis",
+          "head": {
+            "first_name": "Andrew",
+            "last_name": "Lewis",
+            "phone": "435-668-5171",
+            "email": "bandrewlewis@gmail.com",
+            "address": "1537 S Wagon Box Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3635"
+          },
+          "members": [
+            {
+              "first_name": "Miriam Catrine",
+              "last_name": "Lewis",
+              "gender": "F",
+              "birthday_partial": "9 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Ingrid",
+              "last_name": "Lewis",
+              "gender": "F",
+              "birthday_partial": "26 Nov",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "89bf4f9b-5603-9188-7a84-d1df092ab665",
+          "name": "Eves Family",
+          "family_name": "Eves",
+          "head": {
+            "first_name": "Kameron",
+            "last_name": "Eves",
+            "phone": "702-686-2105",
+            "email": "kameroneves@gmail.com",
+            "address": "1612 S Star Springs Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3692"
+          },
+          "members": [
+            {
+              "first_name": "Alison",
+              "last_name": "Eves",
+              "gender": "F",
+              "birthday_partial": "14 Sep",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Logan Kameron",
+              "last_name": "Eves",
+              "gender": "M",
+              "birthday_partial": "7 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Hannah",
+              "last_name": "Eves",
+              "gender": "F",
+              "birthday_partial": "29 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Abigail Rachelle",
+              "last_name": "Eves",
+              "gender": "F",
+              "birthday_partial": "8 Dec",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "13197542-44f7-1887-f160-1f744a215afc",
+          "name": "Tower Family",
+          "family_name": "Tower",
+          "head": {
+            "first_name": "Bridger",
+            "last_name": "Tower",
+            "phone": "801-300-7473",
+            "email": "bridgertower@gmail.com",
+            "address": "1719 S Devils Garden Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Rileigh Anne",
+              "last_name": "Tower",
+              "gender": "F",
+              "birthday_partial": "12 Jun",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Wave William",
+              "last_name": "Tower",
+              "gender": "M",
+              "birthday_partial": "31 Mar",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "34cfd71f-2de3-eec6-a6bc-132739807cf0",
+          "name": "Fisher Family",
+          "family_name": "Fisher",
+          "head": {
+            "first_name": "Landon",
+            "last_name": "Fisher",
+            "phone": "435-817-1007",
+            "email": "lannyfish@gmail.com",
+            "address": "1878 S Swamp Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3800"
+          },
+          "members": [
+            {
+              "first_name": "Halsey",
+              "last_name": "Fisher",
+              "gender": "F",
+              "birthday_partial": "30 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Lola Halsey",
+              "last_name": "Fisher",
+              "gender": "F",
+              "birthday_partial": "21 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Blaire Collins",
+              "last_name": "Fisher",
+              "gender": "F",
+              "birthday_partial": "10 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Scottie Pacific",
+              "last_name": "Fisher",
+              "gender": "F",
+              "birthday_partial": "14 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "03f796ef-ffdd-59ce-0289-4703edd86296",
+          "name": "Twede Family",
+          "family_name": "Twede",
+          "head": {
+            "first_name": "Devin",
+            "last_name": "Twede",
+            "phone": "801-916-8896",
+            "email": "twedesoccer@hotmail.com",
+            "address": "1567 S RIPPLE ROCK DR",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Calindy",
+              "last_name": "Twede",
+              "gender": "F",
+              "birthday_partial": "26 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Preston Robert",
+              "last_name": "Twede",
+              "gender": "M",
+              "birthday_partial": "24 Dec",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "a830e5da-2d40-9b35-5563-57d4710de655",
+          "name": "Rigby Family",
+          "family_name": "Rigby",
+          "head": {
+            "first_name": "Stetson",
+            "last_name": "Rigby",
+            "phone": "801-865-2185",
+            "email": "morgandaysuu@gmail.com",
+            "address": "1951 S Wolverine Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3774"
+          },
+          "members": [
+            {
+              "first_name": "Morgan Elizabeth",
+              "last_name": "Rigby",
+              "gender": "F",
+              "birthday_partial": "24 Sep",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Kai Stetson",
+              "last_name": "Rigby",
+              "gender": "M",
+              "birthday_partial": "30 May",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Listed twice in PDF (alt email stetsonrigby@gmail.com) - deduped."
+        },
+        {
+          "id": "8c3d73b2-0f68-dd27-1b72-484665f97b8b",
+          "name": "Wegesend Family",
+          "family_name": "Wegesend",
+          "head": {
+            "first_name": "Warren Robert",
+            "last_name": "Wegesend",
+            "phone": "808-864-2462",
+            "email": "wgsnd1@yahoo.com",
+            "address": "1501 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Trina",
+              "last_name": "Wegesend",
+              "gender": "F",
+              "birthday_partial": "26 Nov",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "1bc3ebdc-7ce9-1de7-509e-710fdcd86f6f",
+          "name": "Fellmeth Family",
+          "family_name": "Fellmeth",
+          "head": {
+            "first_name": "Joe",
+            "last_name": "Fellmeth",
+            "phone": "435-459-2386",
+            "email": "jlfellmeth@gmail.com",
+            "address": "1527 S WAGON BOX WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3635"
+          },
+          "members": [
+            {
+              "first_name": "Miranda Danielle",
+              "last_name": "Fellmeth",
+              "gender": "F",
+              "birthday_partial": "10 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Linden Olivia",
+              "last_name": "Fellmeth",
+              "gender": "F",
+              "birthday_partial": "1 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "b947cdba-9413-0b06-4e0f-9e5403476692",
+          "name": "Tupuola Family",
+          "family_name": "Tupuola",
+          "head": {
+            "first_name": "Kawika",
+            "last_name": "Tupuola",
+            "phone": "801-889-5280",
+            "email": "ktups90@gmail.com",
+            "address": "1648 S Star Springs Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3692"
+          },
+          "members": [
+            {
+              "first_name": "Aliza Catherine",
+              "last_name": "Tupuola",
+              "gender": "F",
+              "birthday_partial": "27 Jan",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Oriana Sianiu",
+              "last_name": "Tupuola",
+              "gender": "F",
+              "birthday_partial": "30 Apr",
+              "role": "child"
+            },
+            {
+              "first_name": "Ezra Elisapela",
+              "last_name": "Tupuola",
+              "gender": "F",
+              "birthday_partial": "24 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Redd Pato Iosefa",
+              "last_name": "Tupuola",
+              "gender": "M",
+              "birthday_partial": "19 Aug",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Presidency member (District 2 president)."
+        },
+        {
+          "id": "1fe1f5d3-0beb-b330-7503-e01a61c0df51",
+          "name": "Hamilton Family",
+          "family_name": "Hamilton",
+          "head": {
+            "first_name": "Dana",
+            "last_name": "Hamilton",
+            "phone": "435-668-4681",
+            "email": "",
+            "address": "1720 S DEVILS GARDEN LN",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Michael",
+              "last_name": "Bresciani",
+              "gender": "M",
+              "birthday_partial": "29 Dec",
+              "role": "other"
+            }
+          ],
+          "category": "family",
+          "notes": "Two adults; Bresciani relationship unclear."
+        },
+        {
+          "id": "03a1e76b-4bfb-fd23-4626-305b8f121ef9",
+          "name": "Michel Family",
+          "family_name": "Michel",
+          "head": {
+            "first_name": "Joan Mary",
+            "last_name": "Michel",
+            "phone": "435-619-3734",
+            "email": "teddybearhugs4@gmail.com",
+            "address": "2813 E Fireweed Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3885"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "31b3af33-8507-2c0a-4295-df020ab7205d",
+          "name": "Wintch Family",
+          "family_name": "Wintch",
+          "head": {
+            "first_name": "Phil",
+            "last_name": "Wintch",
+            "phone": "520-647-1743",
+            "email": "philwintch@gmail.com",
+            "address": "1839 S WOLVERINE WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3718"
+          },
+          "members": [
+            {
+              "first_name": "Elisha",
+              "last_name": "Wintch",
+              "gender": "F",
+              "birthday_partial": "27 Oct",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Evelyn Kanani",
+              "last_name": "Wintch",
+              "gender": "F",
+              "birthday_partial": "12 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Morgan Henri Kekoa",
+              "last_name": "Wintch",
+              "gender": "M",
+              "birthday_partial": "17 Apr",
+              "role": "child"
+            },
+            {
+              "first_name": "Ethan Kamalu",
+              "last_name": "Wintch",
+              "gender": "M",
+              "birthday_partial": "4 Oct",
+              "role": "child"
+            },
+            {
+              "first_name": "Lucas Keahi",
+              "last_name": "Wintch",
+              "gender": "M",
+              "birthday_partial": "13 Feb",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "dbec62b0-b4bf-126f-8a8b-93514f794663",
+          "name": "Edelmayer Family",
+          "family_name": "Edelmayer",
+          "head": {
+            "first_name": "Branden",
+            "last_name": "Edelmayer",
+            "phone": "208-351-5772",
+            "email": "brandenedelmayer@gmail.com",
+            "address": "1749 S Devils Garden Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Lundyn",
+              "last_name": "Edelmayer",
+              "gender": "F",
+              "birthday_partial": "10 Jun",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Lucca Paul",
+              "last_name": "Edelmayer",
+              "gender": "M",
+              "birthday_partial": "18 Jan",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "d9cc5ead-fb6a-d43a-2e4d-914214d01034",
+          "name": "Sanders Family",
+          "family_name": "Sanders",
+          "head": {
+            "first_name": "Brennan",
+            "last_name": "Sanders",
+            "phone": "435-531-9179",
+            "email": "gbsand28@gmail.com",
+            "address": "1831 S Tower Bridge Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Allison",
+              "last_name": "Sanders",
+              "gender": "F",
+              "birthday_partial": "16 Mar",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Lucy Grace",
+              "last_name": "Sanders",
+              "gender": "F",
+              "birthday_partial": "19 Aug",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "ac4d562f-e880-ef93-e630-47235d35a7e2",
+          "name": "Stratton Family",
+          "family_name": "Stratton",
+          "head": {
+            "first_name": "Lois",
+            "last_name": "Stratton",
+            "phone": "435-632-3444",
+            "email": "merrellloisaz@gmail.com",
+            "address": "1484 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3683"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "9e7edd63-79a4-c542-9eb1-01e51a4a6d34",
+          "name": "Gearig Family",
+          "family_name": "Gearig",
+          "head": {
+            "first_name": "Kyle",
+            "last_name": "Gearig",
+            "phone": "385-231-6766",
+            "email": "kylegearig@gmail.com",
+            "address": "1611 S Wagon Box Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3691"
+          },
+          "members": [
+            {
+              "first_name": "Meleah",
+              "last_name": "Gearig",
+              "gender": "F",
+              "birthday_partial": "16 Dec",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Asher Ray",
+              "last_name": "Gearig",
+              "gender": "M",
+              "birthday_partial": "18 Aug",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "b237802b-8e0c-9ba6-e142-3a0b6b066afd",
+          "name": "Walton Family",
+          "family_name": "Walton",
+          "head": {
+            "first_name": "Christian",
+            "last_name": "Walton",
+            "phone": "909-549-4269",
+            "email": "christian.e.walton@gmail.com",
+            "address": "1567 S Star Springs Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3636"
+          },
+          "members": [
+            {
+              "first_name": "Mary Janelle",
+              "last_name": "Walton",
+              "gender": "F",
+              "birthday_partial": "23 Oct",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Amelia Jane",
+              "last_name": "Walton",
+              "gender": "F",
+              "birthday_partial": "3 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Adaline Elliot",
+              "last_name": "Walton",
+              "gender": "F",
+              "birthday_partial": "19 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Ella Lin",
+              "last_name": "Walton",
+              "gender": "F",
+              "birthday_partial": "14 Dec",
+              "role": "child"
+            },
+            {
+              "first_name": "Hudson William",
+              "last_name": "Walton",
+              "gender": "M",
+              "birthday_partial": "6 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "945b8305-127e-4433-b797-ce066c77f80b",
+          "name": "Gibbons Family",
+          "family_name": "Gibbons",
+          "head": {
+            "first_name": "Joe",
+            "last_name": "Gibbons",
+            "phone": "801-669-1400",
+            "email": "joe@utahmarine.com",
+            "address": "1664 S CEDAR MESA DR",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3693"
+          },
+          "members": [
+            {
+              "first_name": "Vickie",
+              "last_name": "Gibbons",
+              "gender": "F",
+              "birthday_partial": "30 Nov",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "54a9b00a-fd40-ccc9-f544-536b52063bd7",
+          "name": "Wegesend Family",
+          "family_name": "Wegesend",
+          "head": {
+            "first_name": "Ekana",
+            "last_name": "Wegesend",
+            "phone": "808-220-2516",
+            "email": "wegesend01@gmail.com",
+            "address": "1501 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Shiloh Kanoelani Kaipūa'a'laa Namakaokaha'i Akira",
+              "last_name": "Wegesend",
+              "gender": "F",
+              "birthday_partial": "17 Apr",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Kamanawale'a Ku'uhanolimaikalanimai",
+              "last_name": "Wegesend",
+              "gender": "F",
+              "birthday_partial": "12 Dec",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Second Wegesend household (same address as Warren Robert). Hawaiian diacritics preserved."
+        },
+        {
+          "id": "46afdd72-2e8e-707c-8d5c-2ab1d5843c81",
+          "name": "Evans Family",
+          "family_name": "Evans",
+          "head": {
+            "first_name": "Janson",
+            "last_name": "Evans",
+            "phone": "801-309-4875",
+            "email": "evans.janson@gmail.com",
+            "address": "1619 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3637"
+          },
+          "members": [
+            {
+              "first_name": "Sandra Marie",
+              "last_name": "Evans",
+              "gender": "F",
+              "birthday_partial": "12 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Grayson Gaylord",
+              "last_name": "Evans",
+              "gender": "M",
+              "birthday_partial": "29 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Isla Marie",
+              "last_name": "Evans",
+              "gender": "F",
+              "birthday_partial": "23 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Barrett Robert",
+              "last_name": "Evans",
+              "gender": "M",
+              "birthday_partial": "23 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Hayes Jansen",
+              "last_name": "Evans",
+              "gender": "M",
+              "birthday_partial": "12 May",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Second Evans household (distinct from Luke Evans in D1)."
+        },
+        {
+          "id": "46d0d7ee-da4f-d6f1-59b4-0e5ee2b63ea4",
+          "name": "Swanson Family",
+          "family_name": "Swanson",
+          "head": {
+            "first_name": "Brody Ray",
+            "last_name": "Swanson",
+            "phone": "801-427-4555",
+            "email": "brody_swanson15@hotmail.com",
+            "address": "1624 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3637"
+          },
+          "members": [
+            {
+              "first_name": "Samantha",
+              "last_name": "Swanson",
+              "gender": "F",
+              "birthday_partial": "29 Mar",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Sloan Brody",
+              "last_name": "Swanson",
+              "gender": "F",
+              "birthday_partial": "23 Sep",
+              "role": "child"
+            },
+            {
+              "first_name": "Brock James",
+              "last_name": "Swanson",
+              "gender": "M",
+              "birthday_partial": "2 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Bond LeRoy",
+              "last_name": "Swanson",
+              "gender": "M",
+              "birthday_partial": "2 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Suri Jay",
+              "last_name": "Swanson",
+              "gender": "F",
+              "birthday_partial": "12 Dec",
+              "role": "child"
+            },
+            {
+              "first_name": "Scottie Hal",
+              "last_name": "Swanson",
+              "gender": "M",
+              "birthday_partial": "9 Mar",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "0fb5467f-ae45-35c2-5291-36212d66507e",
+          "name": "Gubler Family",
+          "family_name": "Gubler",
+          "head": {
+            "first_name": "Dillon Casey",
+            "last_name": "Gubler",
+            "phone": "435-669-4785",
+            "email": "dillongubler@gmail.com",
+            "address": "1479 S Ripple Rock Dr (Unit 1479)",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3683"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "8d7556c3-4759-cfd1-b0f5-a0801112c068",
+          "name": "McKeighan Family",
+          "family_name": "McKeighan",
+          "head": {
+            "first_name": "Domanic Michael",
+            "last_name": "McKeighan",
+            "phone": "435-680-8493",
+            "email": "domckeighan@gmail.com",
+            "address": "1613 S Star Springs Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3692"
+          },
+          "members": [
+            {
+              "first_name": "Sydney Kathleen",
+              "last_name": "McKeighan",
+              "gender": "F",
+              "birthday_partial": "31 May",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Jack Ernest",
+              "last_name": "McKeighan",
+              "gender": "M",
+              "birthday_partial": "16 Jun",
+              "role": "child"
+            },
+            {
+              "first_name": "Letty Jean",
+              "last_name": "McKeighan",
+              "gender": "F",
+              "birthday_partial": "16 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Zoe Dylan",
+              "last_name": "McKeighan",
+              "gender": "F",
+              "birthday_partial": "25 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "c8a94a6f-5757-565c-d2ef-9129e2fd0f6a",
+          "name": "Christensen Family",
+          "family_name": "Christensen",
+          "head": {
+            "first_name": "Jared",
+            "last_name": "Christensen",
+            "phone": "801-499-9423",
+            "email": "churchofjesuschrist.5f954@simplelogin.com",
+            "address": "1769 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Ashley",
+              "last_name": "Christensen",
+              "gender": "F",
+              "birthday_partial": "28 Aug",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "53ab5ac4-c46d-1412-938b-82f6eb38a149",
+          "name": "Jones Family",
+          "family_name": "Jones",
+          "head": {
+            "first_name": "Jayce",
+            "last_name": "Jones",
+            "phone": "435-705-9281",
+            "email": "jonzey32@outlook.com",
+            "address": "1596 S RIPPLE ROCK DR",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Ashlend Gevon",
+              "last_name": "Jones",
+              "gender": "F",
+              "birthday_partial": "7 Oct",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Rollan Atlas",
+              "last_name": "Jones",
+              "gender": "M",
+              "birthday_partial": "28 Dec",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "12340542-186a-37de-7f06-aba017333ab5",
+          "name": "Espinoza Family",
+          "family_name": "Espinoza",
+          "head": {
+            "first_name": "Jason Robert",
+            "last_name": "Espinoza",
+            "phone": "",
+            "email": "",
+            "address": "1709 S DEVILS GARDEN LN",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Kelci Jourdan",
+              "last_name": "Espinoza",
+              "gender": "F",
+              "birthday_partial": "13 Jul",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "f8693525-6cd8-8f0f-3e66-e4c3f1effe5c",
+          "name": "Swaney Family",
+          "family_name": "Swaney",
+          "head": {
+            "first_name": "Wes",
+            "last_name": "Swaney",
+            "phone": "435-773-8117",
+            "email": "wesswaney3@gmail.com",
+            "address": "1487 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3683"
+          },
+          "members": [
+            {
+              "first_name": "McKenzie",
+              "last_name": "Swaney",
+              "gender": "F",
+              "birthday_partial": "5 Nov",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Kai Luca",
+              "last_name": "Swaney",
+              "gender": "M",
+              "birthday_partial": "3 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Davie Abigail",
+              "last_name": "Swaney",
+              "gender": "F",
+              "birthday_partial": "4 Jun",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "1f248fdc-cfb1-9157-ce8b-01fd3d085b43",
+          "name": "Cashe Collins (companion)",
+          "family_name": "Collins",
+          "head": {
+            "first_name": "Cashe",
+            "last_name": "Collins",
+            "phone": "435-229-9647",
+            "email": "cashecollins@gmail.com",
+            "address": "1885 S Cyclone Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3773"
+          },
+          "members": [],
+          "category": "cross_district",
+          "notes": "Cross-district companion; home household in District 1."
+        }
+      ]
+    },
+    {
+      "district": 3,
+      "president": {
+        "name": "Bryan, Sean",
+        "first_name": "Sean",
+        "last_name": "Bryan",
+        "phone": "520-445-1256",
+        "email": "bry13006@gmail.com"
+      },
+      "households": [
+        {
+          "id": "c972d586-f463-443c-1e42-40f078ca0f30",
+          "name": "Benson Family",
+          "family_name": "Benson",
+          "head": {
+            "first_name": "Nicklas",
+            "last_name": "Benson",
+            "phone": "801-427-3701",
+            "email": "nbenson23@outlook.com",
+            "address": "1977 S Wolverine Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3774"
+          },
+          "members": [
+            {
+              "first_name": "Britney Danielle",
+              "last_name": "Benson",
+              "gender": "F",
+              "birthday_partial": "13 Mar",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Nicklas Lee II",
+              "last_name": "Benson",
+              "gender": "M",
+              "birthday_partial": "31 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Ace Arthur",
+              "last_name": "Benson",
+              "gender": "M",
+              "birthday_partial": "19 Dec",
+              "role": "child"
+            },
+            {
+              "first_name": "Ivory Mae",
+              "last_name": "Benson",
+              "gender": "F",
+              "birthday_partial": "6 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "5d1938f8-3002-8661-9a98-21f2496984d0",
+          "name": "Brown Family",
+          "family_name": "Brown",
+          "head": {
+            "first_name": "Jason",
+            "last_name": "Brown",
+            "phone": "801-420-2461",
+            "email": "jasonbrown3824@gmail.com",
+            "address": "1915 S Cyclone Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3773"
+          },
+          "members": [
+            {
+              "first_name": "Natalia Maluenda",
+              "last_name": "Brown",
+              "gender": "F",
+              "birthday_partial": "26 Sep",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Jason Fernando",
+              "last_name": "Brown",
+              "gender": "M",
+              "birthday_partial": "12 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Austin Tomas",
+              "last_name": "Brown",
+              "gender": "M",
+              "birthday_partial": "27 Jan",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "e3623c5a-9e6e-479f-34a9-9837c404e8d2",
+          "name": "Cahoon Family",
+          "family_name": "Cahoon",
+          "head": {
+            "first_name": "Matt",
+            "last_name": "Cahoon",
+            "phone": "702-217-9164",
+            "email": "mattcahoon.lds@gmail.com",
+            "address": "1659 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3693"
+          },
+          "members": [
+            {
+              "first_name": "Jordie",
+              "last_name": "Cahoon",
+              "gender": "F",
+              "birthday_partial": "25 Aug",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Harlow Leialoha",
+              "last_name": "Cahoon",
+              "gender": "F",
+              "birthday_partial": "8 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Barrett Alpha",
+              "last_name": "Cahoon",
+              "gender": "M",
+              "birthday_partial": "12 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Remington Kahealani",
+              "last_name": "Cahoon",
+              "gender": "F",
+              "birthday_partial": "4 Dec",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "6a0b1ef3-8877-689d-332a-21734f0260a7",
+          "name": "Christiansen Family",
+          "family_name": "Christiansen",
+          "head": {
+            "first_name": "Treyson Russell",
+            "last_name": "Christiansen",
+            "phone": "435-231-1212",
+            "email": "d00336276@dmail.dixie.edu",
+            "address": "1745 S Devils Garden Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Makena",
+              "last_name": "Christiansen",
+              "gender": "F",
+              "birthday_partial": "8 May",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Harley Russell",
+              "last_name": "Christiansen",
+              "gender": "M",
+              "birthday_partial": "14 Jan",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "cd55f23f-cfe5-39f1-6b8f-0062b52b4ee2",
+          "name": "Petersen Family",
+          "family_name": "Petersen",
+          "head": {
+            "first_name": "Ryan",
+            "last_name": "Petersen",
+            "phone": "435-406-9458",
+            "email": "petersen.430.93@gmail.com",
+            "address": "1864 Tower Bridge Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Breanna Mae",
+              "last_name": "Petersen",
+              "gender": "F",
+              "birthday_partial": "8 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Dax Ryan",
+              "last_name": "Petersen",
+              "gender": "M",
+              "birthday_partial": "27 Jun",
+              "role": "child"
+            },
+            {
+              "first_name": "Clara Anne",
+              "last_name": "Petersen",
+              "gender": "F",
+              "birthday_partial": "5 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Preslee Mae",
+              "last_name": "Petersen",
+              "gender": "F",
+              "birthday_partial": "27 Dec",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "7ff75233-28ff-004b-a3de-7b4000b485e1",
+          "name": "Durrant Family",
+          "family_name": "Durrant",
+          "head": {
+            "first_name": "David Arthur",
+            "last_name": "Durrant",
+            "phone": "801-854-8630",
+            "email": "david.durrant16@gmail.com",
+            "address": "1761 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3717"
+          },
+          "members": [
+            {
+              "first_name": "Jessica Elise",
+              "last_name": "Durrant",
+              "gender": "F",
+              "birthday_partial": "16 Apr",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Drew Thomas",
+              "last_name": "Durrant",
+              "gender": "M",
+              "birthday_partial": "20 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Jonah David",
+              "last_name": "Durrant",
+              "gender": "M",
+              "birthday_partial": "5 Oct",
+              "role": "child"
+            },
+            {
+              "first_name": "Ivy Elyse",
+              "last_name": "Durrant",
+              "gender": "F",
+              "birthday_partial": "17 Mar",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "9fd43650-ee63-98be-e72f-b55cbacc24ec",
+          "name": "Warner Family",
+          "family_name": "Warner",
+          "head": {
+            "first_name": "Tyler",
+            "last_name": "Warner",
+            "phone": "435-705-3942",
+            "email": "warner.tyler42@gmail.com",
+            "address": "1939 S Wolverine Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Annie",
+              "last_name": "Warner",
+              "gender": "F",
+              "birthday_partial": "14 Aug",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Ivoree Kay",
+              "last_name": "Warner",
+              "gender": "F",
+              "birthday_partial": "7 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Remi Lynn",
+              "last_name": "Warner",
+              "gender": "F",
+              "birthday_partial": "15 Dec",
+              "role": "child"
+            },
+            {
+              "first_name": "Tatum Ann",
+              "last_name": "Warner",
+              "gender": "F",
+              "birthday_partial": "29 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "78e63355-5a53-4e19-23f9-c232b2cfa677",
+          "name": "Wynne Family",
+          "family_name": "Wynne",
+          "head": {
+            "first_name": "Colton",
+            "last_name": "Wynne",
+            "phone": "435-709-1257",
+            "email": "coltonwynne3@gmail.com",
+            "address": "1857 Tower Bridge Dr.",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3635"
+          },
+          "members": [
+            {
+              "first_name": "Sydney Lee",
+              "last_name": "Wynne",
+              "gender": "F",
+              "birthday_partial": "24 Jun",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Roman Jace",
+              "last_name": "Wynne",
+              "gender": "M",
+              "birthday_partial": "26 Nov",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "8dfb98a0-3f1c-f80d-9526-bb971925b8da",
+          "name": "Adair Family",
+          "family_name": "Adair",
+          "head": {
+            "first_name": "Zach",
+            "last_name": "Adair",
+            "phone": "435-414-4175",
+            "email": "zack.m.adair@gmail.com",
+            "address": "1954 S Swamp Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3800"
+          },
+          "members": [
+            {
+              "first_name": "Ashley Kay",
+              "last_name": "Adair",
+              "gender": "F",
+              "birthday_partial": "22 Oct",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Oaklynn Christine",
+              "last_name": "Adair",
+              "gender": "F",
+              "birthday_partial": "18 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Huntley Bee",
+              "last_name": "Adair",
+              "gender": "F",
+              "birthday_partial": "13 May",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "1b24f6af-2187-38f2-ed7b-a9d454b8df54",
+          "name": "Bennett Family",
+          "family_name": "Bennett",
+          "head": {
+            "first_name": "Ethan",
+            "last_name": "Bennett",
+            "phone": "435-215-3683",
+            "email": "21benneethl@gmail.com",
+            "address": "2794 E Fireweed Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3885"
+          },
+          "members": [
+            {
+              "first_name": "Aspin",
+              "last_name": "Bennett",
+              "gender": "F",
+              "birthday_partial": "16 May",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "2917b0f6-12ca-5ef6-85a5-af689b1a8481",
+          "name": "Church Family",
+          "family_name": "Church",
+          "head": {
+            "first_name": "Braden",
+            "last_name": "Church",
+            "phone": "435-705-1455",
+            "email": "bradenchurch@gmail.com",
+            "address": "1625 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3637"
+          },
+          "members": [
+            {
+              "first_name": "Tierra Nan",
+              "last_name": "Church",
+              "gender": "F",
+              "birthday_partial": "4 Feb",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Oaklee Nan",
+              "last_name": "Church",
+              "gender": "F",
+              "birthday_partial": "15 Jul",
+              "role": "child"
+            },
+            {
+              "first_name": "Mason Braden",
+              "last_name": "Church",
+              "gender": "M",
+              "birthday_partial": "26 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Dani Shae",
+              "last_name": "Church",
+              "gender": "F",
+              "birthday_partial": "9 Oct",
+              "role": "child"
+            },
+            {
+              "first_name": "Tommy Ray",
+              "last_name": "Church",
+              "gender": "M",
+              "birthday_partial": "18 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "3e28ab14-21b4-c4b6-e3a3-6a6c6adc81b8",
+          "name": "Searle Family",
+          "family_name": "Searle",
+          "head": {
+            "first_name": "Colton Ronald",
+            "last_name": "Searle",
+            "phone": "435-359-8067",
+            "email": "coltonrs@icloud.com",
+            "address": "1692 S DEVILS GARDEN LN",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Morgan",
+              "last_name": "Bernardo",
+              "gender": "F",
+              "birthday_partial": "6 Nov",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": "Bernardo (Morgan) listed under Searle household."
+        },
+        {
+          "id": "56f81e61-debc-0b7a-3c43-f50d4f756540",
+          "name": "Rigby Family",
+          "family_name": "Rigby",
+          "head": {
+            "first_name": "Elijah Todd",
+            "last_name": "Rigby",
+            "phone": "801-875-9226",
+            "email": "elirigby70@gmail.com",
+            "address": "1891 S. Swamp Mesa Dr.",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Brooke Ann",
+              "last_name": "Rigby",
+              "gender": "F",
+              "birthday_partial": "27 Jun",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Bodee Laine",
+              "last_name": "Rigby",
+              "gender": "M",
+              "birthday_partial": "13 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Cadence Sophia",
+              "last_name": "Rigby",
+              "gender": "F",
+              "birthday_partial": "15 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Annabelle Brooke",
+              "last_name": "Rigby",
+              "gender": "F",
+              "birthday_partial": "8 Apr",
+              "role": "child"
+            },
+            {
+              "first_name": "Boone Ryder",
+              "last_name": "Rigby",
+              "gender": "M",
+              "birthday_partial": "20 Mar",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Second Rigby household (distinct from Stetson Rigby in D2)."
+        },
+        {
+          "id": "cd832435-e9aa-c09a-1e24-3b2e8beddfc4",
+          "name": "Whittaker Family",
+          "family_name": "Whittaker",
+          "head": {
+            "first_name": "Oaken",
+            "last_name": "Whittaker",
+            "phone": "801-580-2266",
+            "email": "oakwhid@gmail.com",
+            "address": "1520 S RIPPLE ROCK DR",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Paige Lauren",
+              "last_name": "Whittaker",
+              "gender": "F",
+              "birthday_partial": "6 Mar",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "8e3ddb75-1764-18e4-e9a5-7a82f0961f95",
+          "name": "Owen Family",
+          "family_name": "Owen",
+          "head": {
+            "first_name": "Jason",
+            "last_name": "Owen",
+            "phone": "702-275-9168",
+            "email": "jmowen1605@gmail.com",
+            "address": "1605 S Star Springs Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3636"
+          },
+          "members": [
+            {
+              "first_name": "Diane",
+              "last_name": "Owen",
+              "gender": "F",
+              "birthday_partial": "16 Jan",
+              "role": "spouse"
+            },
+            {
+              "first_name": "JoceLyn Jay",
+              "last_name": "Owen",
+              "gender": "F",
+              "birthday_partial": "31 May",
+              "role": "child"
+            },
+            {
+              "first_name": "RoxaBelle Berlin",
+              "last_name": "Owen",
+              "gender": "F",
+              "birthday_partial": "26 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Ezra",
+              "last_name": "Owen",
+              "gender": "M",
+              "birthday_partial": "3 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Liam",
+              "last_name": "Owen",
+              "gender": "M",
+              "birthday_partial": "24 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "597fbe93-5915-e7a6-d442-8d94017c5335",
+          "name": "Hale Family",
+          "family_name": "Hale",
+          "head": {
+            "first_name": "Jaxon",
+            "last_name": "Hale",
+            "phone": "435-841-7538",
+            "email": "halejaxon@gmail.com",
+            "address": "1881 S Tower Bridge Dr.",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Madeline",
+              "last_name": "Hale",
+              "gender": "F",
+              "birthday_partial": "17 Mar",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Bode Riley",
+              "last_name": "Hale",
+              "gender": "M",
+              "birthday_partial": "7 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "5221cacf-b1a7-7de9-5667-e976993bdc9c",
+          "name": "Sorenson Family",
+          "family_name": "Sorenson",
+          "head": {
+            "first_name": "Cody",
+            "last_name": "Sorenson",
+            "phone": "909-528-8330",
+            "email": "cjsorenson88@gmail.com",
+            "address": "1595 S WAGON BOX WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3691"
+          },
+          "members": [
+            {
+              "first_name": "Gina",
+              "last_name": "Sorenson",
+              "gender": "F",
+              "birthday_partial": "16 Jun",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Dillan",
+              "last_name": "Sorenson",
+              "gender": "M",
+              "birthday_partial": "5 Jun",
+              "role": "child"
+            },
+            {
+              "first_name": "Emmarie",
+              "last_name": "Sorenson",
+              "gender": "F",
+              "birthday_partial": "18 Apr",
+              "role": "child"
+            },
+            {
+              "first_name": "Ellia Joan",
+              "last_name": "Sorenson",
+              "gender": "F",
+              "birthday_partial": "29 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "0ea46ddc-c8c5-41ee-ab65-5df940166fba",
+          "name": "Chevez Solano Family",
+          "family_name": "Chevez Solano",
+          "head": {
+            "first_name": "Blaine",
+            "last_name": "Chambers",
+            "phone": "801-708-2948",
+            "email": "blainechambers9@gmail.com",
+            "address": "1856 S WOLVERINE WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3718"
+          },
+          "members": [
+            {
+              "first_name": "Shawnee",
+              "last_name": "Chambers",
+              "gender": "F",
+              "birthday_partial": "24 Sep",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": "PDF household header 'Chevez Solano'; members listed as Chambers."
+        },
+        {
+          "id": "aa873951-0055-9125-2e3e-55eab20ff000",
+          "name": "Robinson Family",
+          "family_name": "Robinson",
+          "head": {
+            "first_name": "Travis",
+            "last_name": "Robinson",
+            "phone": "435-590-9681",
+            "email": "robinson.travis20@gmail.com",
+            "address": "1728 Devils Garden Lane",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Megan",
+              "last_name": "Robinson",
+              "gender": "F",
+              "birthday_partial": "6 Aug",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Brielle Megan",
+              "last_name": "Robinson",
+              "gender": "F",
+              "birthday_partial": "6 Jul",
+              "role": "child"
+            },
+            {
+              "first_name": "Adalynn Tamera",
+              "last_name": "Robinson",
+              "gender": "F",
+              "birthday_partial": "23 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "95cf38eb-441c-b1f3-4f08-f1f2e898490d",
+          "name": "Barden Family",
+          "family_name": "Barden",
+          "head": {
+            "first_name": "Kory Andrew",
+            "last_name": "Barden",
+            "phone": "949-209-7255",
+            "email": "kory.barden@gmail.com",
+            "address": "1729 S Devils Garden Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Montana Reagan",
+              "last_name": "Barden",
+              "gender": "F",
+              "birthday_partial": "28 Aug",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Zion James",
+              "last_name": "Barden",
+              "gender": "M",
+              "birthday_partial": "2 Oct",
+              "role": "child"
+            },
+            {
+              "first_name": "Georgia Reagan",
+              "last_name": "Barden",
+              "gender": "F",
+              "birthday_partial": "27 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "a3921486-cd74-7041-ba4d-96388e29f409",
+          "name": "Echols Family",
+          "family_name": "Echols",
+          "head": {
+            "first_name": "Preston",
+            "last_name": "Echols",
+            "phone": "360-742-2445",
+            "email": "prestonechols54@gmail.com",
+            "address": "1554 S Wagon Box Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3635"
+          },
+          "members": [
+            {
+              "first_name": "McKell Rose",
+              "last_name": "Echols",
+              "gender": "F",
+              "birthday_partial": "3 Apr",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Jace Donald",
+              "last_name": "Echols",
+              "gender": "M",
+              "birthday_partial": "5 Jun",
+              "role": "child"
+            },
+            {
+              "first_name": "Lainey Rose",
+              "last_name": "Echols",
+              "gender": "F",
+              "birthday_partial": "13 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Paxton John",
+              "last_name": "Echols",
+              "gender": "M",
+              "birthday_partial": "26 May",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "86119c2f-223a-f8e2-1b03-70db2b935cc7",
+          "name": "Stewart Family",
+          "family_name": "Stewart",
+          "head": {
+            "first_name": "Dane",
+            "last_name": "Stewart",
+            "phone": "435-899-9182",
+            "email": "dstewy14@gmail.com",
+            "address": "1721 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3717"
+          },
+          "members": [
+            {
+              "first_name": "Brianna",
+              "last_name": "Stewart",
+              "gender": "F",
+              "birthday_partial": "7 Dec",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Jett D.",
+              "last_name": "Stewart",
+              "gender": "M",
+              "birthday_partial": "8 Oct",
+              "role": "child"
+            },
+            {
+              "first_name": "Beau Levi",
+              "last_name": "Stewart",
+              "gender": "M",
+              "birthday_partial": "12 May",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "4b48a0b7-b245-eedc-b983-1e859b042f57",
+          "name": "Poulsen Family",
+          "family_name": "Poulsen",
+          "head": {
+            "first_name": "Jenna",
+            "last_name": "Cary",
+            "phone": "435-256-1408",
+            "email": "wbeagle61@yahoo.com",
+            "address": "1873 S. Tower Bridge Dr.",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Alexa",
+              "last_name": "Edmondson",
+              "gender": "F",
+              "birthday_partial": "24 Jun",
+              "role": "other"
+            },
+            {
+              "first_name": "Addalyn",
+              "last_name": "Medina",
+              "gender": "F",
+              "birthday_partial": "11 Jul",
+              "role": "other"
+            },
+            {
+              "first_name": "Sophia Marie",
+              "last_name": "Garita-Cary",
+              "gender": "F",
+              "birthday_partial": "29 Jan",
+              "role": "other"
+            },
+            {
+              "first_name": "Gage",
+              "last_name": "Edmondson",
+              "gender": "M",
+              "birthday_partial": "15 Jan",
+              "role": "other"
+            },
+            {
+              "first_name": "Jett Hendrix",
+              "last_name": "Garita",
+              "gender": "M",
+              "birthday_partial": "3 Nov",
+              "role": "other"
+            }
+          ],
+          "category": "family",
+          "notes": "Complex multi-family household; PDF header 'Poulsen' but no Poulsen-named member listed."
+        },
+        {
+          "id": "ccf5b116-bc9a-dff0-c551-5677eaa5df21",
+          "name": "Ricks Family",
+          "family_name": "Ricks",
+          "head": {
+            "first_name": "Austin",
+            "last_name": "Ricks",
+            "phone": "801-413-9936",
+            "email": "austinkricks@gmail.com",
+            "address": "1881 S WOLVERINE WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3718"
+          },
+          "members": [
+            {
+              "first_name": "Haley Bonnie",
+              "last_name": "Ricks",
+              "gender": "F",
+              "birthday_partial": "2 Aug",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Ryann Hazel",
+              "last_name": "Ricks",
+              "gender": "F",
+              "birthday_partial": "25 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Oakley Georgia",
+              "last_name": "Ricks",
+              "gender": "F",
+              "birthday_partial": "14 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "af8ffd8a-b6a8-9005-f108-0a5784ff559f",
+          "name": "Fernquist Family",
+          "family_name": "Fernquist",
+          "head": {
+            "first_name": "Joshua",
+            "last_name": "Fernquist",
+            "phone": "660-525-7909",
+            "email": "jrfernquist812@gmail.com",
+            "address": "1890 S. Swamp Mesa",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Megan Taylor",
+              "last_name": "Fernquist",
+              "gender": "F",
+              "birthday_partial": "22 Aug",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Sophie Taylor",
+              "last_name": "Fernquist",
+              "gender": "F",
+              "birthday_partial": "20 Oct",
+              "role": "child"
+            },
+            {
+              "first_name": "Alice Renee",
+              "last_name": "Fernquist",
+              "gender": "F",
+              "birthday_partial": "28 Feb",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "66678c68-fb4e-daff-e47b-82b99cfd4b99",
+          "name": "Stoor Family",
+          "family_name": "Stoor",
+          "head": {
+            "first_name": "Dawson John",
+            "last_name": "Stoor",
+            "phone": "435-704-8210",
+            "email": "foxrider570@gmail.com",
+            "address": "1698 S Devils Garden Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Macie",
+              "last_name": "Warren",
+              "gender": "F",
+              "birthday_partial": "23 May",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": "Warren (Macie) listed under Stoor household."
+        },
+        {
+          "id": "1efae190-8a4c-6832-5303-c0b27286f467",
+          "name": "Sorensen Family",
+          "family_name": "Sorensen",
+          "head": {
+            "first_name": "Hyrum",
+            "last_name": "Sorensen",
+            "phone": "435-680-7353",
+            "email": "hyrumgary@gmail.com",
+            "address": "2957 E Corral Hollow Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3756"
+          },
+          "members": [
+            {
+              "first_name": "Jacey Finch",
+              "last_name": "Sorensen",
+              "gender": "F",
+              "birthday_partial": "20 Feb",
+              "role": "spouse"
+            }
+          ],
+          "category": "family",
+          "notes": "PDF spells 'Sorensen' (vs 'Sorenson' for Cody)."
+        },
+        {
+          "id": "7e7cfa06-40af-b0f8-5183-1192656fec18",
+          "name": "Wood Family",
+          "family_name": "Wood",
+          "head": {
+            "first_name": "Shawn Kirtpatrik",
+            "last_name": "Wood",
+            "phone": "702-979-0759",
+            "email": "shawnkwoody@gmail.com",
+            "address": "1566 S Wagon Box Way",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3691"
+          },
+          "members": [
+            {
+              "first_name": "Shauna",
+              "last_name": "Wood",
+              "gender": "F",
+              "birthday_partial": "13 Apr",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Nicole",
+              "last_name": "Wood",
+              "gender": "F",
+              "birthday_partial": "2 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Hannah Emily",
+              "last_name": "Wood",
+              "gender": "F",
+              "birthday_partial": "23 May",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "e2068bea-f1a6-80b3-0f3a-731b6ea65161",
+          "name": "Cranney Family",
+          "family_name": "Cranney",
+          "head": {
+            "first_name": "Dale",
+            "last_name": "Cranney",
+            "phone": "801-694-0606",
+            "email": "dalecranney@yahoo.com",
+            "address": "1568 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "947548b6-ecf0-e510-f567-4e02c385da0a",
+          "name": "Smith Family",
+          "family_name": "Smith",
+          "head": {
+            "first_name": "Trent",
+            "last_name": "Smith",
+            "phone": "435-772-5397",
+            "email": "trentpsmith1993@gmail.com",
+            "address": "1470 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3683"
+          },
+          "members": [
+            {
+              "first_name": "Morgan",
+              "last_name": "Smith",
+              "gender": "F",
+              "birthday_partial": "5 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Henry Boone",
+              "last_name": "Smith",
+              "gender": "M",
+              "birthday_partial": "25 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Norah",
+              "last_name": "Smith",
+              "gender": "F",
+              "birthday_partial": "6 Jul",
+              "role": "child"
+            },
+            {
+              "first_name": "Lincoln Palmer",
+              "last_name": "Smith",
+              "gender": "M",
+              "birthday_partial": "20 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Penelope J",
+              "last_name": "Smith",
+              "gender": "F",
+              "birthday_partial": "27 May",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "First Smith household in D3."
+        },
+        {
+          "id": "72233b62-36ba-6fc1-c336-6b0fc10a838c",
+          "name": "Child Family",
+          "family_name": "Child",
+          "head": {
+            "first_name": "Cody",
+            "last_name": "Child",
+            "phone": "385-243-0519",
+            "email": "codychild2@gmail.com",
+            "address": "1535 Ripple Rock Drive",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Kyla Jean",
+              "last_name": "Child",
+              "gender": "F",
+              "birthday_partial": "10 Apr",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Brooks Robert",
+              "last_name": "Child",
+              "gender": "M",
+              "birthday_partial": "28 Mar",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "338fab7c-c330-64f7-7202-9fbe46011b3a",
+          "name": "Ruben Family",
+          "family_name": "Ruben",
+          "head": {
+            "first_name": "Adam",
+            "last_name": "Ruben",
+            "phone": "801-709-8359",
+            "email": "adamjruben@gmail.com",
+            "address": "1586 S WAGON BOX WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3691"
+          },
+          "members": [
+            {
+              "first_name": "Charlee",
+              "last_name": "Ruben",
+              "gender": "F",
+              "birthday_partial": "28 May",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Finley Jane",
+              "last_name": "Ruben",
+              "gender": "F",
+              "birthday_partial": "31 Dec",
+              "role": "child"
+            },
+            {
+              "first_name": "Cohen John",
+              "last_name": "Ruben",
+              "gender": "M",
+              "birthday_partial": "11 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Rylee Mae",
+              "last_name": "Ruben",
+              "gender": "F",
+              "birthday_partial": "8 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Taylor Ann",
+              "last_name": "Ruben",
+              "gender": "F",
+              "birthday_partial": "24 Jun",
+              "role": "child"
+            },
+            {
+              "first_name": "Emery Laine",
+              "last_name": "Ruben",
+              "gender": "F",
+              "birthday_partial": "15 Apr",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "d0d40b44-32a1-6318-502a-c0ef239cf642",
+          "name": "Burrows Family",
+          "family_name": "Burrows",
+          "head": {
+            "first_name": "Helaman",
+            "last_name": "Burrows",
+            "phone": "801-636-4789",
+            "email": "burrowshs@gmail.com",
+            "address": "1736 S DEVILS GARDEN LN",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "McKenna Sheree",
+              "last_name": "Burrows",
+              "gender": "F",
+              "birthday_partial": "21 Jul",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Amelia Grace",
+              "last_name": "Burrows",
+              "gender": "F",
+              "birthday_partial": "30 Jul",
+              "role": "child"
+            },
+            {
+              "first_name": "Wrenn Paige",
+              "last_name": "Burrows",
+              "gender": "F",
+              "birthday_partial": "28 Aug",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "72783bd6-ce71-7341-0c8d-507d88fce34d",
+          "name": "Petersen Family",
+          "family_name": "Petersen",
+          "head": {
+            "first_name": "Chalise Geneal",
+            "last_name": "Petersen",
+            "phone": "801-687-2733",
+            "email": "chpeter12@gmail.com",
+            "address": "2921 E CORRAL HOLLOW DR",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3756"
+          },
+          "members": [
+            {
+              "first_name": "Tayson Shad",
+              "last_name": "Petersen",
+              "gender": "M",
+              "birthday_partial": "4 Sep",
+              "role": "child"
+            },
+            {
+              "first_name": "Teagan Cecil",
+              "last_name": "Petersen",
+              "gender": "M",
+              "birthday_partial": "7 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Ty Jake",
+              "last_name": "Petersen",
+              "gender": "M",
+              "birthday_partial": "9 Feb",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Second Petersen household in D3; single-parent (Chalise is head)."
+        },
+        {
+          "id": "5560106d-b6f9-e202-812e-e4dc9a51f2db",
+          "name": "Calkins Family",
+          "family_name": "Calkins",
+          "head": {
+            "first_name": "Sean Patrick",
+            "last_name": "Calkins",
+            "phone": "435-773-0125",
+            "email": "spcfamily@gmail.com",
+            "address": "1748 S Devils Garden Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "d0f233f4-1389-a201-15b3-9a93f4aab7fb",
+          "name": "Smith Family",
+          "family_name": "Smith",
+          "head": {
+            "first_name": "Ben",
+            "last_name": "Smith",
+            "phone": "801-698-8108",
+            "email": "bensmith.yyc@gmail.com",
+            "address": "1847 Cyclone Dr.",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Kellie",
+              "last_name": "Smith",
+              "gender": "F",
+              "birthday_partial": "20 Jun",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Lydia Jane",
+              "last_name": "Smith",
+              "gender": "F",
+              "birthday_partial": "6 Oct",
+              "role": "child"
+            },
+            {
+              "first_name": "Bronson Jack",
+              "last_name": "Smith",
+              "gender": "M",
+              "birthday_partial": "14 Aug",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Second Smith household in D3."
+        },
+        {
+          "id": "6b0e614b-0aa3-f296-b325-07e2804fa89b",
+          "name": "Brewer Family",
+          "family_name": "Brewer",
+          "head": {
+            "first_name": "Bradley Nelson",
+            "last_name": "Brewer",
+            "phone": "435-669-3834",
+            "email": "brewer01@gmail.com",
+            "address": "1721 S Cedar Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3717"
+          },
+          "members": [],
+          "category": "single",
+          "notes": ""
+        },
+        {
+          "id": "571138ad-f632-f261-5a2c-dae1e7adae09",
+          "name": "Cloward Family",
+          "family_name": "Cloward",
+          "head": {
+            "first_name": "Nicholas J",
+            "last_name": "Cloward",
+            "phone": "801-546-7468",
+            "email": "",
+            "address": "1863 South Cyclone Drive",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Angela",
+              "last_name": "Cloward",
+              "gender": "F",
+              "birthday_partial": "8 May",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Sophie",
+              "last_name": "Cloward",
+              "gender": "F",
+              "birthday_partial": "29 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Julian",
+              "last_name": "Cloward",
+              "gender": "M",
+              "birthday_partial": "21 Sep",
+              "role": "child"
+            },
+            {
+              "first_name": "Gabriel Thomas",
+              "last_name": "Cloward",
+              "gender": "M",
+              "birthday_partial": "26 Nov",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "02f8ae19-5102-c5f5-e8f4-6f7ee539f675",
+          "name": "Nish Family",
+          "family_name": "Nish",
+          "head": {
+            "first_name": "Jennifer",
+            "last_name": "Nish",
+            "phone": "801-244-2141",
+            "email": "mrsjennynish@gmail.com",
+            "address": "1752 S Devils Garden Ln",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3716"
+          },
+          "members": [
+            {
+              "first_name": "Maxwell",
+              "last_name": "Nish",
+              "gender": "M",
+              "birthday_partial": "14 Dec",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Single-parent household (Jennifer is head)."
+        },
+        {
+          "id": "9d433a58-3b7c-c1c5-54a1-e4e14cc0a23d",
+          "name": "Bryan Family",
+          "family_name": "Bryan",
+          "head": {
+            "first_name": "Sean",
+            "last_name": "Bryan",
+            "phone": "520-445-1256",
+            "email": "bry13006@gmail.com",
+            "address": "1450 S Ripple Rock Drive",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Amy",
+              "last_name": "Bryan",
+              "gender": "F",
+              "birthday_partial": "23 Feb",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Amelia",
+              "last_name": "Bryan",
+              "gender": "F",
+              "birthday_partial": "31 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Elliott",
+              "last_name": "Bryan",
+              "gender": "M",
+              "birthday_partial": "4 Nov",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Presidency member (District 3 president)."
+        },
+        {
+          "id": "4d1b606b-ece3-18af-8d7e-a13a77eed5b9",
+          "name": "Patterson Family",
+          "family_name": "Patterson",
+          "head": {
+            "first_name": "Rey",
+            "last_name": "Patterson",
+            "phone": "435-773-8968",
+            "email": "rpatter9@gmail.com",
+            "address": "1580 S WAGON BOX WAY",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3691"
+          },
+          "members": [
+            {
+              "first_name": "Carlee Ann",
+              "last_name": "Patterson",
+              "gender": "F",
+              "birthday_partial": "31 Jan",
+              "role": "spouse"
+            },
+            {
+              "first_name": "June Ann",
+              "last_name": "Patterson",
+              "gender": "F",
+              "birthday_partial": "31 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Navy Lee",
+              "last_name": "Patterson",
+              "gender": "F",
+              "birthday_partial": "15 Sep",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "19945069-4cf4-54ac-36c3-c110051294a5",
+          "name": "Gulbranson Family",
+          "family_name": "Gulbranson",
+          "head": {
+            "first_name": "Garyn",
+            "last_name": "Gulbranson",
+            "phone": "801-995-2173",
+            "email": "gklarke@gmail.com",
+            "address": "1879 South Swamp Mesa Drive",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [
+            {
+              "first_name": "Jill Ann",
+              "last_name": "Gulbranson",
+              "gender": "F",
+              "birthday_partial": "2 Nov",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Marlowe Jean",
+              "last_name": "Gulbranson",
+              "gender": "F",
+              "birthday_partial": "19 Mar",
+              "role": "child"
+            },
+            {
+              "first_name": "Brooks Timothy",
+              "last_name": "Gulbranson",
+              "gender": "M",
+              "birthday_partial": "24 Feb",
+              "role": "child"
+            },
+            {
+              "first_name": "Hayes Klark",
+              "last_name": "Gulbranson",
+              "gender": "M",
+              "birthday_partial": "6 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Mercer Ann",
+              "last_name": "Gulbranson",
+              "gender": "F",
+              "birthday_partial": "8 Feb",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "ec60552f-c9fc-0f66-060e-331687371f5e",
+          "name": "Pettus Family",
+          "family_name": "Pettus",
+          "head": {
+            "first_name": "Daniel",
+            "last_name": "Pettus",
+            "phone": "435-668-1731",
+            "email": "dannypettus3@gmail.com",
+            "address": "1953 S Swamp Mesa Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3800"
+          },
+          "members": [
+            {
+              "first_name": "Kylie Lyn",
+              "last_name": "Pettus",
+              "gender": "F",
+              "birthday_partial": "24 Oct",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Maddyn Victoria",
+              "last_name": "Pettus",
+              "gender": "F",
+              "birthday_partial": "21 Jul",
+              "role": "child"
+            },
+            {
+              "first_name": "Kinzley Jo",
+              "last_name": "Pettus",
+              "gender": "F",
+              "birthday_partial": "27 Jan",
+              "role": "child"
+            },
+            {
+              "first_name": "Jaxon Paul",
+              "last_name": "Pettus",
+              "gender": "M",
+              "birthday_partial": "5 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "b65106c3-12e8-6491-41be-3008ea0e7a0f",
+          "name": "Chollet Family",
+          "family_name": "Chollet",
+          "head": {
+            "first_name": "Cole",
+            "last_name": "Chollet",
+            "phone": "435-218-1455",
+            "email": "cole.chollet1@gmail.com",
+            "address": "1526 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Alexis Rose",
+              "last_name": "Chollet",
+              "gender": "F",
+              "birthday_partial": "17 Feb",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Indie May",
+              "last_name": "Chollet",
+              "gender": "F",
+              "birthday_partial": "17 May",
+              "role": "child"
+            },
+            {
+              "first_name": "Calvin Kai",
+              "last_name": "Chollet",
+              "gender": "M",
+              "birthday_partial": "8 Jun",
+              "role": "child"
+            },
+            {
+              "first_name": "Daisy Fin",
+              "last_name": "Chollet",
+              "gender": "F",
+              "birthday_partial": "13 Jul",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": "Presidency member (District 1 president; his household is ministered to in District 3)."
+        },
+        {
+          "id": "2d560cd4-1668-6171-7bfa-d5c4df49fbca",
+          "name": "Russell Family",
+          "family_name": "Russell",
+          "head": {
+            "first_name": "Chase",
+            "last_name": "Russell",
+            "phone": "970-901-4424",
+            "email": "cruss15@gmail.com",
+            "address": "1613 S Ripple Rock Dr",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3686"
+          },
+          "members": [
+            {
+              "first_name": "Breanna",
+              "last_name": "Russell",
+              "gender": "F",
+              "birthday_partial": "11 Apr",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Malia Jane",
+              "last_name": "Russell",
+              "gender": "F",
+              "birthday_partial": "2 Apr",
+              "role": "child"
+            },
+            {
+              "first_name": "Xander William",
+              "last_name": "Russell",
+              "gender": "M",
+              "birthday_partial": "23 Nov",
+              "role": "child"
+            },
+            {
+              "first_name": "Evelyn Mae",
+              "last_name": "Russell",
+              "gender": "F",
+              "birthday_partial": "15 Aug",
+              "role": "child"
+            },
+            {
+              "first_name": "Crew Michael",
+              "last_name": "Russell",
+              "gender": "M",
+              "birthday_partial": "25 Jan",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "db57b5e7-a251-2bc9-84bb-9c955b161ada",
+          "name": "Bringhurst Family",
+          "family_name": "Bringhurst",
+          "head": {
+            "first_name": "Wade",
+            "last_name": "Bringhurst",
+            "phone": "435-773-5215",
+            "email": "skipperwade12@gmail.com",
+            "address": "1508 S RIPPLE ROCK DR",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780-3685"
+          },
+          "members": [
+            {
+              "first_name": "Rachel Camille",
+              "last_name": "Bringhurst",
+              "gender": "F",
+              "birthday_partial": "26 Jun",
+              "role": "spouse"
+            },
+            {
+              "first_name": "Slade William",
+              "last_name": "Bringhurst",
+              "gender": "M",
+              "birthday_partial": "3 Mar",
+              "role": "child"
+            }
+          ],
+          "category": "family",
+          "notes": ""
+        },
+        {
+          "id": "bb528df4-adac-0dfd-946f-176fc9a753c3",
+          "name": "Jordan Bell (companion)",
+          "family_name": "Bell",
+          "head": {
+            "first_name": "Jordan",
+            "last_name": "Bell",
+            "phone": "801-388-0153",
+            "email": "jordanbell@designanywhere.org",
+            "address": "1898 South Tower Bridge Dr.",
+            "city": "Washington",
+            "state": "UT",
+            "zip": "84780"
+          },
+          "members": [],
+          "category": "cross_district",
+          "notes": "Cross-district companion; home household in District 1."
+        }
+      ]
+    }
+  ],
+  "totals": {
+    "households": 131,
+    "individuals": 476,
+    "by_district": {
+      "1": 42,
+      "2": 42,
+      "3": 47
+    }
+  }
+}

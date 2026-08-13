@@ -17,6 +17,7 @@ import {
   GOOGLE_SCOPES,
 } from './google.js';
 import { handleBookingConfirmation } from './notifications.js';
+import { getRoster, formatAddress, splitCompanions } from './roster.js';
 
 dotenv.config();
 
@@ -293,6 +294,156 @@ app.get('/api/companionships', async (req, res) => {
     const { data, error } = await query;
     if (error) throw error;
     res.json(data);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/companions?ward=long-valley-2nd-ward — public: all companionships
+// grouped by district, with companionship pair info.
+app.get('/api/companions', async (req, res) => {
+  const ward = String(req.query.ward || 'long-valley-2nd-ward').trim();
+  try {
+    const { companionships, presidencyByDistrict } = getRoster();
+
+    const byDistrict = new Map();
+    for (const comp of companionships) {
+      if (!byDistrict.has(comp.district)) byDistrict.set(comp.district, []);
+      byDistrict.get(comp.district).push(comp);
+    }
+
+    const districts = [...byDistrict.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([districtNumber, comps]) => ({
+        district_number: districtNumber,
+        presidency_member:
+          presidencyByDistrict.get(districtNumber) ||
+          { name: comps[0]?.presidency_member || '', email: '', phone: '' },
+        companionships: comps.map((comp) => ({
+          id: comp.id,
+          ...splitCompanions(comp.companions),
+        })),
+      }));
+
+    res.json({ ward, districts });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/families?companion_name=...&companionship_id=... — public: the
+// families a companionship ministers to, plus its assigned presidency member.
+app.get('/api/families', async (req, res) => {
+  const { companion_name, companionship_id } = req.query;
+  try {
+    const { companionships, householdById, presidencyByDistrict } = getRoster();
+
+    let comp = null;
+    if (companionship_id) {
+      comp = companionships.find((c) => c.id === companionship_id);
+    } else if (companion_name) {
+      const needle = String(companion_name).toLowerCase();
+      comp = companionships.find((c) =>
+        (c.companions || []).some((p) => (p.name || '').toLowerCase() === needle)
+      );
+    }
+
+    if (!comp) {
+      return res.status(404).json({ error: 'Companionship not found' });
+    }
+
+    const { companion_1, companion_2 } = splitCompanions(comp.companions);
+    const companions = [companion_1, companion_2].filter(Boolean);
+
+    const families = (comp.families_visited || []).map((f) => {
+      const hh = householdById.get(f.household_id);
+      return {
+        household_id: f.household_id,
+        head_name: f.head_name || '',
+        address: f.address || '',
+        phone: hh?.head?.phone || '',
+        email: hh?.head?.email || '',
+        category: f.category || '',
+        members: hh?.members || [],
+      };
+    });
+
+    res.json({
+      companionship_id: comp.id,
+      companions,
+      presidency_member:
+        presidencyByDistrict.get(comp.district) ||
+        { name: comp.presidency_member || '', email: '', phone: '' },
+      families,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/admin/roster — admin: full ward view (totals + by-district rollup +
+// filterable household list). Query: ?district=1 &category=single &search=Walker
+app.get('/api/admin/roster', requireAuth, requireAdmin, async (req, res) => {
+  const { district, category, search } = req.query;
+  try {
+    const { ward, companionships, householdsFlat, presidencyByDistrict, districts } = getRoster();
+
+    const totals = {
+      households: householdsFlat.length,
+      members: householdsFlat.reduce((sum, hh) => sum + 1 + (hh.members || []).length, 0),
+      companionships: companionships.length,
+    };
+
+    const by_district = districts.map((d) => {
+      const comps = companionships.filter((c) => c.district === d.district);
+      const hhs = householdsFlat.filter((hh) => hh.district_number === d.district);
+      return {
+        district_number: d.district,
+        presidency_member:
+          presidencyByDistrict.get(d.district) || { name: '', email: '', phone: '' },
+        companionships_count: comps.length,
+        households_count: hhs.length,
+        members_count: hhs.reduce((sum, hh) => sum + 1 + (hh.members || []).length, 0),
+      };
+    });
+
+    let households = householdsFlat.map((hh) => ({
+      household_id: hh.id,
+      head_name: `${hh.head?.first_name || ''} ${hh.head?.last_name || ''}`.trim(),
+      family_name: hh.family_name || '',
+      address: formatAddress(hh.head),
+      phone: hh.head?.phone || '',
+      email: hh.head?.email || '',
+      category: hh.category || '',
+      district_number: hh.district_number,
+      members: hh.members || [],
+    }));
+
+    if (district) {
+      const dn = Number(district);
+      households = households.filter((hh) => hh.district_number === dn);
+    }
+    if (category) {
+      households = households.filter((hh) => hh.category === category);
+    }
+    if (search) {
+      const needle = String(search).toLowerCase();
+      households = households.filter((hh) => {
+        const hay = [
+          hh.head_name,
+          hh.family_name,
+          hh.address,
+          hh.phone,
+          hh.email,
+          ...(hh.members || []).map((m) => `${m.first_name || ''} ${m.last_name || ''}`),
+        ]
+          .join(' ')
+          .toLowerCase();
+        return hay.includes(needle);
+      });
+    }
+
+    res.json({ ward, totals, by_district, households });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
