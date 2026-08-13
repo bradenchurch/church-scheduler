@@ -42,19 +42,19 @@ export default function Admin() {
             <input 
               type="text" placeholder="Companion 1 Name" required
               value={newComp.companion1_name} onChange={e => setNewComp({...newComp, companion1_name: e.target.value})}
-              className="p-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-ghost outline-none transition-all"
+              className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
             />
             <input 
               type="text" placeholder="Companion 2 Name" required
               value={newComp.companion2_name} onChange={e => setNewComp({...newComp, companion2_name: e.target.value})}
-              className="p-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-ghost outline-none transition-all"
+              className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
             />
           </div>
           <div>
             <select 
               required
               value={newComp.leader_id} onChange={e => setNewComp({...newComp, leader_id: e.target.value})}
-              className="p-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-ghost outline-none transition-all bg-white"
+              className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all bg-white"
             >
               <option value="">Select Interviewer...</option>
               {leaders.map(l => (
@@ -62,7 +62,7 @@ export default function Admin() {
               ))}
             </select>
           </div>
-          <button type="submit" className="bg-burgundy text-white px-4 py-2 rounded-md font-semibold hover:bg-burgundy-light transition-colors">Add</button>
+          <button type="submit" className="min-h-[44px] bg-burgundy text-white px-4 py-2 rounded-md font-semibold hover:bg-burgundy-light transition-colors">Add</button>
         </form>
       </div>
 

@@ -107,13 +107,13 @@ export default function Leader() {
             <div className="flex gap-2">
               <button
                 onClick={handleCopyDigest}
-                className="bg-transparent border border-burgundy text-burgundy px-4 py-2 rounded-md hover:bg-burgundy-ghost transition-colors text-sm font-semibold"
+                className="min-h-[44px] bg-transparent border border-burgundy text-burgundy px-4 py-2 rounded-md hover:bg-burgundy-ghost transition-colors text-sm font-semibold"
               >
                 Copy Digest
               </button>
               <button
                 onClick={handleBulkComplete}
-                className="bg-burgundy text-white px-4 py-2 rounded-md hover:bg-burgundy-light transition-colors text-sm font-semibold"
+                className="min-h-[44px] bg-burgundy text-white px-4 py-2 rounded-md hover:bg-burgundy-light transition-colors text-sm font-semibold"
               >
                 Bulk Mark Complete
               </button>
@@ -164,7 +164,7 @@ export default function Leader() {
           {!addingSlot ? (
             <button
               onClick={() => setAddingSlot(true)}
-              className="w-full py-2 border-2 border-dashed border-warm-border text-burgundy rounded-lg hover:border-burgundy-light hover:bg-burgundy-ghost transition-colors font-semibold"
+              className="min-h-[44px] w-full py-2 border-2 border-dashed border-warm-border text-burgundy rounded-lg hover:border-burgundy-light hover:bg-burgundy-ghost transition-colors font-semibold"
             >
               + Add New Slot
             </button>
@@ -174,7 +174,7 @@ export default function Leader() {
                 <select
                   value={newSlotDay}
                   onChange={e => setNewSlotDay(parseInt(e.target.value))}
-                  className="p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-ghost outline-none transition-all flex-1"
+                  className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all flex-1"
                 >
                   <option value={0}>Sunday</option>
                   <option value={1}>Monday</option>
@@ -188,12 +188,12 @@ export default function Leader() {
                   type="time"
                   value={newSlotTime}
                   onChange={e => setNewSlotTime(e.target.value)}
-                  className="p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-ghost outline-none transition-all flex-1"
+                  className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all flex-1"
                 />
               </div>
               <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setAddingSlot(false)} className="px-4 py-2 text-stone-600 font-semibold hover:underline">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-burgundy text-white rounded-md hover:bg-burgundy-light transition-colors font-semibold">Save Slot</button>
+                <button type="button" onClick={() => setAddingSlot(false)} className="min-h-[44px] px-4 py-2 text-stone-600 font-semibold hover:underline">Cancel</button>
+                <button type="submit" className="min-h-[44px] px-4 py-2 bg-burgundy text-white rounded-md hover:bg-burgundy-light transition-colors font-semibold">Save Slot</button>
               </div>
             </form>
           )}

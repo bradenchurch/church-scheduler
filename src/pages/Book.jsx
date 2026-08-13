@@ -124,10 +124,10 @@ END:VCALENDAR`;
           <p className="text-sage mb-6 font-medium">{currentT.scheduled}</p>
           
           <div className="flex flex-col gap-3 mb-6">
-            <a href={googleLink} target="_blank" rel="noreferrer" className="bg-burgundy text-white py-2 px-4 rounded-md font-semibold hover:bg-burgundy-light transition-colors">
+            <a href={googleLink} target="_blank" rel="noreferrer" className="min-h-[44px] bg-burgundy text-white py-2 px-4 rounded-md font-semibold hover:bg-burgundy-light transition-colors">
               {currentT.addToGoogle}
             </a>
-            <a href={icsLink} download="interview.ics" className="bg-transparent border border-burgundy text-burgundy py-2 px-4 rounded-md font-semibold hover:bg-burgundy-ghost transition-colors">
+            <a href={icsLink} download="interview.ics" className="min-h-[44px] bg-transparent border border-burgundy text-burgundy py-2 px-4 rounded-md font-semibold hover:bg-burgundy-ghost transition-colors">
               {currentT.downloadIcs}
             </a>
           </div>
@@ -155,9 +155,9 @@ END:VCALENDAR`;
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder={currentT.placeholder}
-              className="flex-1 border-[1.5px] border-warm-border rounded-md p-2 text-lg focus:border-burgundy focus:ring focus:ring-burgundy-ghost outline-none transition-all"
+              className="min-h-[44px] flex-1 border-[1.5px] border-warm-border rounded-md p-2 text-lg focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
             />
-            <button type="submit" className="bg-burgundy text-white px-4 rounded-md font-semibold hover:bg-burgundy-light transition-colors">{currentT.search}</button>
+            <button type="submit" className="min-h-[44px] bg-burgundy text-white px-4 rounded-md font-semibold hover:bg-burgundy-light transition-colors">{currentT.search}</button>
           </form>
 
           <div className="space-y-2">

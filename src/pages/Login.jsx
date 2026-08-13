@@ -38,14 +38,14 @@ export default function Login() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full p-2 border-[1.5px] border-warm-border rounded-md focus:border-burgundy focus:ring focus:ring-burgundy-ghost outline-none transition-all"
+            className="min-h-[44px] w-full p-2 border-[1.5px] border-warm-border rounded-md focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
             placeholder="your@email.com"
           />
         </div>
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-burgundy text-white p-2 rounded-md font-semibold hover:bg-burgundy-light transition-colors disabled:opacity-50"
+          className="min-h-[44px] w-full bg-burgundy text-white p-2 rounded-md font-semibold hover:bg-burgundy-light transition-colors disabled:opacity-50"
         >
           {loading ? 'Sending link...' : 'Send Magic Link'}
         </button>
