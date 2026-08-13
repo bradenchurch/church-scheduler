@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import QREntry from './pages/QREntry';
 import ProtectedRoute from './components/ProtectedRoute';
+import Settings from './pages/Settings';
 
 function App() {
   return (
@@ -42,6 +43,14 @@ function App() {
             element={
               <ProtectedRoute requireRole="admin">
                 <Admin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

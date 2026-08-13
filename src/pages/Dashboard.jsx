@@ -315,6 +315,7 @@ export default function Dashboard() {
                 {role === 'admin' && (
                   <Link to="/admin" className="text-stone-600 hover:underline">Admin Panel</Link>
                 )}
+                <Link to="/settings" className="text-stone-600 hover:underline">Settings</Link>
                 <button onClick={() => signOut()} className="text-red-600 hover:underline text-sm ml-auto">
                   Sign Out
                 </button>

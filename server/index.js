@@ -1,10 +1,22 @@
 import express from 'express';
 import cors from 'cors';
 import QRCode from 'qrcode';
+import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 import { getWardSlug, getDefaultWardSlug } from './ward.js';
 import { assignNextPending } from './routing.js';
+import {
+  buildAuthUrl,
+  exchangeCode,
+  authorizedClient,
+  getTokenEmail,
+  revokeToken,
+  createCalendarEvent,
+  sendEmail,
+  GOOGLE_SCOPES,
+} from './google.js';
+import { handleBookingConfirmation } from './notifications.js';
 
 dotenv.config();
 
@@ -15,6 +27,10 @@ const port = process.env.PORT || 3001;
 const supabaseUrl = process.env.SUPABASE_URL || 'https://example.supabase.co';
 const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || 'public-anon-key';
 const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Service-role client for sensitive tables (oauth_tokens / confirmation_log) that are RLS-protected.
+const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY || supabaseKey;
+const supabaseAdmin = createClient(supabaseUrl, serviceKey);
 
 app.use(cors());
 app.use(express.json());
@@ -68,6 +84,199 @@ const requireAdmin = (req, res, next) => {
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
+});
+
+// --- Google OAuth helpers ---
+
+function parseCookies(req) {
+  const header = req.headers.cookie || '';
+  const out = {};
+  for (const part of header.split(';')) {
+    const idx = part.indexOf('=');
+    if (idx === -1) continue;
+    const k = part.slice(0, idx).trim();
+    const v = part.slice(idx + 1).trim();
+    if (k) out[k] = decodeURIComponent(v);
+  }
+  return out;
+}
+
+function oauthCookieOptions(maxAgeMs) {
+  return {
+    httpOnly: true,
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: maxAgeMs,
+  };
+}
+
+function clearOAuthCookies(res) {
+  const opts = { httpOnly: true, path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production' };
+  res.clearCookie('oauth_state', opts);
+  res.clearCookie('oauth_user_id', opts);
+}
+
+// GET /api/auth/google/start — returns the Google consent URL (auth required)
+app.get('/api/auth/google/start', requireAuth, (req, res) => {
+  try {
+    const state = crypto.randomBytes(24).toString('hex');
+    const url = buildAuthUrl(state);
+    const opts = oauthCookieOptions(10 * 60 * 1000);
+    res.cookie('oauth_state', state, opts);
+    res.cookie('oauth_user_id', req.user.id, opts);
+    res.json({ url });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/auth/google/callback — exchange code, persist tokens, redirect to /settings
+app.get('/api/auth/google/callback', async (req, res) => {
+  const cookies = parseCookies(req);
+  const { code, state, error } = req.query;
+
+  if (error) {
+    clearOAuthCookies(res);
+    return res.redirect(`/settings?connected=false&error=${encodeURIComponent(error)}`);
+  }
+  if (!code) {
+    clearOAuthCookies(res);
+    return res.redirect(`/settings?connected=false&error=${encodeURIComponent('missing authorization code')}`);
+  }
+  if (state !== cookies.oauth_state) {
+    clearOAuthCookies(res);
+    return res.redirect(`/settings?connected=false&error=${encodeURIComponent('state mismatch')}`);
+  }
+
+  const userId = cookies.oauth_user_id;
+  if (!userId) {
+    clearOAuthCookies(res);
+    return res.redirect(`/settings?connected=false&error=${encodeURIComponent('missing user session')}`);
+  }
+
+  try {
+    const tokens = await exchangeCode(code);
+    const email = await getTokenEmail(tokens.access_token);
+
+    const row = {
+      user_id: userId,
+      email,
+      provider: 'google',
+      access_token: tokens.access_token,
+      refresh_token: tokens.refresh_token || null,
+      expires_at: tokens.expiry_date ? new Date(tokens.expiry_date).toISOString() : null,
+      scopes: GOOGLE_SCOPES,
+      updated_at: new Date().toISOString(),
+    };
+
+    const { error: upsertError } = await supabaseAdmin
+      .from('oauth_tokens')
+      .upsert(row, { onConflict: 'user_id' });
+
+    clearOAuthCookies(res);
+    if (upsertError) {
+      return res.redirect(`/settings?connected=false&error=${encodeURIComponent(upsertError.message)}`);
+    }
+    return res.redirect('/settings?connected=true');
+  } catch (err) {
+    clearOAuthCookies(res);
+    return res.redirect(`/settings?connected=false&error=${encodeURIComponent(err.message)}`);
+  }
+});
+
+// GET /api/auth/google/status — current connection status for the logged-in leader
+app.get('/api/auth/google/status', requireAuth, async (req, res) => {
+  try {
+    const { data: tokenRow } = await supabaseAdmin
+      .from('oauth_tokens')
+      .select('id, email, provider, scopes, updated_at')
+      .eq('user_id', req.user.id)
+      .maybeSingle();
+
+    res.json({
+      connected: !!tokenRow,
+      email: tokenRow?.email || req.user.email,
+      provider: tokenRow?.provider || 'google',
+      scopes: tokenRow?.scopes || [],
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/google/disconnect — revoke tokens and delete the row
+app.post('/api/auth/google/disconnect', requireAuth, async (req, res) => {
+  try {
+    const { data: tokenRow } = await supabaseAdmin
+      .from('oauth_tokens')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .maybeSingle();
+
+    if (tokenRow?.access_token) {
+      try {
+        await revokeToken(tokenRow.access_token);
+      } catch (err) {
+        console.error('Token revoke failed (continuing to delete row):', err.message);
+      }
+    }
+
+    await supabaseAdmin.from('oauth_tokens').delete().eq('user_id', req.user.id);
+    res.json({ disconnected: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/auth/google/test-invite — send a test calendar invite + email to self
+app.post('/api/auth/google/test-invite', requireAuth, async (req, res) => {
+  try {
+    const { data: tokenRow } = await supabaseAdmin
+      .from('oauth_tokens')
+      .select('*')
+      .eq('user_id', req.user.id)
+      .maybeSingle();
+
+    if (!tokenRow) {
+      return res.status(400).json({ error: 'No Google account connected' });
+    }
+
+    const oauth2 = authorizedClient(tokenRow);
+    const now = new Date();
+    const date = now.toISOString().slice(0, 10);
+    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:00`;
+
+    let calendarResult = 'sent';
+    let emailResult = 'sent';
+
+    try {
+      await createCalendarEvent(oauth2, {
+        summary: 'EQ Scheduler — Test Invite',
+        description: 'This is a test event from the EQ Scheduler settings page.',
+        date,
+        time,
+        durationMinutes: 15,
+        attendees: [req.user.email],
+      });
+    } catch (err) {
+      calendarResult = `failed: ${err.message}`;
+    }
+
+    try {
+      await sendEmail(oauth2, {
+        to: req.user.email,
+        subject: 'EQ Scheduler — Test Email',
+        body: 'This is a test email from the EQ Scheduler settings page.',
+      });
+    } catch (err) {
+      emailResult = `failed: ${err.message}`;
+    }
+
+    res.json({ calendar: calendarResult, email: emailResult });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Routes
@@ -172,7 +381,17 @@ app.post('/api/bookings', async (req, res) => {
       .insert([{ companionship_id, slot_id, scheduled_date, status: 'booked' }])
       .select();
     if (error) throw error;
-    res.status(201).json(data[0]);
+    const booking = data[0];
+
+    // After confirmation, send calendar invite + email to the assigned leader/elder.
+    // Guarded so notification failures never break the booking response.
+    try {
+      await handleBookingConfirmation(supabaseAdmin, booking);
+    } catch (notifErr) {
+      console.error('Booking notification error:', notifErr.message);
+    }
+
+    res.status(201).json(booking);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
