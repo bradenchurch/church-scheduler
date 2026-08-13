@@ -8,15 +8,16 @@ export default function Admin() {
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState('');
+  const [qrTarget, setQrTarget] = useState('');
   const { token } = useAuth();
-
-  const QR_TARGET = 'https://church-scheduler.vercel.app/q/long-valley-2nd-ward';
 
   useEffect(() => {
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
     fetch('/api/leaders').then(r => r.json()).then(setLeaders).catch(() => []);
     fetch('/api/companionships', { headers }).then(r => r.json()).then(setCompanionships).catch(() => []);
+    // Resolve the canonical QR target from the server so the slug is never hardcoded client-side.
+    fetch('/api/ward').then(r => r.json()).then(d => { if (d?.ok) setQrTarget(d.qrUrl); }).catch(() => {});
   }, [token]);
 
   const handleAddComp = async (e) => {

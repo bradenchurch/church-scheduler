@@ -3,6 +3,7 @@ import cors from 'cors';
 import QRCode from 'qrcode';
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import { getWardSlug, getDefaultWardSlug } from './ward.js';
 
 dotenv.config();
 
@@ -323,11 +324,30 @@ app.post('/api/qr/request', async (req, res) => {
 });
 
 // GET /api/qr/generate?target=... — returns a QR code (PNG data URL) for a given URL.
+// If no target is provided, defaults to the canonical ward QR URL.
 app.get('/api/qr/generate', async (req, res) => {
-  const target = req.query.target || 'https://church-scheduler.vercel.app/q/long-valley-2nd-ward';
+  let target = req.query.target;
+  if (!target) {
+    const slug = await getWardSlug();
+    const base = process.env.PUBLIC_BASE_URL || 'https://church-scheduler.vercel.app';
+    target = `${base.replace(/\/$/, '')}/q/${encodeURIComponent(slug)}`;
+  }
   try {
     const dataUrl = await QRCode.toDataURL(target, { width: 400, margin: 2 });
     res.json({ ok: true, url: target, dataUrl });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// GET /api/ward — returns the canonical ward slug + the canonical QR URL.
+// Public endpoint (no auth) so the QREntry page and Admin page can both use it.
+app.get('/api/ward', async (req, res) => {
+  try {
+    const slug = await getWardSlug();
+    const base = process.env.PUBLIC_BASE_URL || 'https://church-scheduler.vercel.app';
+    const qrUrl = `${base.replace(/\/$/, '')}/q/${encodeURIComponent(slug)}`;
+    res.json({ ok: true, slug, qrUrl, defaultSlug: getDefaultWardSlug() });
   } catch (error) {
     res.status(500).json({ ok: false, error: error.message });
   }

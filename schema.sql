@@ -38,6 +38,13 @@ CREATE TABLE IF NOT EXISTS config (
   value JSONB
 );
 
+-- Canonical ward slug for QR-code URLs. Single source of truth; server/ward.js
+-- reads from this row (with env var override + hardcoded fallback). Update
+-- the slug here at runtime if the ward boundary changes.
+INSERT INTO config (key, value)
+VALUES ('ward_slug', '"long-valley-2nd-ward"')
+ON CONFLICT (key) DO NOTHING;
+
 -- QR-code interview requests (public chapel entry flow)
 CREATE TABLE IF NOT EXISTS qr_requests (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -46,8 +53,12 @@ CREATE TABLE IF NOT EXISTS qr_requests (
   submitted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   assigned_to TEXT REFERENCES leaders(id),
   assigned_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
   notes TEXT
 );
+
+-- Backfill: add completed_at to existing qr_requests tables (added by cs-smart-routing in flight).
+ALTER TABLE qr_requests ADD COLUMN IF NOT EXISTS completed_at TIMESTAMPTZ;
 
 CREATE INDEX IF NOT EXISTS idx_qr_requests_status ON qr_requests(status);
 CREATE INDEX IF NOT EXISTS idx_qr_requests_companionship ON qr_requests(companionship_id);
