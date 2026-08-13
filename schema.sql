@@ -93,3 +93,47 @@ CREATE TABLE IF NOT EXISTS confirmation_log (
 -- Sensitive tables: deny anon access, allow service role only.
 ALTER TABLE oauth_tokens ENABLE ROW LEVEL SECURITY;
 ALTER TABLE confirmation_log ENABLE ROW LEVEL SECURITY;
+
+-- =============================================================
+-- Ministering roster: households + members + companionship links
+-- (Phase A1). Seeded by seed.sql (deterministic, idempotent).
+-- =============================================================
+
+CREATE TABLE IF NOT EXISTS households (
+  id UUID PRIMARY KEY,
+  ward_slug TEXT NOT NULL,
+  family_name TEXT,
+  head_first_name TEXT,
+  head_last_name TEXT,
+  head_phone TEXT,
+  head_email TEXT,
+  address TEXT,
+  city TEXT,
+  state TEXT,
+  zip TEXT,
+  category TEXT CHECK (category IN ('family','single','cross_district')),
+  district_number INTEGER,
+  active BOOLEAN DEFAULT true,
+  notes TEXT,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS household_members (
+  id UUID PRIMARY KEY,
+  household_id UUID REFERENCES households(id) ON DELETE CASCADE,
+  first_name TEXT,
+  last_name TEXT,
+  gender TEXT CHECK (gender IN ('M','F')),
+  birthday_partial TEXT,
+  role TEXT CHECK (role IN ('spouse','child','single_adult','other'))
+);
+
+CREATE TABLE IF NOT EXISTS companionship_households (
+  companionship_id UUID REFERENCES companionships(id) ON DELETE CASCADE,
+  household_id UUID REFERENCES households(id) ON DELETE CASCADE,
+  PRIMARY KEY (companionship_id, household_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_households_district ON households(district_number);
+CREATE INDEX IF NOT EXISTS idx_household_members_household ON household_members(household_id);
+CREATE INDEX IF NOT EXISTS idx_companionship_households_household ON companionship_households(household_id);
