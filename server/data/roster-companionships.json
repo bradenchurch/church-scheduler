@@ -1,0 +1,2221 @@
+{
+  "ward": "long-valley-2nd-ward",
+  "stake": "washington-utah-long-valley",
+  "extracted_at": "2026-08-13T19:09:36.501019+00:00",
+  "source_pdf": "Ministering_Assignments---300ec225-0e97-4221-bccc-00d73a8f27ed.pdf",
+  "totals": {
+    "companionships": 60,
+    "families_visited": 128,
+    "by_district": {
+      "1": 41,
+      "2": 41,
+      "3": 46
+    }
+  },
+  "companionships": [
+    {
+      "id": "ac3fd9d5-dfec-5d20-bcce-2c7061a1567c",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Austin Behymer",
+          "phone": "435-429-9843",
+          "email": "Austin.behymer@gmail.com",
+          "head": true
+        },
+        {
+          "name": "Bridger Tower",
+          "phone": "801-300-7473",
+          "email": "bridgertower@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "96645ab5-1a42-5175-dc02-23b9d9522cfd",
+          "family_name": "Evans",
+          "head_name": "Luke Evans",
+          "address": "1865 S Tower Bridge Dr, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "d0fd944c-488e-184e-8a44-88249d2c51d7",
+          "family_name": "Mann",
+          "head_name": "Ryan Mann",
+          "address": "1529 S Ripple Rock Dr, Washington UT 84780-3685",
+          "category": "family"
+        },
+        {
+          "household_id": "22775cfa-5412-5486-7448-44238101f704",
+          "family_name": "Walker",
+          "head_name": "Kashden Walker",
+          "address": "1940 S Wolverine Way, Washington UT 84780",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "44fb2ee4-0422-5c93-8b98-6b6b41f4ba18",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Kash Bracken",
+          "phone": "+14356807840",
+          "email": "kashbracken@gmail.com",
+          "head": true
+        },
+        {
+          "name": "Kenneth Mar Bracken",
+          "phone": "435-6192532",
+          "email": "kbrackenm@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "73ab2d85-5755-8d29-97aa-acb36b9142b6",
+          "family_name": "Collins",
+          "head_name": "Cashe Collins",
+          "address": "1885 S Cyclone Dr, Washington UT 84780-3773",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "1268264b-e301-531e-a26f-238ad68bcc76",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Sean Bryan",
+          "phone": "520-445-1256",
+          "email": "bry13006@Gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Kason Whitesides",
+          "phone": "435-922-8141",
+          "email": "slips1225@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "a006d811-ce8b-3709-724b-25cfec5aeb5c",
+          "family_name": "Bond",
+          "head_name": "Cody Bond",
+          "address": "1447 S. Ripple Rock Drive, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "fa7cbbc2-1407-d763-a2eb-d89d687a7749",
+          "family_name": "Clark",
+          "head_name": "Matt Clark",
+          "address": "1731 S Cedar Mesa Dr, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "0759fc18-cde9-8319-3159-682d5f89fa8e",
+          "family_name": "Crichton",
+          "head_name": "Donald Brad Crichton",
+          "address": "1889 S Tower Bridge Dr, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "beb7c01e-dede-b84f-4359-9b6b07e1bd30",
+          "family_name": "Sharp",
+          "head_name": "Ben Sharp",
+          "address": "1532 S Ripple Rock Dr, Washington UT 84780-3685",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "ca5e235e-7b26-52ff-b9c7-f4e3b79ae468",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Matt Cahoon",
+          "phone": "702-217-9164",
+          "email": "mattcahoon.lds@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Colton Wynne",
+          "phone": "435-709-1257",
+          "email": "coltonwynne3@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "ccc4acd2-9612-56b6-e698-9c7a7eebe07d",
+          "family_name": "Blazzard",
+          "head_name": "Izaic Blazzard",
+          "address": "1621 S Star Springs Dr, Washington UT 84780-3692",
+          "category": "family"
+        },
+        {
+          "household_id": "eef19663-4883-2e3b-fe5a-2ab09698a25c",
+          "family_name": "Wright",
+          "head_name": "Shane Joseph Wright",
+          "address": "1547 S Wagon Box Way, Washington UT 84780-3635",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "89279970-930f-5959-9482-3c7b30c9a7bc",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Cody Child",
+          "phone": "385-243-0519",
+          "email": "codychild2@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Ryan Petersen",
+          "phone": "435-406-9458",
+          "email": "petersen.430.93@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "8f9ec472-114b-9234-d910-2eabab4519ab",
+          "family_name": "Dunyon",
+          "head_name": "Kevin Dunyon",
+          "address": "1902 S Swamp Mesa Dr, Washington UT 84780-3800",
+          "category": "family"
+        },
+        {
+          "household_id": "c2d934e8-304f-f570-d96c-e5ca4fa9a265",
+          "family_name": "Everitt",
+          "head_name": "Jared Everitt",
+          "address": "1474 S Ripple Rock Drive, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "e9313d29-8897-6b23-df6a-f6ad681881c8",
+          "family_name": "Thompson",
+          "head_name": "Kenneth Taylor Thompson",
+          "address": "1649 S Cedar Mesa Dr, Washington UT 84780-3637",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "7e7b4966-73c9-5f3c-8283-86df7e5649ac",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Treyson Russell Christiansen",
+          "phone": "(435)231-1212",
+          "email": "D00336276@dmail.dixie.edu",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Kameron Eves",
+          "phone": "(702) 686-2105",
+          "email": "KameronEves@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "3528dc69-9aa7-f86b-8e31-ee15dd6785af",
+          "family_name": "Miles",
+          "head_name": "Wyatt Miles",
+          "address": "1632 S Cedar Mesa Dr, Washington UT 84780-3637",
+          "category": "family"
+        },
+        {
+          "household_id": "16dd67cc-a1df-f41b-5f35-5b0a70a38b5b",
+          "family_name": "Nielson",
+          "head_name": "Matthew Nielson",
+          "address": "2953 E Corral Hollow Dr, Washington UT 84780",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "8bd33f7f-831d-57b8-865a-e1e44cd5f261",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "David Arthur Durrant",
+          "phone": "801-854-8630",
+          "email": "David.durrant16@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "20bc3941-dd22-64b4-91e1-d8d6c4c4210b",
+          "family_name": "Bell",
+          "head_name": "Jordan Bell",
+          "address": "1898 South Tower Bridge Dr., Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "f2551914-7a7e-e51e-e2d9-adb372efcbaf",
+          "family_name": "Lynch",
+          "head_name": "Patrick Lynch",
+          "address": "1572 S Star Springs Dr, Washington UT 84780-3636",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "934145af-5610-5c66-a3aa-b5698bf35c95",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Branden Edelmayer",
+          "phone": "208-351-5772",
+          "email": "brandenedelmayer@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        },
+        {
+          "name": "Wyatt Miles",
+          "phone": "435-705-0180",
+          "email": "",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "098864cc-a55c-ad94-ce72-8555680b377d",
+          "family_name": "Bott",
+          "head_name": "Kroy Lance Bott",
+          "address": "1693 S Devils Garden Ln, Washington UT 84780",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "071e88cf-de88-5d2c-add4-178d23143375",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Janson Evans",
+          "phone": "801-309-4875",
+          "email": "evans.janson@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        },
+        {
+          "name": "William John Valadez",
+          "phone": "435-619-0588",
+          "email": "will.valadez4@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "1cc82462-4f9b-8d6a-b063-64a8fa947efd",
+          "family_name": "Adams",
+          "head_name": "Ethan Adams",
+          "address": "1513 S Ripple Rock Dr, Washington UT 84780-3685",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "698d4c66-fd47-5e32-8169-3640b48c6297",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Jacob William Ewell",
+          "phone": "909-658-5370",
+          "email": "jacobewell7@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        },
+        {
+          "name": "Shawn Kirtpatrik Wood",
+          "phone": "702-979-0759",
+          "email": "shawnkwoody@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "925b246b-7534-0602-dd05-b23f2f156ba3",
+          "family_name": "Aycock",
+          "head_name": "Rodney James Aycock",
+          "address": "1836 S Wolverine Way, Washington UT 84780-3718",
+          "category": "family"
+        },
+        {
+          "household_id": "f9cb24b7-7998-9e5d-0724-1d5d244efffd",
+          "family_name": "Kealer",
+          "head_name": "Bryce Kealer",
+          "address": "1845 S Wolverine Way, Washington UT 84780-3718",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "f28e7df7-7692-5f2e-81f6-62ae60a1cac7",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Garyn Gulbranson",
+          "phone": "801-995-2173",
+          "email": "gklarke@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Travis Robinson",
+          "phone": "435-590-9681",
+          "email": "robinson.travis20@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "bd8d05e4-b77a-c4fa-5978-f09cd663ef2a",
+          "family_name": "Behymer",
+          "head_name": "Austin Behymer",
+          "address": "1884 S Tower Bridge Dr., Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "b326bcbd-8436-6fa4-cd7c-0539ab8f8c1b",
+          "family_name": "Davis",
+          "head_name": "Carter Davis",
+          "address": "1905 S Swamp Mesa Dr., Washington UT 84780",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "59d257e8-4036-57fd-827d-3db08bc0a676",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Benjamin Sidney Hales",
+          "phone": "385-375-9058",
+          "email": "b3.hales@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        },
+        {
+          "name": "Kawika Tupuola",
+          "phone": "8018895280",
+          "email": "ktups90@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "fade445d-9cac-cf1d-137e-9d36d9c453be",
+          "family_name": "Brady",
+          "head_name": "Cody Dean Brady",
+          "address": "1480 S Ripple Rock Dr, Washington UT 84780-3683",
+          "category": "family"
+        },
+        {
+          "household_id": "3aaa65a4-ec5c-0740-0d0a-fcf4620c7cba",
+          "family_name": "Gates",
+          "head_name": "Zander Gates",
+          "address": "1587 S WAGON BOX WAY, Washington UT 84780-3691",
+          "category": "family"
+        },
+        {
+          "household_id": "f17c0a87-d6a7-9b1e-0e29-1e01b3986186",
+          "family_name": "Valadez",
+          "head_name": "William John Valadez",
+          "address": "1746 S DEVILS GARDEN LN, Washington UT 84780-3716",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "ce07091b-bf91-5fe0-9a61-bc413aec7acd",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Joshua Bruce Klawitter",
+          "phone": "+14356692020",
+          "email": "Josh_klawitter@outlook.com",
+          "head": true
+        },
+        {
+          "name": "Raymond Eric Klawitter",
+          "phone": "+14356696603",
+          "email": "ray_klawitter@yahoo.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "a87985b5-cb47-8f33-66ac-356bc5f90f1e",
+          "family_name": "Billingsley",
+          "head_name": "Kamilie Billingsley",
+          "address": "1583 S Ripple Rock Dr, Washington UT 84780-3685",
+          "category": "family"
+        },
+        {
+          "household_id": "7d6e4b1e-f6f0-7498-eed0-f6a8090e1ef7",
+          "family_name": "Goodall",
+          "head_name": "Ryan Goodall",
+          "address": "1465 S Ripple Rock Dr, Washington UT 84780-3683",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "c651a8b2-2bbd-5882-aead-133351ddc32e",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Jason Owen",
+          "phone": "702-275-9168",
+          "email": "jmowen1605@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Liam Owen",
+          "phone": "",
+          "email": "liamowen0724@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "b94b2c4e-caad-e475-d021-ba1cdd1e2d63",
+          "family_name": "Parker",
+          "head_name": "Kylie Michelle Parker",
+          "address": "1550 S Wagon Box Way, Washington UT 84780-3635",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "44f52bbe-1f6a-50a6-a4ee-45f2d00d93fd",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Chase Russell",
+          "phone": "970-901-4424",
+          "email": "cruss15@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Shane Joseph Wright",
+          "phone": "435-862-1073",
+          "email": "shanejwright18@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "20d5610c-ed05-097f-bad6-abac3577d334",
+          "family_name": "Bistline",
+          "head_name": "Sherry Bistline",
+          "address": "1683 S Devils Garden Ln, Washington UT 84780-3716",
+          "category": "family"
+        },
+        {
+          "household_id": "fd2275b5-65ee-cb22-9b79-b4367edbe104",
+          "family_name": "Mayfield",
+          "head_name": "Amanda Mayfield",
+          "address": "1832 S WOLVERINE WAY, Washington UT 84780-3718",
+          "category": "single"
+        }
+      ]
+    },
+    {
+      "id": "ac4110cf-90f9-5f03-9500-655146c015d5",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Brennan Sanders",
+          "phone": "435-531-9179",
+          "email": "gbsand28@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "2ba5f0cd-11f9-d1f1-a706-a8dcee17bc15",
+          "family_name": "Baker",
+          "head_name": "Tyler Baker",
+          "address": "1634 S Star Springs Dr, Washington UT 84780-3692",
+          "category": "family"
+        },
+        {
+          "household_id": "9e55f014-608f-51ad-3514-4b5ce700aa40",
+          "family_name": "Klawitter",
+          "head_name": "Raymond Eric Klawitter",
+          "address": "1850 S Tower Bridge Drive, Washington UT 84780",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "4ea527fd-c6ac-5627-8d81-6d663b5b3eee",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Ben Smith",
+          "phone": "8016988108",
+          "email": "bensmith.yyc@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Christian Walton",
+          "phone": "909-549-4269",
+          "email": "christian.e.walton@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "c3ba71f2-0a74-c29f-f5e5-b0ed47797b32",
+          "family_name": "Durst",
+          "head_name": "Nick Durst",
+          "address": "1597 S Ripple Rock Dr, Washington UT 84780-3685",
+          "category": "family"
+        },
+        {
+          "household_id": "81f8bbe4-f78e-e78d-50d1-d84128e64122",
+          "family_name": "Hicken",
+          "head_name": "Reese Hicken",
+          "address": "1849 S Tower Bridge Dr, Washington UT 84780-3772",
+          "category": "single"
+        },
+        {
+          "household_id": "db1b4adf-7453-633b-c3fc-c3c62f8bd0f5",
+          "family_name": "Moore",
+          "head_name": "Walker Moore",
+          "address": "1978 S Wolverine Way, Washington UT 84780-3774",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "d1cff840-f8b4-50bc-bbbc-a4983140a4cb",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Trent Smith",
+          "phone": "435-772-5397",
+          "email": "trentpsmith1993@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Kenneth Taylor Thompson",
+          "phone": "435-879-9034",
+          "email": "kennythompson12@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "af595157-1d2d-37cb-8e60-56339d1a00a9",
+          "family_name": "Bracken",
+          "head_name": "Kenneth Mar Bracken",
+          "address": "1589 S Star Springs Dr, Washington UT 84780-3636",
+          "category": "family"
+        },
+        {
+          "household_id": "2ab130e7-2bee-771a-a254-09bfa275200f",
+          "family_name": "Montoya",
+          "head_name": "Kade Montoya",
+          "address": "1461 S. Ripple Rock, Washington UT 84780",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "fedcce02-7176-5d6a-9248-cf16d0e8154e",
+      "district": 1,
+      "presidency_member": "Cole Chollet",
+      "companions": [
+        {
+          "name": "Ethan Kamalu Wintch",
+          "phone": "",
+          "email": "ethanwintch@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        },
+        {
+          "name": "Phil Wintch",
+          "phone": "520-647-1743",
+          "email": "philwintch@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "583481a1-3cd6-a5f3-4903-981f13301636",
+          "family_name": "Abel",
+          "head_name": "Jordan Abel",
+          "address": "1627 S STAR SPRINGS DR, Washington UT 84780-3692",
+          "category": "family"
+        },
+        {
+          "household_id": "13dcc3a5-c557-454a-2021-c7451d9c0d13",
+          "family_name": "Hunt",
+          "head_name": "Stefany Hunt",
+          "address": "1649 S Star Springs Dr, Washington UT 84780-3692",
+          "category": "family"
+        },
+        {
+          "household_id": "63474269-6e6a-689c-2769-fc25458c740a",
+          "family_name": "Willard",
+          "head_name": "Nathan Gordon Willard",
+          "address": "1594 S WAGON BOX WAY, Washington UT 84780-3691",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "5527f5f8-e05f-556e-a85c-0036d0c88cb4",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Jordan Abel",
+          "phone": "435-574-7475",
+          "email": "jabel873@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Kyle Gearig",
+          "phone": "1-385-231-6766",
+          "email": "Kylegearig@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "3dd868f3-5d17-d02b-7e38-e90a3d7994d7",
+          "family_name": "Connole",
+          "head_name": "Brayden Connole",
+          "address": "1682 S Devils Garden Ln, Washington UT 84780-3716",
+          "category": "family"
+        },
+        {
+          "household_id": "b054d5a9-8be2-1437-3b3f-b17c61da56c0",
+          "family_name": "Slade",
+          "head_name": "Logan Timothy Slade",
+          "address": "1484 S Ripple Rock Dr, Washington UT 84780-3683",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "3d951c73-2586-5a86-b767-24cd143b9da1",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Nicklas Benson",
+          "phone": "801-427-3701",
+          "email": "nbenson23@outlook.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Jason Brown",
+          "phone": "801-420-2461",
+          "email": "jasonbrown3824@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "041cbe74-5fe2-812b-db28-b9bb54997bc7",
+          "family_name": "Bangerter",
+          "head_name": "Torsten Bangerter",
+          "address": "2786 E Fireweed Ln, Washington UT 84780-3885",
+          "category": "single"
+        },
+        {
+          "household_id": "14fcb729-7b29-0d0f-a7d2-57250359dae6",
+          "family_name": "Engemann",
+          "head_name": "Cole Engemann",
+          "address": "1502 S Ripple Rock Dr, Washington UT 84780-3685",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "f6fe5455-2f90-56ae-9a32-f3bdeda8bb38",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Izaic Blazzard",
+          "phone": "4356195454",
+          "email": "izaicmblazzard@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Oaken Whittaker",
+          "phone": "801-580-2266",
+          "email": "Oakwhid@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "def4dcdf-de94-ba90-8148-782afcb9182e",
+          "family_name": "Bayles",
+          "head_name": "Jared Bayles",
+          "address": "1751 S Cedar Mesa Dr, Washington UT 84780-3717",
+          "category": "single"
+        },
+        {
+          "household_id": "e12c28e3-8941-4c65-3826-de76a5682579",
+          "family_name": "Gallacci",
+          "head_name": "Justine Gallacci",
+          "address": "2925 E CORRAL HOLLOW DR, Washington UT 84780-3756",
+          "category": "single"
+        }
+      ]
+    },
+    {
+      "id": "7fc655a4-d9b9-5bf8-8b63-378b8b2e6e7d",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Kroy Lance Bott",
+          "phone": "801-913-6137",
+          "email": "Froybott@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Walker Moore",
+          "phone": "801-472-8281",
+          "email": "walkermoore24@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "fba76880-9fe0-b5fc-c699-5264a4e4dce7",
+          "family_name": "Hadlock",
+          "head_name": "Sydni Hadlock",
+          "address": "1530 S Wagon Box Way, Washington UT 84780-3635",
+          "category": "family"
+        },
+        {
+          "household_id": "ee3f891b-e345-6da6-bfbe-b877f3497d59",
+          "family_name": "Hales",
+          "head_name": "Benjamin Sidney Hales",
+          "address": "1574 S WAGON BOX WAY, Washington UT 84780-3691",
+          "category": "family"
+        },
+        {
+          "household_id": "f04e79be-cf19-dbed-86de-bf5befe48b00",
+          "family_name": "West",
+          "head_name": "Milli West",
+          "address": "1855 S Cyclone Dr, Washington UT 84780-3773",
+          "category": "single"
+        }
+      ]
+    },
+    {
+      "id": "8627bdb2-ca7a-55ba-a8eb-b953b70bd7d8",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Helaman Burrows",
+          "phone": "801-636-4789",
+          "email": "burrowshs@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Brayden Connole",
+          "phone": "760-650-6351",
+          "email": "brayden.connole@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "c481e6e2-732d-1eb7-0240-e8e24d2f253e",
+          "family_name": "Ewell",
+          "head_name": "Jacob William Ewell",
+          "address": "1638 S Cedar Mesa Dr, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "0cd029e9-b7ad-a67e-1db7-7ea320c746a1",
+          "family_name": "Sorensen",
+          "head_name": "Kyle Sorensen",
+          "address": "2802 Fireweed LN, Washington UT 84780",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "534b09a0-c136-573a-b0b1-04d839fb4208",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Sean Patrick Calkins",
+          "phone": "435-773-0125",
+          "email": "spcfamily@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Luke Evans",
+          "phone": "+18018579204",
+          "email": "lukept3221@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "c7be6ffe-1b5b-ae99-9891-8ea427f3902f",
+          "family_name": "Harris",
+          "head_name": "Devin Harris",
+          "address": "1555 S Wagon Box Way, Washington UT 84780-3635",
+          "category": "family"
+        },
+        {
+          "household_id": "2a768d87-a769-7fd9-65ab-e538feac4acf",
+          "family_name": "Whitesides",
+          "head_name": "Kason Whitesides",
+          "address": "1884 S WOLVERINE WAY, Washington UT 84780-3718",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "b682ff32-c720-555b-b345-b9afcdea4b0e",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Cashe Collins",
+          "phone": "435-229-9647",
+          "email": "cashecollins@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Connor Gavin Wood",
+          "phone": "801-644-4812",
+          "email": "connor.wood2014@gmail.com",
+          "head": false,
+          "notes": "not_in_households_json"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "142fc850-57d9-bfe3-6770-bf7b662b94cf",
+          "family_name": "Hyer",
+          "head_name": "Mckay Hyer",
+          "address": "2173 S Wolverine Way, Washington UT 84780-3887",
+          "category": "single"
+        },
+        {
+          "household_id": "3e2cbc53-a863-beb5-9096-144760305b0f",
+          "family_name": "Lewis",
+          "head_name": "Andrew Lewis",
+          "address": "1537 S Wagon Box Way, Washington UT 84780-3635",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "73c90131-7964-5ca5-94ff-d90813768585",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Dale Cranney",
+          "phone": "801-694-0606",
+          "email": "dalecranney@yahoo.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Pakiko Wegesend",
+          "phone": "",
+          "email": "pakikoooo808@gmail.com",
+          "head": false,
+          "notes": "not_in_households_json"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "89bf4f9b-5603-9188-7a84-d1df092ab665",
+          "family_name": "Eves",
+          "head_name": "Kameron Eves",
+          "address": "1612 S Star Springs Dr, Washington UT 84780-3692",
+          "category": "family"
+        },
+        {
+          "household_id": "13197542-44f7-1887-f160-1f744a215afc",
+          "family_name": "Tower",
+          "head_name": "Bridger Tower",
+          "address": "1719 S Devils Garden Ln, Washington UT 84780-3716",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "f5fb9923-6f7c-55fc-9904-a4d9b1b026a9",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Brian Crichton",
+          "phone": "",
+          "email": "",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "34cfd71f-2de3-eec6-a6bc-132739807cf0",
+          "family_name": "Fisher",
+          "head_name": "Landon Fisher",
+          "address": "1878 S Swamp Mesa Dr, Washington UT 84780-3800",
+          "category": "family"
+        },
+        {
+          "household_id": "03f796ef-ffdd-59ce-0289-4703edd86296",
+          "family_name": "Twede",
+          "head_name": "Devin Twede",
+          "address": "1567 S RIPPLE ROCK DR, Washington UT 84780-3685",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "ea44b6ed-1589-515a-8c8c-df8139a0b621",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Nick Durst",
+          "phone": "719-688-1345",
+          "email": "nmdurst@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "William Samuel Durst",
+          "phone": "",
+          "email": "nmdurst@yahoo.com",
+          "head": false,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "a830e5da-2d40-9b35-5563-57d4710de655",
+          "family_name": "Rigby",
+          "head_name": "Stetson Rigby",
+          "address": "1951 S Wolverine Way, Washington UT 84780-3774",
+          "category": "family"
+        },
+        {
+          "household_id": "8c3d73b2-0f68-dd27-1b72-484665f97b8b",
+          "family_name": "Wegesend",
+          "head_name": "Warren Robert Wegesend",
+          "address": "1501 S Ripple Rock Dr, Washington UT 84780-3685",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "5e9117ba-636b-5978-b843-2b62ced8ed2e",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Cole Engemann",
+          "phone": "801-361-2369",
+          "email": "Colengemann10@gmail.com",
+          "head": true
+        },
+        {
+          "name": "Bryce Kealer",
+          "phone": "623-696-1870",
+          "email": "bkealer81@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "1bc3ebdc-7ce9-1de7-509e-710fdcd86f6f",
+          "family_name": "Fellmeth",
+          "head_name": "Joe Fellmeth",
+          "address": "1527 S WAGON BOX WAY, Washington UT 84780-3635",
+          "category": "family"
+        },
+        {
+          "household_id": "b947cdba-9413-0b06-4e0f-9e5403476692",
+          "family_name": "Tupuola",
+          "head_name": "Kawika Tupuola",
+          "address": "1648 S Star Springs Dr, Washington UT 84780-3692",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "8ac3ef40-30d2-5135-9174-bbc19ae38f72",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Joshua Fernquist",
+          "phone": "660-525-7909",
+          "email": "jrfernquist812@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Kyle Lemperle",
+          "phone": "801-450-5577",
+          "email": "kyle.lemperle10@gmail.com",
+          "head": false,
+          "notes": "not_in_households_json"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "1fe1f5d3-0beb-b330-7503-e01a61c0df51",
+          "family_name": "Hamilton",
+          "head_name": "Dana Hamilton",
+          "address": "1720 S DEVILS GARDEN LN, Washington UT 84780-3716",
+          "category": "family"
+        },
+        {
+          "household_id": "03a1e76b-4bfb-fd23-4626-305b8f121ef9",
+          "family_name": "Michel",
+          "head_name": "Joan Mary Michel",
+          "address": "2813 E Fireweed Ln, Washington UT 84780-3885",
+          "category": "single"
+        },
+        {
+          "household_id": "31b3af33-8507-2c0a-4295-df020ab7205d",
+          "family_name": "Wintch",
+          "head_name": "Phil Wintch",
+          "address": "1839 S WOLVERINE WAY, Washington UT 84780-3718",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "61695e28-a3a1-54b8-b430-ef3bfc5ebad5",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Jaxon Hale",
+          "phone": "435-841-7538",
+          "email": "halejaxon@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Austin Ricks",
+          "phone": "801-413-9936",
+          "email": "austinkricks@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "dbec62b0-b4bf-126f-8a8b-93514f794663",
+          "family_name": "Edelmayer",
+          "head_name": "Branden Edelmayer",
+          "address": "1749 S Devils Garden Ln, Washington UT 84780-3716",
+          "category": "family"
+        },
+        {
+          "household_id": "d9cc5ead-fb6a-d43a-2e4d-914214d01034",
+          "family_name": "Sanders",
+          "head_name": "Brennan Sanders",
+          "address": "1831 S Tower Bridge Dr, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "ac4d562f-e880-ef93-e630-47235d35a7e2",
+          "family_name": "Stratton",
+          "head_name": "Lois Stratton",
+          "address": "1484 S Ripple Rock Dr, Washington UT 84780-3683",
+          "category": "single"
+        }
+      ]
+    },
+    {
+      "id": "2484d3f7-a183-5df0-9e13-052603f916ef",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Jayce Jones",
+          "phone": "435-705-9281",
+          "email": "jonzey32@outlook.com",
+          "head": true
+        },
+        {
+          "name": "Dawson John Stoor",
+          "phone": "435-704-8210",
+          "email": "foxrider570@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "9e7edd63-79a4-c542-9eb1-01e51a4a6d34",
+          "family_name": "Gearig",
+          "head_name": "Kyle Gearig",
+          "address": "1611 S Wagon Box Way, Washington UT 84780-3691",
+          "category": "family"
+        },
+        {
+          "household_id": "b237802b-8e0c-9ba6-e142-3a0b6b066afd",
+          "family_name": "Walton",
+          "head_name": "Christian Walton",
+          "address": "1567 S Star Springs Dr, Washington UT 84780-3636",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "8db2954d-0001-5741-8636-0b3173a906a1",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Caleb Lynch",
+          "phone": "",
+          "email": "uberreggie0322@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Patrick Lynch",
+          "phone": "385-207-5082",
+          "email": "patmanutah@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "945b8305-127e-4433-b797-ce066c77f80b",
+          "family_name": "Gibbons",
+          "head_name": "Joe Gibbons",
+          "address": "1664 S CEDAR MESA DR, Washington UT 84780-3693",
+          "category": "family"
+        },
+        {
+          "household_id": "54a9b00a-fd40-ccc9-f544-536b52063bd7",
+          "family_name": "Wegesend",
+          "head_name": "Ekana Wegesend",
+          "address": "1501 S Ripple Rock Dr, Washington UT 84780-3685",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "7920e712-0d8f-52fc-a7da-b2f00ffff182",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Rey Patterson",
+          "phone": "435-773-8968",
+          "email": "rpatter9@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Taylor Dwayne Sullivan",
+          "phone": "435-272-2946",
+          "email": "tsully28@hotmail.com",
+          "head": false,
+          "notes": "not_in_households_json"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "46afdd72-2e8e-707c-8d5c-2ab1d5843c81",
+          "family_name": "Evans",
+          "head_name": "Janson Evans",
+          "address": "1619 S Cedar Mesa Dr, Washington UT 84780-3637",
+          "category": "family"
+        },
+        {
+          "household_id": "46d0d7ee-da4f-d6f1-59b4-0e5ee2b63ea4",
+          "family_name": "Swanson",
+          "head_name": "Brody Ray Swanson",
+          "address": "1624 S Cedar Mesa Dr, Washington UT 84780-3637",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "e0fd2310-278d-56e1-8328-3a3d4f877597",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Stetson Rigby",
+          "phone": "385-214-0737",
+          "email": "stetsonrigby@gmail.com",
+          "head": true
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "0fb5467f-ae45-35c2-5291-36212d66507e",
+          "family_name": "Gubler",
+          "head_name": "Dillon Casey Gubler",
+          "address": "1479 S Ripple Rock Dr (Unit 1479), Washington UT 84780-3683",
+          "category": "single"
+        },
+        {
+          "household_id": "8d7556c3-4759-cfd1-b0f5-a0801112c068",
+          "family_name": "McKeighan",
+          "head_name": "Domanic Michael McKeighan",
+          "address": "1613 S Star Springs Dr, Washington UT 84780-3692",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "c57f764b-dd30-5978-8a6d-37f7970510f5",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Kyle Sorensen",
+          "phone": "435-559-8629",
+          "email": "hangtimekls@gmail.com",
+          "head": true
+        },
+        {
+          "name": "Nathan Gordon Willard",
+          "phone": "801-369-2976",
+          "email": "willard.nathang1198@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "c8a94a6f-5757-565c-d2ef-9129e2fd0f6a",
+          "family_name": "Christensen",
+          "head_name": "Jared Christensen",
+          "address": "1769 S Cedar Mesa Dr, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "53ab5ac4-c46d-1412-938b-82f6eb38a149",
+          "family_name": "Jones",
+          "head_name": "Jayce Jones",
+          "address": "1596 S RIPPLE ROCK DR, Washington UT 84780-3685",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "60b4987b-df99-5187-b1ad-fd6547144a90",
+      "district": 2,
+      "presidency_member": "Kawika Tupuola",
+      "companions": [
+        {
+          "name": "Cody Sorenson",
+          "phone": "909-528-8330",
+          "email": "cjsorensen88@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 3"
+        },
+        {
+          "name": "Dillan Sorenson",
+          "phone": "7252307940",
+          "email": "fiberglass291@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 3"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "12340542-186a-37de-7f06-aba017333ab5",
+          "family_name": "Espinoza",
+          "head_name": "Jason Robert Espinoza",
+          "address": "1709 S DEVILS GARDEN LN, Washington UT 84780-3716",
+          "category": "family"
+        },
+        {
+          "household_id": "f8693525-6cd8-8f0f-3e66-e4c3f1effe5c",
+          "family_name": "Swaney",
+          "head_name": "Wes Swaney",
+          "address": "1487 S Ripple Rock Dr, Washington UT 84780-3683",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "a02653e0-f49e-5b8e-ac06-8802cfa7a95c",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Zach Adair",
+          "phone": "435-414-4175",
+          "email": "Zack.m.adair@gmail.com",
+          "head": true
+        },
+        {
+          "name": "Daniel Pettus",
+          "phone": "435-668-1731",
+          "email": "dannypettus3@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "c972d586-f463-443c-1e42-40f078ca0f30",
+          "family_name": "Benson",
+          "head_name": "Nicklas Benson",
+          "address": "1977 S Wolverine Way, Washington UT 84780-3774",
+          "category": "family"
+        },
+        {
+          "household_id": "5d1938f8-3002-8661-9a98-21f2496984d0",
+          "family_name": "Brown",
+          "head_name": "Jason Brown",
+          "address": "1915 S Cyclone Dr, Washington UT 84780-3773",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "2d563312-8786-5f43-a54a-b14e3e4eaa7f",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Ethan Adams",
+          "phone": "318-780-1657",
+          "email": "ethan1833adams@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Cole Chollet",
+          "phone": "435-218-1455",
+          "email": "cole.chollet1@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "e3623c5a-9e6e-479f-34a9-9837c404e8d2",
+          "family_name": "Cahoon",
+          "head_name": "Matt Cahoon",
+          "address": "1659 S Cedar Mesa Dr, Washington UT 84780-3693",
+          "category": "family"
+        },
+        {
+          "household_id": "6a0b1ef3-8877-689d-332a-21734f0260a7",
+          "family_name": "Christiansen",
+          "head_name": "Treyson Russell Christiansen",
+          "address": "1745 S Devils Garden Ln, Washington UT 84780-3716",
+          "category": "family"
+        },
+        {
+          "household_id": "cd55f23f-cfe5-39f1-6b8f-0062b52b4ee2",
+          "family_name": "Petersen",
+          "head_name": "Ryan Petersen",
+          "address": "1864 Tower Bridge Dr, Washington UT 84780",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "7fb134b4-d08a-56e3-bab4-d604b32a8ba2",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Tyler Baker",
+          "phone": "(661) 733-5430",
+          "email": "tgbaker7@yahoo.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Devin Harris",
+          "phone": "4354219158",
+          "email": "devinrayharris52@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "7ff75233-28ff-004b-a3de-7b4000b485e1",
+          "family_name": "Durrant",
+          "head_name": "David Arthur Durrant",
+          "address": "1761 S Cedar Mesa Dr, Washington UT 84780-3717",
+          "category": "family"
+        },
+        {
+          "household_id": "9fd43650-ee63-98be-e72f-b55cbacc24ec",
+          "family_name": "Warner",
+          "head_name": "Tyler Warner",
+          "address": "1939 S Wolverine Way, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "78e63355-5a53-4e19-23f9-c232b2cfa677",
+          "family_name": "Wynne",
+          "head_name": "Colton Wynne",
+          "address": "1857 Tower Bridge Dr., Washington UT 84780-3635",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "cd481e87-6fb7-5860-94a5-a879d7027c54",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Torsten Bangerter",
+          "phone": "8018510854",
+          "email": "torbangerter@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        },
+        {
+          "name": "Mckay Hyer",
+          "phone": "+14356321380",
+          "email": "mckay.hyer@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "8dfb98a0-3f1c-f80d-9526-bb971925b8da",
+          "family_name": "Adair",
+          "head_name": "Zach Adair",
+          "address": "1954 S Swamp Mesa Dr, Washington UT 84780-3800",
+          "category": "family"
+        },
+        {
+          "household_id": "1b24f6af-2187-38f2-ed7b-a9d454b8df54",
+          "family_name": "Bennett",
+          "head_name": "Ethan Bennett",
+          "address": "2794 E Fireweed Ln, Washington UT 84780-3885",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "c73a7312-261c-5eed-be85-fd03e8f3cee7",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Kory Andrew Barden",
+          "phone": "949-209-7255",
+          "email": "kory.barden@gmail.com",
+          "head": true
+        },
+        {
+          "name": "Joe Gibbons",
+          "phone": "801-669-1400",
+          "email": "joe@utahmarine.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "2917b0f6-12ca-5ef6-85a5-af689b1a8481",
+          "family_name": "Church",
+          "head_name": "Braden Church",
+          "address": "1625 S Cedar Mesa Dr, Washington UT 84780-3637",
+          "category": "family"
+        },
+        {
+          "household_id": "3e28ab14-21b4-c4b6-e3a3-6a6c6adc81b8",
+          "family_name": "Searle",
+          "head_name": "Colton Ronald Searle",
+          "address": "1692 S DEVILS GARDEN LN, Washington UT 84780-3716",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "efc50e6a-96b5-5c6e-99f9-44c3b83de024",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Jordan Bell",
+          "phone": "801-388-0153",
+          "email": "jordanbell@designanywhere.org",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Adam Ruben",
+          "phone": "8017098359",
+          "email": "adamruben@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "56f81e61-debc-0b7a-3c43-f50d4f756540",
+          "family_name": "Rigby",
+          "head_name": "Elijah Todd Rigby",
+          "address": "1891 S. Swamp Mesa Dr., Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "cd832435-e9aa-c09a-1e24-3b2e8beddfc4",
+          "family_name": "Whittaker",
+          "head_name": "Oaken Whittaker",
+          "address": "1520 S RIPPLE ROCK DR, Washington UT 84780-3685",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "d10341cc-169b-5fd2-9c0d-4dfea8cbcf3d",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Cody Bond",
+          "phone": "503-508-5380",
+          "email": "codytbond@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Wade Bringhurst",
+          "phone": "435-773-5215",
+          "email": "skipperwade12@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "8e3ddb75-1764-18e4-e9a5-7a82f0961f95",
+          "family_name": "Owen",
+          "head_name": "Jason Owen",
+          "address": "1605 S Star Springs Dr, Washington UT 84780-3636",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "ce36b6c6-8e75-5e7e-8193-e932698952af",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Michael Bresciani",
+          "phone": "",
+          "email": "",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        },
+        {
+          "name": "Kade Montoya",
+          "phone": "801-870-9518",
+          "email": "Montoyakade@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "597fbe93-5915-e7a6-d442-8d94017c5335",
+          "family_name": "Hale",
+          "head_name": "Jaxon Hale",
+          "address": "1881 S Tower Bridge Dr., Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "5221cacf-b1a7-7de9-5667-e976993bdc9c",
+          "family_name": "Sorenson",
+          "head_name": "Cody Sorenson",
+          "address": "1595 S WAGON BOX WAY, Washington UT 84780-3691",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "2c5e8843-f3db-5314-89f7-74c954fe5f14",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Bradley Nelson Brewer",
+          "phone": "+14356693834",
+          "email": "brewer01@gmail.com",
+          "head": true
+        },
+        {
+          "name": "Jared Christensen",
+          "phone": "801-499-9423",
+          "email": "churchofjesuschrist.5f954@simplelogin.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "0ea46ddc-c8c5-41ee-ab65-5df940166fba",
+          "family_name": "Chevez Solano",
+          "head_name": "Blaine Chambers",
+          "address": "1856 S WOLVERINE WAY, Washington UT 84780-3718",
+          "category": "family"
+        },
+        {
+          "household_id": "aa873951-0055-9125-2e3e-55eab20ff000",
+          "family_name": "Robinson",
+          "head_name": "Travis Robinson",
+          "address": "1728 Devils Garden Lane, Washington UT 84780",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "402284f3-06a3-5241-85c9-b356fd169813",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Braden Church",
+          "phone": "4357051455",
+          "email": "bradenchurch@gmail.com",
+          "head": true
+        },
+        {
+          "name": "Landon Fisher",
+          "phone": "435-817-1007",
+          "email": "lannyfish@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "95cf38eb-441c-b1f3-4f08-f1f2e898490d",
+          "family_name": "Barden",
+          "head_name": "Kory Andrew Barden",
+          "address": "1729 S Devils Garden Ln, Washington UT 84780-3716",
+          "category": "family"
+        },
+        {
+          "household_id": "a3921486-cd74-7041-ba4d-96388e29f409",
+          "family_name": "Echols",
+          "head_name": "Preston Echols",
+          "address": "1554 S Wagon Box Way, Washington UT 84780-3635",
+          "category": "family"
+        },
+        {
+          "household_id": "86119c2f-223a-f8e2-1b03-70db2b935cc7",
+          "family_name": "Stewart",
+          "head_name": "Dane Stewart",
+          "address": "1721 S Cedar Mesa Dr, Washington UT 84780-3717",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "9e922f4c-b0aa-5d78-98ec-da35a2aac97f",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Matt Clark",
+          "phone": "763-442-4377",
+          "email": "mattc2592@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Zander Gates",
+          "phone": "8019154205",
+          "email": "zzandergates@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "4b48a0b7-b245-eedc-b983-1e859b042f57",
+          "family_name": "Poulsen",
+          "head_name": "Jenna Cary",
+          "address": "1873 S. Tower Bridge Dr., Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "ccf5b116-bc9a-dff0-c551-5677eaa5df21",
+          "family_name": "Ricks",
+          "head_name": "Austin Ricks",
+          "address": "1881 S WOLVERINE WAY, Washington UT 84780-3718",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "274c06ec-d794-5bab-9117-1ecf4294b5a0",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Julian Cloward",
+          "phone": "",
+          "email": "julian.cloward@icloud.com",
+          "head": true
+        },
+        {
+          "name": "Nicholas J Cloward",
+          "phone": "801-546-7468",
+          "email": "",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "af8ffd8a-b6a8-9005-f108-0a5784ff559f",
+          "family_name": "Fernquist",
+          "head_name": "Joshua Fernquist",
+          "address": "1890 S. Swamp Mesa, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "66678c68-fb4e-daff-e47b-82b99cfd4b99",
+          "family_name": "Stoor",
+          "head_name": "Dawson John Stoor",
+          "address": "1698 S Devils Garden Ln, Washington UT 84780-3716",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "437b5958-a221-59e3-b948-20c254bf6cac",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Anthony Clark Iakopo Crichton",
+          "phone": "",
+          "email": "antbryc@icloud.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Donald Brad Crichton",
+          "phone": "435-862-3198",
+          "email": "bubucrichton@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "1efae190-8a4c-6832-5303-c0b27286f467",
+          "family_name": "Sorensen",
+          "head_name": "Hyrum Sorensen",
+          "address": "2957 E Corral Hollow Dr, Washington UT 84780-3756",
+          "category": "family"
+        },
+        {
+          "household_id": "7e7cfa06-40af-b0f8-5183-1192656fec18",
+          "family_name": "Wood",
+          "head_name": "Shawn Kirtpatrik Wood",
+          "address": "1566 S Wagon Box Way, Washington UT 84780-3691",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "33ac0cf3-0cd8-5261-a0bf-8798bf12f6e3",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Preston Echols",
+          "phone": "360-742-2445",
+          "email": "prestonechols54@gmail.com",
+          "head": true
+        },
+        {
+          "name": "Dillon Casey Gubler",
+          "phone": "435-669-4785",
+          "email": "dillongubler@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "e2068bea-f1a6-80b3-0f3a-731b6ea65161",
+          "family_name": "Cranney",
+          "head_name": "Dale Cranney",
+          "address": "1568 S Ripple Rock Dr, Washington UT 84780-3685",
+          "category": "single"
+        },
+        {
+          "household_id": "947548b6-ecf0-e510-f567-4e02c385da0a",
+          "family_name": "Smith",
+          "head_name": "Trent Smith",
+          "address": "1470 S Ripple Rock Dr, Washington UT 84780-3683",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "13961677-edbe-5bf6-856e-f1c2150bdb69",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Joe Fellmeth",
+          "phone": "435-459-2386",
+          "email": "jlfellmeth@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        },
+        {
+          "name": "Warren Robert Wegesend",
+          "phone": "808-864-2462",
+          "email": "wgsnd1@yahoo.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "72233b62-36ba-6fc1-c336-6b0fc10a838c",
+          "family_name": "Child",
+          "head_name": "Cody Child",
+          "address": "1535 Ripple Rock Drive, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "338fab7c-c330-64f7-7202-9fbe46011b3a",
+          "family_name": "Ruben",
+          "head_name": "Adam Ruben",
+          "address": "1586 S WAGON BOX WAY, Washington UT 84780-3691",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "d632a927-a230-575e-a0b8-f0ca9bf99383",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Ryan Goodall",
+          "phone": "1-435-668-7078",
+          "email": "ryan_goodall16@yahoo.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Dane Stewart",
+          "phone": "435-899-9182",
+          "email": "dstewy14@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "d0d40b44-32a1-6318-502a-c0ef239cf642",
+          "family_name": "Burrows",
+          "head_name": "Helaman Burrows",
+          "address": "1736 S DEVILS GARDEN LN, Washington UT 84780-3716",
+          "category": "family"
+        },
+        {
+          "household_id": "72783bd6-ce71-7341-0c8d-507d88fce34d",
+          "family_name": "Petersen",
+          "head_name": "Chalise Geneal Petersen",
+          "address": "2921 E CORRAL HOLLOW DR, Washington UT 84780-3756",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "c6696425-dc12-5300-ba7c-1def1c225e20",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Ryan Mann",
+          "phone": "385-209-3307",
+          "email": "rymann26@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "5560106d-b6f9-e202-812e-e4dc9a51f2db",
+          "family_name": "Calkins",
+          "head_name": "Sean Patrick Calkins",
+          "address": "1748 S Devils Garden Ln, Washington UT 84780-3716",
+          "category": "single"
+        },
+        {
+          "household_id": "d0f233f4-1389-a201-15b3-9a93f4aab7fb",
+          "family_name": "Smith",
+          "head_name": "Ben Smith",
+          "address": "1847 Cyclone Dr., Washington UT 84780",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "aefab318-0347-56a5-a5b4-da5c95c35c1f",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Domanic Michael McKeighan",
+          "phone": "4356808493",
+          "email": "domckeighan@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        },
+        {
+          "name": "Kashden Walker",
+          "phone": "435-229-0794",
+          "email": "Kashdenswade@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 1"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "6b0e614b-0aa3-f296-b325-07e2804fa89b",
+          "family_name": "Brewer",
+          "head_name": "Bradley Nelson Brewer",
+          "address": "1721 S Cedar Mesa Dr, Washington UT 84780-3717",
+          "category": "single"
+        },
+        {
+          "household_id": "571138ad-f632-f261-5a2c-dae1e7adae09",
+          "family_name": "Cloward",
+          "head_name": "Nicholas J Cloward",
+          "address": "1863 South Cyclone Drive, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "02f8ae19-5102-c5f5-e8f4-6f7ee539f675",
+          "family_name": "Nish",
+          "head_name": "Jennifer Nish",
+          "address": "1752 S Devils Garden Ln, Washington UT 84780-3716",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "b91b6949-3f37-5861-ac77-99e74d818f0b",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Matthew Nielson",
+          "phone": "3853124385",
+          "email": "matthew.j.nielson@gmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 1"
+        },
+        {
+          "name": "Ekana Wegesend",
+          "phone": "8082202516",
+          "email": "wegesend01@gmail.com",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "9d433a58-3b7c-c1c5-54a1-e4e14cc0a23d",
+          "family_name": "Bryan",
+          "head_name": "Sean Bryan",
+          "address": "1450 S Ripple Rock Drive, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "4d1b606b-ece3-18af-8d7e-a13a77eed5b9",
+          "family_name": "Patterson",
+          "head_name": "Rey Patterson",
+          "address": "1580 S WAGON BOX WAY, Washington UT 84780-3691",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "d2c63266-6932-57ee-b6b2-713df1630c48",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Elijah Todd Rigby",
+          "phone": "801-875-9226",
+          "email": "eligby70@gmail.com",
+          "head": true
+        },
+        {
+          "name": "Tyler Warner",
+          "phone": "435-705-3942",
+          "email": "warner.tyler42@gmail.com",
+          "head": false
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "19945069-4cf4-54ac-36c3-c110051294a5",
+          "family_name": "Gulbranson",
+          "head_name": "Garyn Gulbranson",
+          "address": "1879 South Swamp Mesa Drive, Washington UT 84780",
+          "category": "family"
+        },
+        {
+          "household_id": "ec60552f-c9fc-0f66-060e-331687371f5e",
+          "family_name": "Pettus",
+          "head_name": "Daniel Pettus",
+          "address": "1953 S Swamp Mesa Dr, Washington UT 84780-3800",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "fd14aee4-72d6-533e-bcf6-9070f55713b1",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Hyrum Sorensen",
+          "phone": "(435) 6807353",
+          "email": "hyrumgary@gmail.com",
+          "head": true
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "b65106c3-12e8-6491-41be-3008ea0e7a0f",
+          "family_name": "Chollet",
+          "head_name": "Cole Chollet",
+          "address": "1526 S Ripple Rock Dr, Washington UT 84780-3685",
+          "category": "family"
+        },
+        {
+          "household_id": "2d560cd4-1668-6171-7bfa-d5c4df49fbca",
+          "family_name": "Russell",
+          "head_name": "Chase Russell",
+          "address": "1613 S Ripple Rock Dr, Washington UT 84780-3686",
+          "category": "family"
+        }
+      ]
+    },
+    {
+      "id": "a5c7cfd9-c3b3-5538-b130-d0e6a2a59ac4",
+      "district": 3,
+      "presidency_member": "Sean Bryan",
+      "companions": [
+        {
+          "name": "Devin Twede",
+          "phone": "801-916-8896",
+          "email": "twedesoccer@hotmail.com",
+          "head": true,
+          "notes": "cross_district: home household in District 2"
+        },
+        {
+          "name": "Preston Robert Twede",
+          "phone": "",
+          "email": "27twedeprer@washk12.org",
+          "head": false,
+          "notes": "cross_district: home household in District 2"
+        }
+      ],
+      "families_visited": [
+        {
+          "household_id": "db57b5e7-a251-2bc9-84bb-9c955b161ada",
+          "family_name": "Bringhurst",
+          "head_name": "Wade Bringhurst",
+          "address": "1508 S RIPPLE ROCK DR, Washington UT 84780-3685",
+          "category": "family"
+        }
+      ]
+    }
+  ]
+}
