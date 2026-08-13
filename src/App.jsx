@@ -7,6 +7,7 @@ import Admin from './pages/Admin';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import QREntry from './pages/QREntry';
+import Chapel from './pages/Chapel';
 import ProtectedRoute from './components/ProtectedRoute';
 import Settings from './pages/Settings';
 import Nav from './components/Nav';
@@ -35,6 +36,9 @@ function App() {
 
           {/* Public QR entry (no auth) — elders scan a QR at the chapel */}
           <Route path="/q/:slug" element={<QREntry />} />
+
+          {/* Public chapel-side companion visit flow (no auth, anonymous) */}
+          <Route path="/chapel" element={<Chapel />} />
 
           {/* Protected Routes */}
           <Route

@@ -55,7 +55,7 @@ export default function Book() {
     setSelectedComp(comp);
     const res = await fetch(`/api/availability/${comp.leader_id}`);
     const data = await res.json();
-    setSlots(data);
+    setSlots(Array.isArray(data) ? data : data.slots || []);
   };
 
   const handleBook = async (slot) => {
