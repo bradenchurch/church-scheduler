@@ -1032,3 +1032,225 @@ app.get('/api/leaders', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// --- iCal subscription feed (RFC 5545) ---
+
+// Leaders who see every submission (admin view). Counselors are scoped to
+// their own assigned_to. Keyed by leader id, matching the task spec.
+const ICAL_ADMIN_LEADERS = new Set(['cole', 'braden']);
+
+const ICAL_ROLE_LABELS = {
+  cole: 'Elders Quorum President',
+  kawika: 'Elders Quorum Counselor',
+  sean: 'Elders Quorum Counselor',
+  braden: 'Ward Secretary / Admin',
+};
+
+function icalEscape(value) {
+  return String(value ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\n/g, '\\n')
+    .replace(/;/g, '\\;')
+    .replace(/,/g, '\\,');
+}
+
+// Fold a logical line at 75 octets, inserting a leading space on continuations.
+function icalFold(line) {
+  const MAX = 75;
+  if (Buffer.byteLength(line, 'utf8') <= MAX) return line;
+  const parts = [];
+  let current = '';
+  let currentBytes = 0;
+  for (const ch of line) {
+    const chBytes = Buffer.byteLength(ch, 'utf8');
+    if (currentBytes + chBytes > MAX) {
+      parts.push(current);
+      current = ` ${ch}`;
+      currentBytes = 1 + chBytes;
+    } else {
+      current += ch;
+      currentBytes += chBytes;
+    }
+  }
+  if (current) parts.push(current);
+  return parts.join('\n');
+}
+
+function pad2(n) {
+  return String(n).padStart(2, '0');
+}
+
+function icalUtcStamp(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return null;
+  return `${d.getUTCFullYear()}${pad2(d.getUTCMonth() + 1)}${pad2(d.getUTCDate())}T${pad2(d.getUTCHours())}${pad2(d.getUTCMinutes())}${pad2(d.getUTCSeconds())}Z`;
+}
+
+function parseDateParts(dateStr) {
+  const [y, mo, d] = String(dateStr).split('-').map(Number);
+  return { y, mo, d };
+}
+
+function dateToIcal(dateStr) {
+  const { y, mo, d } = parseDateParts(dateStr);
+  return `${y}${pad2(mo)}${pad2(d)}`;
+}
+
+function datePlusDays(dateStr, days) {
+  const { y, mo, d } = parseDateParts(dateStr);
+  const dt = new Date(Date.UTC(y, mo - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return `${dt.getUTCFullYear()}${pad2(dt.getUTCMonth() + 1)}${pad2(dt.getUTCDate())}`;
+}
+
+function timeToIcal(timeStr) {
+  const [h, m, s] = String(timeStr).split(':').map((n) => Number(n) || 0);
+  return `${pad2(h)}${pad2(m)}${pad2(s)}`;
+}
+
+function dateTimePlusMinutes(dateStr, timeStr, minutes) {
+  const { y, mo, d } = parseDateParts(dateStr);
+  const [h, m, s] = String(timeStr).split(':').map((n) => Number(n) || 0);
+  const dt = new Date(Date.UTC(y, mo - 1, d, h, m, s));
+  dt.setUTCMinutes(dt.getUTCMinutes() + minutes);
+  return `${dt.getUTCFullYear()}${pad2(dt.getUTCMonth() + 1)}${pad2(dt.getUTCDate())}T${pad2(dt.getUTCHours())}${pad2(dt.getUTCMinutes())}${pad2(dt.getUTCSeconds())}`;
+}
+
+function icalFamilies(raw) {
+  if (Array.isArray(raw)) return raw;
+  if (raw && typeof raw === 'object') return Object.values(raw);
+  return [];
+}
+
+function icalFamilyName(f) {
+  if (!f || typeof f !== 'object') return 'Family';
+  return f.name || f.family_name || f.head_name || 'Family';
+}
+
+// The "other" companion in the pair (the one who didn't submit).
+function icalCompanion2(submission, comp) {
+  const submitter = String(submission.companion_name || '').trim();
+  const c1 = String(comp?.companion1_name || '').trim();
+  const c2 = String(comp?.companion2_name || '').trim();
+  if (c1 && c1 === submitter) return c2 || null;
+  if (c2 && c2 === submitter) return c1 || null;
+  return null;
+}
+
+function buildVEvent(s) {
+  const date = s.preferred_slot_date;
+  const time = s.preferred_slot_time;
+  const stamp = icalUtcStamp(s.submitted_at) || icalUtcStamp(new Date().toISOString());
+
+  const lines = [];
+  lines.push(icalFold('BEGIN:VEVENT'));
+  lines.push(icalFold(`UID:${s.id}@church-scheduler`));
+  lines.push(icalFold(`DTSTAMP:${stamp}`));
+
+  if (time) {
+    lines.push(icalFold(`DTSTART:${dateToIcal(date)}T${timeToIcal(time)}`));
+    lines.push(icalFold(`DTEND:${dateTimePlusMinutes(date, time, 30)}`));
+  } else {
+    // No time → all-day event spanning the preferred date (DTEND = next day).
+    lines.push(icalFold(`DTSTART;VALUE=DATE:${dateToIcal(date)}`));
+    lines.push(icalFold(`DTEND;VALUE=DATE:${datePlusDays(date, 1)}`));
+  }
+
+  let summary = `Interview: ${s.companion_name || 'Companionship'}`;
+  const c2 = icalCompanion2(s, s.companionships);
+  if (c2) summary = `${summary} with ${c2}`;
+  lines.push(icalFold(`SUMMARY:${icalEscape(summary)}`));
+
+  const families = icalFamilies(s.families_visited)
+    .map(icalFamilyName)
+    .filter(Boolean)
+    .join(', ');
+  const description = [
+    s.visit_notes || '',
+    `Families visited: ${families}`,
+    `Status: ${s.status}`,
+  ].join('\n\n');
+  lines.push(icalFold(`DESCRIPTION:${icalEscape(description)}`));
+
+  lines.push(icalFold(`LAST-MODIFIED:${stamp}`));
+  lines.push(icalFold('STATUS:CONFIRMED'));
+  lines.push(icalFold('END:VEVENT'));
+  return lines.join('\n');
+}
+
+function buildCalendar(leader, submissions) {
+  const name = leader.name || leader.id;
+  const roleLabel = ICAL_ROLE_LABELS[leader.id] || 'Elders Quorum Presidency';
+  const calName = `${name} — Presidency Interviews`;
+  const calDesc = `Ministering interviews — ${name} (${roleLabel})`;
+
+  const lines = [];
+  lines.push(icalFold('BEGIN:VCALENDAR'));
+  lines.push(icalFold('VERSION:2.0'));
+  lines.push(icalFold('PRODID:-//Church Scheduler//EN'));
+  lines.push(icalFold('CALSCALE:GREGORIAN'));
+  lines.push(icalFold('METHOD:PUBLISH'));
+  lines.push(icalFold(`X-WR-CALNAME:${icalEscape(calName)}`));
+  lines.push(icalFold(`X-WR-CALDESC:${icalEscape(calDesc)}`));
+
+  for (const s of submissions) {
+    lines.push(buildVEvent(s));
+  }
+
+  lines.push(icalFold('END:VCALENDAR'));
+  return `${lines.join('\n')}\n`;
+}
+
+// GET /api/cal/:leader_id.ics?key=TOKEN — personal iCal subscription feed.
+// Token-authenticated (no OAuth). Counselors see only their own submissions;
+// admins (cole/braden) see every submission. Cancelled + undated submissions
+// are skipped.
+app.get('/api/cal/:leader_id.ics', async (req, res) => {
+  const { leader_id } = req.params;
+  const { key } = req.query;
+
+  if (!key) {
+    return res.status(401).type('text/plain').send('Unauthorized');
+  }
+
+  try {
+    const { data: leader, error: leaderErr } = await supabase
+      .from('leaders')
+      .select('id, name, ical_token')
+      .eq('id', leader_id)
+      .maybeSingle();
+    if (leaderErr) throw leaderErr;
+    if (!leader) {
+      return res.status(404).type('text/plain').send('Not found');
+    }
+    if (!leader.ical_token || leader.ical_token !== key) {
+      return res.status(401).type('text/plain').send('Unauthorized');
+    }
+
+    let query = supabase
+      .from('chapel_submissions')
+      .select('*, companionships(companion1_name, companion2_name)')
+      .neq('status', 'cancelled')
+      .not('preferred_slot_date', 'is', null)
+      .order('preferred_slot_date', { ascending: true });
+
+    if (!ICAL_ADMIN_LEADERS.has(leader_id)) {
+      query = query.eq('assigned_to', leader_id);
+    }
+
+    const { data: submissions, error: subErr } = await query;
+    if (subErr) throw subErr;
+
+    const ical = buildCalendar(leader, submissions || []);
+
+    res.set('Content-Type', 'text/calendar; charset=utf-8');
+    res.set('Content-Disposition', `inline; filename="${leader_id}.ics"`);
+    res.set('Cache-Control', 'no-cache');
+    res.send(ical);
+  } catch (error) {
+    res.status(500).type('text/plain').send(error.message);
+  }
+});

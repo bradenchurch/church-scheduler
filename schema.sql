@@ -15,6 +15,11 @@ CREATE TABLE IF NOT EXISTS leaders (
 -- created before this column was added (Aug 2026).
 ALTER TABLE leaders ADD COLUMN IF NOT EXISTS phone TEXT;
 
+-- iCal subscription token (one per leader) for personal calendar feeds.
+-- Secret-bearing: the /api/cal/:leader_id.ics endpoint requires this token
+-- as a ?key= query param (no OAuth). Populated by scripts/ical-tokens.mjs.
+ALTER TABLE leaders ADD COLUMN IF NOT EXISTS ical_token TEXT;
+
 CREATE TABLE IF NOT EXISTS companionships (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   leader_id TEXT REFERENCES leaders(id) ON DELETE SET NULL,
