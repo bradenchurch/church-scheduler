@@ -18,7 +18,7 @@ import AdminQueue from './pages/AdminQueue';
 
 function App() {
   return (
-    <div className="min-h-screen bg-cream text-stone-900 font-sans w-full">
+    <div className="min-h-screen bg-cream text-ink font-sans w-full">
       <header className="bg-white shadow-sm border-b border-warm-border sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-4 py-3 flex justify-between items-center gap-4 flex-wrap">
           <Link to="/" className="text-xl font-serif text-burgundy font-bold">

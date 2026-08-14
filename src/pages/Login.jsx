@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { signInWithOtp } from '../lib/auth';
+import SectionLabel from '../components/SectionLabel';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -27,12 +28,12 @@ export default function Login() {
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-sm border border-warm-border mt-12">
       <div className="text-center mb-6">
-        <h2 className="text-2xl font-serif font-bold text-burgundy">Long Valley 2nd Ward</h2>
-        <p className="text-sm text-stone-500 mt-1">Leader Login</p>
+        <SectionLabel className="mb-2">Long Valley 2nd Ward</SectionLabel>
+        <h2 className="text-xl font-serif text-burgundy">Elders Quorum Presidency</h2>
       </div>
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-brown mb-1">Email</label>
           <input
             type="email"
             required
@@ -50,11 +51,11 @@ export default function Login() {
           {loading ? 'Sending link...' : 'Send Magic Link'}
         </button>
       </form>
-      <p className="text-xs text-stone-500 text-center mt-6">
-        You'll receive a magic link in your email to sign in securely. No password required.
+      <p className="text-xs text-brown-light text-center mt-6">
+        You&apos;ll receive a sign-in link in your email. No password needed.
       </p>
       {message && (
-        <div className={`mt-4 p-3 rounded text-sm ${message.startsWith('Error') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+        <div className={`mt-4 p-3 rounded-lg border text-sm ${message.startsWith('Error') ? 'bg-rose-light text-rose border-rose/20' : 'bg-sage-light text-sage border-sage/20'}`}>
           {message}
         </div>
       )}

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import Badge from '../components/Badge';
 
 export default function Leader() {
   const { leaderId, token, user } = useAuth();
@@ -123,21 +124,16 @@ export default function Leader() {
 
           <div className="space-y-2">
             {bookings.length === 0 ? (
-              <p className="text-stone-500 italic">No bookings found.</p>
+              <p className="text-brown-light italic">No bookings found.</p>
             ) : (
               bookings.map(b => (
                 <div key={b.id} className="p-4 border border-warm-border rounded-lg flex justify-between items-center">
                   <div>
                     <div className="font-semibold">{b.companionships?.companion1_name} & {b.companionships?.companion2_name}</div>
-                    <div className="text-sm text-stone-500">{b.scheduled_date} at {b.slots?.start_time}</div>
+                    <div className="text-sm text-brown-light">{b.scheduled_date} at {b.slots?.start_time}</div>
                   </div>
                   <div>
-                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
-                      b.status === 'completed' ? 'bg-sage-light text-sage' :
-                      b.status === 'cancelled' ? 'bg-rose-light text-rose' : 'bg-amber-light text-amber'
-                    }`}>
-                      {b.status.toUpperCase()}
-                    </span>
+                    <Badge status={b.status} />
                   </div>
                 </div>
               ))
@@ -147,7 +143,7 @@ export default function Leader() {
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
           <h3 className="text-xl font-serif font-bold mb-4 text-burgundy">Manage Availability</h3>
-          <p className="text-stone-500 mb-4 text-sm">Add 30-min slots for your interviews.</p>
+          <p className="text-brown-light mb-4 text-sm">Add 30-min slots for your interviews.</p>
           {/* A simple form to add a slot could go here */}
           <div className="space-y-2 mb-4">
              {slots.map(s => {
@@ -155,7 +151,7 @@ export default function Leader() {
                 return (
                   <div key={s.id} className="p-3 border border-warm-border rounded-lg flex justify-between items-center">
                     <span>{days[s.day_of_week]} at {s.start_time.slice(0,5)}</span>
-                    <button onClick={() => handleRemoveSlot(s.id)} className="text-red-600 text-sm hover:underline">Remove</button>
+                    <button onClick={() => handleRemoveSlot(s.id)} className="text-rose text-sm hover:underline">Remove</button>
                   </div>
                 );
              })}
@@ -192,7 +188,7 @@ export default function Leader() {
                 />
               </div>
               <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setAddingSlot(false)} className="min-h-[44px] px-4 py-2 text-stone-600 font-semibold hover:underline">Cancel</button>
+                <button type="button" onClick={() => setAddingSlot(false)} className="min-h-[44px] px-4 py-2 text-brown-light font-semibold hover:underline">Cancel</button>
                 <button type="submit" className="min-h-[44px] px-4 py-2 bg-burgundy text-white rounded-md hover:bg-burgundy-light transition-colors font-semibold">Save Slot</button>
               </div>
             </form>

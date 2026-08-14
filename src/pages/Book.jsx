@@ -1,5 +1,25 @@
 import React, { useState } from 'react';
 
+function CheckIcon() {
+  return (
+    <svg
+      width="40"
+      height="40"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="text-sage"
+      aria-hidden="true"
+    >
+      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+      <polyline points="22 4 12 14.01 9 11.01" />
+    </svg>
+  );
+}
+
 export default function Book() {
   const [lang, setLang] = useState('en');
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,20 +102,20 @@ export default function Book() {
 
   const getCalendarLinks = () => {
     if (!bookedDetails) return {};
-    
+
     // YYYYMMDDTHHMMSSZ format for calendar
     const d = new Date(bookedDetails.date + 'T' + bookedDetails.time);
     const end = new Date(d.getTime() + bookedDetails.duration * 60000);
-    
+
     const startStr = d.toISOString().replace(/-|:|.\d+/g, '');
     const endStr = end.toISOString().replace(/-|:|.\d+/g, '');
-    
+
     const title = "Ministering Interview";
     const details = "Ministering Interview with " + (selectedComp?.leaders?.name || '');
-    
+
     const googleLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(details)}`;
-    
-    const icsContent = 
+
+    const icsContent =
 `BEGIN:VCALENDAR
 VERSION:2.0
 BEGIN:VEVENT
@@ -115,24 +135,27 @@ END:VCALENDAR`;
     return (
       <div className="max-w-md mx-auto">
         <div className="flex justify-end mb-4">
-          <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="text-stone-500 hover:text-stone-800 font-medium">
+          <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="text-brown-light hover:text-brown font-medium">
             {lang === 'en' ? 'Español' : 'English'}
           </button>
         </div>
         <div className="text-center p-8 bg-sage-light border border-sage rounded-xl shadow-sm">
+          <div className="flex justify-center mb-3">
+            <CheckIcon />
+          </div>
           <h2 className="text-2xl font-serif font-bold text-sage mb-2">{currentT.booked}</h2>
-          <p className="text-sage mb-6 font-medium">{currentT.scheduled}</p>
-          
-          <div className="flex flex-col gap-3 mb-6">
-            <a href={googleLink} target="_blank" rel="noreferrer" className="min-h-[44px] bg-burgundy text-white py-2 px-4 rounded-md font-semibold hover:bg-burgundy-light transition-colors">
+          <p className="text-brown mb-6">{currentT.scheduled}</p>
+
+          <div className="flex flex-col gap-3 mb-6 max-w-[260px] mx-auto">
+            <a href={googleLink} target="_blank" rel="noreferrer" className="min-h-[44px] bg-burgundy text-white py-2 px-4 rounded-lg font-semibold hover:bg-burgundy-light transition-colors inline-flex items-center justify-center">
               {currentT.addToGoogle}
             </a>
-            <a href={icsLink} download="interview.ics" className="min-h-[44px] bg-transparent border border-burgundy text-burgundy py-2 px-4 rounded-md font-semibold hover:bg-burgundy-ghost transition-colors">
+            <a href={icsLink} download="interview.ics" className="min-h-[44px] bg-transparent border-[1.5px] border-warm-border text-brown py-2 px-4 rounded-lg font-semibold hover:border-brown transition-colors inline-flex items-center justify-center">
               {currentT.downloadIcs}
             </a>
           </div>
 
-          <button onClick={() => window.location.reload()} className="text-burgundy underline hover:text-burgundy-light font-medium">{currentT.bookAnother}</button>
+          <button onClick={() => window.location.reload()} className="text-burgundy hover:text-burgundy-light font-medium">{currentT.bookAnother} →</button>
         </div>
       </div>
     );
@@ -141,7 +164,7 @@ END:VCALENDAR`;
   return (
     <div className="max-w-md mx-auto">
       <div className="flex justify-end mb-4">
-        <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="text-stone-500 hover:text-stone-800 font-medium">
+        <button onClick={() => setLang(lang === 'en' ? 'es' : 'en')} className="text-brown-light hover:text-brown font-medium">
           {lang === 'en' ? 'Español' : 'English'}
         </button>
       </div>
@@ -155,9 +178,9 @@ END:VCALENDAR`;
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder={currentT.placeholder}
-              className="min-h-[44px] flex-1 border-[1.5px] border-warm-border rounded-md p-2 text-lg focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
+              className="min-h-[44px] flex-1 border-[1.5px] border-warm-border rounded-md p-2 text-base text-ink focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
             />
-            <button type="submit" className="min-h-[44px] bg-burgundy text-white px-4 rounded-md font-semibold hover:bg-burgundy-light transition-colors">{currentT.search}</button>
+            <button type="submit" className="min-h-[44px] bg-burgundy text-white px-4 rounded-lg font-semibold hover:bg-burgundy-light transition-colors">{currentT.search}</button>
           </form>
 
           <div className="space-y-2">
@@ -165,32 +188,32 @@ END:VCALENDAR`;
               <button
                 key={c.id}
                 onClick={() => handleSelectComp(c)}
-                className="w-full text-left p-3 border border-warm-border rounded-lg hover:bg-cream transition-colors"
+                className="w-full text-left p-3 border border-warm-border rounded-lg hover:border-burgundy hover:bg-cream transition-colors"
               >
-                <div className="font-semibold">{c.companion1_name} & {c.companion2_name}</div>
-                <div className="text-sm text-stone-500">{currentT.interviewer}: {c.leaders?.name || 'Assigned Leader'}</div>
+                <div className="font-semibold text-ink">{c.companion1_name} & {c.companion2_name}</div>
+                <div className="text-sm text-brown-light">{currentT.interviewer}: {c.leaders?.name || 'Assigned Leader'}</div>
               </button>
             ))}
           </div>
         </div>
       ) : (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
-          <button onClick={() => setSelectedComp(null)} className="text-sm text-stone-500 mb-4 hover:underline">&larr; {currentT.back}</button>
+          <button onClick={() => setSelectedComp(null)} className="text-sm text-brown-light mb-4 hover:underline">&larr; {currentT.back}</button>
           <h2 className="text-xl font-serif font-bold mb-2 text-burgundy">{currentT.pickTime}</h2>
-          <p className="text-stone-600 mb-6">{currentT.interviewer}: {selectedComp.leaders?.name}</p>
+          <p className="text-brown-light mb-6">{currentT.interviewer}: {selectedComp.leaders?.name}</p>
 
           <div className="space-y-2">
             {slots.length === 0 ? (
-              <p className="text-stone-500 italic">{currentT.noSlots}</p>
+              <p className="text-brown-light italic">{currentT.noSlots}</p>
             ) : (
               slots.map(s => (
                 <button
                   key={s.id}
                   onClick={() => handleBook(s)}
-                  className="w-full text-left p-4 border border-warm-border rounded-lg hover:bg-cream hover:border-burgundy transition-all flex justify-between items-center"
+                  className="w-full text-left p-4 border border-warm-border rounded-lg hover:bg-warm-white hover:border-burgundy transition-all flex justify-between items-center"
                 >
-                  <span className="font-medium text-lg">{currentT.days[s.day_of_week]}</span>
-                  <span className="text-stone-600">{s.start_time.slice(0,5)}</span>
+                  <span className="font-semibold text-lg text-ink">{currentT.days[s.day_of_week]}</span>
+                  <span className="text-brown">{s.start_time.slice(0,5)}</span>
                 </button>
               ))
             )}

@@ -1,7 +1,18 @@
 @import "tailwindcss";
 
+/*
+ * Church Scheduler — design tokens.
+ *
+ * Source of truth: media/church-scheduler-mockups/v1.html (:root palette).
+ * The sage/rose/amber *text* values are darkened variants of the mockup's
+ * lighter pastel accents so 10–11px badge/stat text keeps readable contrast
+ * against their `*-light` backgrounds; the `*-light` tones are used exactly as
+ * the mockup defines them. See DESIGN-SYSTEM.md for the full contract.
+ */
 @theme {
+  /* Brand palette */
   --color-cream: #FAF7F2;
+  --color-warm-white: #FFFBF5;
   --color-burgundy: #7A2E3B;
   --color-burgundy-light: #A84756;
   --color-burgundy-ghost: #F5E8EA;
@@ -15,16 +26,24 @@
   --color-rose-light: #F5E8E8;
   --color-amber: #8A5E12;
   --color-amber-light: #F7EDD8;
-  --color-warm-white: #FFFBF5;
   --color-warm-border: #E6DDD4;
+
+  /* Neutral text (mockup --text / --text-muted) */
+  --color-ink: #2C2418;
+  --color-muted: #7A7062;
+
+  /* Typography — Georgia serif for headings, system sans for body/UI */
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
-
 body {
-  background-color: var(--color-cream);
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--color-cream);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }

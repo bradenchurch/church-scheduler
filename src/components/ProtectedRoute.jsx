@@ -15,7 +15,7 @@ export default function ProtectedRoute({ children, requireRole }) {
 
   if (requireRole && role !== requireRole && role !== 'admin') {
     // Admin can access anything, otherwise must match exact role
-    return <div className="p-4 bg-red-100 text-red-800 text-center rounded m-4">Access Denied: Insufficient permissions</div>;
+    return <div className="p-4 bg-rose-light text-rose text-center rounded-xl border border-rose/20 m-4">Access Denied: Insufficient permissions</div>;
   }
 
   return children;
