@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import SectionLabel from '../components/SectionLabel';
 
 export default function Admin() {
   const [leaders, setLeaders] = useState([]);
@@ -57,7 +58,10 @@ export default function Admin() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-8">
-      <h2 className="text-2xl font-serif font-bold text-burgundy">Admin Portal</h2>
+      <div>
+        <SectionLabel>Admin · Portal</SectionLabel>
+        <h1 className="text-3xl font-serif font-bold text-burgundy mt-1">Admin Portal</h1>
+      </div>
       
       <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
         <h3 className="text-xl font-serif font-bold mb-4 text-burgundy">Add Companionship</h3>
@@ -95,30 +99,30 @@ export default function Admin() {
         <div className="space-y-2">
           {companionships.map(c => (
              <div key={c.id} className="p-3 border border-warm-border rounded-lg flex justify-between">
-                <span>{c.companion1_name} & {c.companion2_name}</span>
-                <span className="text-stone-500">{c.leaders?.name || c.leader_id}</span>
+                <span className="text-ink">{c.companion1_name} & {c.companion2_name}</span>
+                <span className="text-brown-light">{c.leaders?.name || c.leader_id}</span>
              </div>
           ))}
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm border border-stone-200">
-        <h3 className="text-xl font-bold mb-2">QR Code for Chapel Entry</h3>
-        <p className="text-sm text-stone-500 mb-4">
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+        <h3 className="text-xl font-serif font-bold mb-2 text-burgundy">QR Code for Chapel Entry</h3>
+        <p className="text-sm text-brown-light mb-4">
           Print this QR code and place it at the chapel. Elders scan it to open the public request page.
         </p>
         <div className="flex flex-col items-center gap-4">
           <button
             onClick={generateQR}
             disabled={qrLoading}
-            className="bg-stone-800 text-white px-4 py-2 rounded font-semibold min-h-[44px] disabled:opacity-40"
+            className="bg-burgundy text-white px-4 py-2 rounded-lg font-semibold min-h-[44px] hover:bg-burgundy-light disabled:opacity-40 transition-colors"
           >
             {qrLoading ? 'Generating…' : 'Generate QR Code'}
           </button>
-          {qrError && <p className="text-red-600 text-sm">{qrError}</p>}
+          {qrError && <p className="text-rose text-sm">{qrError}</p>}
           {qrDataUrl && (
             <>
-              <img src={qrDataUrl} alt="QR code for chapel entry" className="w-64 h-64 rounded border border-stone-200" />
+              <img src={qrDataUrl} alt="QR code for chapel entry" className="w-64 h-64 rounded border border-warm-border" />
               <div className="flex flex-col items-center gap-2">
                 <a
                   href={qrDataUrl}
@@ -128,7 +132,7 @@ export default function Admin() {
                 >
                   Download PNG
                 </a>
-                <code className="text-xs text-stone-500 break-all">{QR_TARGET}</code>
+                <code className="text-xs text-brown-light break-all">{QR_TARGET}</code>
               </div>
             </>
           )}

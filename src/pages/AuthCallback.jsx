@@ -38,17 +38,17 @@ export default function AuthCallback() {
   return (
     <div className="max-w-md mx-auto text-center mt-20">
       {error ? (
-        <div className="bg-red-100 text-red-800 p-4 rounded">
-          <h2 className="font-bold">Authentication Error</h2>
+        <div className="bg-rose-light text-rose p-4 rounded-xl border border-rose/20">
+          <h2 className="font-serif font-bold text-xl">Authentication Error</h2>
           <p>{error}</p>
-          <button onClick={() => navigate('/login')} className="mt-4 text-blue-600 hover:underline">
+          <button onClick={() => navigate('/login')} className="mt-4 text-burgundy hover:underline">
             Back to Login
           </button>
         </div>
       ) : (
         <div>
-          <h2 className="text-xl">Completing login...</h2>
-          <p className="text-stone-500">Please wait while we log you in.</p>
+          <h2 className="text-xl font-serif text-burgundy">Completing login…</h2>
+          <p className="text-brown-light">Please wait while we log you in.</p>
         </div>
       )}
     </div>

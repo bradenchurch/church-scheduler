@@ -116,8 +116,8 @@ export default function Settings() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-[#7A2E3B]">Settings</h2>
-        <p className="text-[#8B6F5C] mt-1">
+        <h2 className="text-2xl font-serif font-bold text-burgundy">Settings</h2>
+        <p className="text-brown-light mt-1">
           Connect your Google account so calendar invites and confirmation emails are sent automatically.
         </p>
       </div>
@@ -126,28 +126,28 @@ export default function Settings() {
         <div
           className={`p-3 rounded-lg border text-sm ${
             banner.type === 'success'
-              ? 'bg-[#E8EDE3] text-[#48593D] border-[#48593D]/20'
-              : 'bg-[#F5E8E8] text-[#943030] border-[#943030]/20'
+              ? 'bg-sage-light text-sage border-sage/20'
+              : 'bg-rose-light text-rose border-rose/20'
           }`}
         >
           {banner.text}
         </div>
       )}
 
-      <div className="bg-white p-6 rounded-xl border border-[#E6DDD4] shadow-sm">
-        <h3 className="text-lg font-semibold text-[#5C4334] mb-4">Google Calendar &amp; Email</h3>
+      <div className="bg-white p-6 rounded-xl border border-warm-border shadow-sm">
+        <h3 className="text-lg font-serif font-semibold text-brown mb-4">Google Calendar &amp; Email</h3>
 
         {loading ? (
-          <p className="text-[#8B6F5C]">Checking connection…</p>
+          <p className="text-brown-light">Checking connection…</p>
         ) : (
           <>
             <div className="flex items-center gap-3 mb-6">
               <span
                 className={`inline-block h-3 w-3 rounded-full ${
-                  connected ? 'bg-[#48593D]' : 'bg-[#B8943E]'
+                  connected ? 'bg-sage' : 'bg-gold'
                 }`}
               />
-              <span className="font-medium text-[#5C4334]">
+              <span className="font-medium text-brown">
                 {connected ? `Connected as ${connectedEmail}` : 'Not connected'}
               </span>
             </div>
@@ -157,7 +157,7 @@ export default function Settings() {
                 <button
                   onClick={handleConnect}
                   disabled={busy}
-                  className="min-h-[44px] px-5 rounded-lg bg-[#7A2E3B] text-white font-semibold hover:bg-[#A84756] disabled:opacity-50"
+                  className="min-h-[44px] px-5 rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light disabled:opacity-50 transition-colors"
                 >
                   {busy ? 'Connecting…' : 'Connect Google Calendar & Email'}
                 </button>
@@ -166,14 +166,14 @@ export default function Settings() {
                   <button
                     onClick={handleTestInvite}
                     disabled={busy}
-                    className="min-h-[44px] px-5 rounded-lg bg-[#48593D] text-white font-semibold hover:bg-[#5C4334] disabled:opacity-50"
+                    className="min-h-[44px] px-5 rounded-lg bg-sage text-white font-semibold hover:opacity-90 disabled:opacity-50 transition-opacity"
                   >
                     {busy ? 'Sending…' : 'Send Test Invite'}
                   </button>
                   <button
                     onClick={handleDisconnect}
                     disabled={busy}
-                    className="min-h-[44px] px-5 rounded-lg border border-[#E6DDD4] text-[#943030] font-semibold hover:bg-[#F5E8E8] disabled:opacity-50"
+                    className="min-h-[44px] px-5 rounded-lg border border-warm-border text-rose font-semibold hover:bg-rose-light disabled:opacity-50 transition-colors"
                   >
                     Disconnect
                   </button>
@@ -182,17 +182,17 @@ export default function Settings() {
             </div>
 
             {testResult && (
-              <div className="mt-4 p-3 rounded-lg border border-[#E6DDD4] bg-[#FAF7F2] text-sm">
-                <p className="font-semibold text-[#5C4334] mb-1">Test result:</p>
-                <p className="text-[#5C4334]">
+              <div className="mt-4 p-3 rounded-lg border border-warm-border bg-cream text-sm">
+                <p className="font-semibold text-brown mb-1">Test result:</p>
+                <p className="text-brown">
                   Calendar invite:{' '}
-                  <span className={testResult.calendar === 'sent' ? 'text-[#48593D]' : 'text-[#943030]'}>
+                  <span className={testResult.calendar === 'sent' ? 'text-sage' : 'text-rose'}>
                     {testResult.calendar}
                   </span>
                 </p>
-                <p className="text-[#5C4334]">
+                <p className="text-brown">
                   Confirmation email:{' '}
-                  <span className={testResult.email === 'sent' ? 'text-[#48593D]' : 'text-[#943030]'}>
+                  <span className={testResult.email === 'sent' ? 'text-sage' : 'text-rose'}>
                     {testResult.email}
                   </span>
                 </p>
@@ -203,8 +203,8 @@ export default function Settings() {
       </div>
 
       {user && (
-        <p className="text-sm text-[#8B6F5C]">
-          Signed in as <span className="font-medium text-[#5C4334]">{user.email}</span>
+        <p className="text-sm text-brown-light">
+          Signed in as <span className="font-medium text-brown">{user.email}</span>
         </p>
       )}
     </div>
