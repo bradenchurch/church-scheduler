@@ -46,7 +46,7 @@ export async function handleBookingConfirmation(supabaseAdmin, booking) {
   // 1. Resolve companionship + assigned leader
   const { data: companionship, error: compError } = await supabaseAdmin
     .from('companionships')
-    .select('*, leaders(*)')
+    .select('*, leaders(name, email)')
     .eq('id', booking.companionship_id)
     .single();
 

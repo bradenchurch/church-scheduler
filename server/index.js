@@ -683,7 +683,7 @@ app.get('/api/bookings/all', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('bookings')
-      .select('*, companionships!inner(*, leaders(*)), slots(*)');
+      .select('*, companionships!inner(*, leaders(id, name, email, phone)), slots(*)');
     if (error) throw error;
     res.json(data);
   } catch (error) {
@@ -699,7 +699,7 @@ app.get('/api/bookings/:leaderId', requireAuth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('bookings')
-      .select('*, companionships!inner(*, leaders(*)), slots(*)')
+      .select('*, companionships!inner(*, leaders(id, name, email, phone)), slots(*)')
       .eq('companionships.leader_id', leaderId);
 
     if (error) throw error;
