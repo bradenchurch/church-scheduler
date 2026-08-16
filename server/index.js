@@ -981,7 +981,7 @@ app.get('/api/qr/generate', async (req, res) => {
   let target = req.query.target;
   if (!target) {
     const slug = await getWardSlug();
-    const base = process.env.PUBLIC_BASE_URL || 'https://church-scheduler.vercel.app';
+    const base = process.env.PUBLIC_BASE_URL || 'https://church-scheduler-tawny.vercel.app';
     target = `${base.replace(/\/$/, '')}/q/${encodeURIComponent(slug)}`;
   }
   try {
@@ -997,7 +997,7 @@ app.get('/api/qr/generate', async (req, res) => {
 app.get('/api/ward', async (req, res) => {
   try {
     const slug = await getWardSlug();
-    const base = process.env.PUBLIC_BASE_URL || 'https://church-scheduler.vercel.app';
+    const base = process.env.PUBLIC_BASE_URL || 'https://church-scheduler-tawny.vercel.app';
     const qrUrl = `${base.replace(/\/$/, '')}/q/${encodeURIComponent(slug)}`;
     res.json({ ok: true, slug, qrUrl, defaultSlug: getDefaultWardSlug() });
   } catch (error) {

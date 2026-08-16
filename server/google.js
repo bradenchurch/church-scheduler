@@ -6,17 +6,39 @@ export const GOOGLE_SCOPES = [
 ];
 
 export function getRedirectUri() {
-  return (
-    process.env.GOOGLE_REDIRECT_URI ||
-    `${process.env.APP_URL || 'https://church-scheduler.vercel.app'}/api/auth/google/callback`
-  );
+  if (process.env.GOOGLE_REDIRECT_URI) {
+    return process.env.GOOGLE_REDIRECT_URI;
+  }
+  if (process.env.APP_URL) {
+    return `${process.env.APP_URL.replace(/\/$/, '')}/api/auth/google/callback`;
+  }
+  if (process.env.NODE_ENV !== 'production') {
+    const port = process.env.PORT || 3001;
+    return `http://localhost:${port}/api/auth/google/callback`;
+  }
+  throw new Error('GOOGLE_REDIRECT_URI or APP_URL must be set in production');
 }
 
 export function getOAuthClient() {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
   if (!clientId || !clientSecret) {
-    throw new Error('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are not configured');
+    const missing = [];
+    if (!clientId) missing.push('GOOGLE_CLIENT_ID');
+    if (!clientSecret) missing.push('GOOGLE_CLIENT_SECRET');
+
+    let redirectUri;
+    try {
+      redirectUri = getRedirectUri();
+    } catch {
+      redirectUri = '(unset — GOOGLE_REDIRECT_URI or APP_URL required in production)';
+    }
+
+    throw new Error(
+      `Google OAuth not configured. Missing env vars: ${missing.join(', ')}. ` +
+        `Redirect URI: ${redirectUri}. ` +
+        'Set GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, and either GOOGLE_REDIRECT_URI or APP_URL.'
+    );
   }
   return new google.auth.OAuth2(clientId, clientSecret, getRedirectUri());
 }
