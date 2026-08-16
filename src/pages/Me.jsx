@@ -36,7 +36,7 @@ function CalendarIcon() {
 }
 
 export default function Me() {
-  const { user, role, leaderId } = useAuth();
+  const { user, role, leaderId, token } = useAuth();
 
   const [profile, setProfile] = useState({ ...MOCK_ME });
   const [contact, setContact] = useState({ phone: MOCK_ME.phone, email: MOCK_ME.email });
@@ -58,7 +58,6 @@ export default function Me() {
           const roleTitle = roleTitleFor(me.name) || (role === 'admin' ? 'Secretary' : 'Counselor');
           setProfile({ name: me.name, roleTitle, phone: me.phone || MOCK_ME.phone, email: me.email || user?.email || MOCK_ME.email });
           setContact({ phone: me.phone || MOCK_ME.phone, email: me.email || user?.email || MOCK_ME.email });
-          setIcalToken(me.ical_token || null);
         } else if (user?.email) {
           const fallbackName = user.email.split('@')[0].replace(/[._-]/g, ' ');
           const roleTitle = role === 'admin' ? 'Secretary' : 'Counselor';
@@ -71,6 +70,24 @@ export default function Me() {
       active = false;
     };
   }, [leaderId, role, user]);
+
+  // Fetch the current leader's own iCal token via the auth-gated endpoint
+  // (tokens are no longer returned by the public /api/leaders list).
+  useEffect(() => {
+    if (!token) return;
+    let active = true;
+    fetch('/api/me/ical-token', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((d) => {
+        if (active) setIcalToken(d?.ical_token || null);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [token]);
 
   const handleSaveContact = () => setSaved(true);
 

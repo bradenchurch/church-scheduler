@@ -683,7 +683,7 @@ app.get('/api/bookings/all', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('bookings')
-      .select('*, companionships!inner(*, leaders(*)), slots(*)');
+      .select('*, companionships!inner(*, leaders(id, name, email, phone)), slots(*)');
     if (error) throw error;
     res.json(data);
   } catch (error) {
@@ -699,7 +699,7 @@ app.get('/api/bookings/:leaderId', requireAuth, async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('bookings')
-      .select('*, companionships!inner(*, leaders(*)), slots(*)')
+      .select('*, companionships!inner(*, leaders(id, name, email, phone)), slots(*)')
       .eq('companionships.leader_id', leaderId);
 
     if (error) throw error;
@@ -1023,13 +1023,35 @@ app.post('/api/companionships', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // GET /api/leaders
+// NOTE: ical_token is intentionally excluded — it is a secret and must never
+// be returned to unauthenticated callers. The current leader's own token is
+// available via GET /api/me/ical-token (auth-gated).
 app.get('/api/leaders', async (req, res) => {
   try {
-    const { data, error } = await supabase.from('leaders').select('*');
+    const { data, error } = await supabase
+      .from('leaders')
+      .select('id, name, email, google_calendar_id, active, role, phone');
     if (error) throw error;
     res.json(data);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/me/ical-token — returns the current leader's own iCal token.
+// Auth-gated so tokens are never exposed via the public /api/leaders list.
+app.get('/api/me/ical-token', requireAuth, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('leaders')
+      .select('ical_token')
+      .eq('id', req.user.leader_id)
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ ical_token: data?.ical_token || null });
+  } catch (error) {
+    console.error('ical-token lookup error:', error.message);
+    res.status(500).json({ error: 'Internal error' });
   }
 });
 
@@ -1204,6 +1226,15 @@ function buildCalendar(leader, submissions) {
   return `${lines.join('\n')}\n`;
 }
 
+// Constant-time token comparison. Hashing normalizes length so
+// crypto.timingSafeEqual (which requires equal-length buffers) never throws,
+// and avoids the short-circuit timing oracle of the plain `!==` operator.
+function icalTokenMatches(stored, provided) {
+  const a = crypto.createHash('sha256').update(String(stored ?? '')).digest();
+  const b = crypto.createHash('sha256').update(String(provided ?? '')).digest();
+  return crypto.timingSafeEqual(a, b);
+}
+
 // GET /api/cal/:leader_id.ics?key=TOKEN — personal iCal subscription feed.
 // Token-authenticated (no OAuth). Counselors see only their own submissions;
 // admins (cole/braden) see every submission. Cancelled + undated submissions
@@ -1226,7 +1257,7 @@ app.get('/api/cal/:leader_id.ics', async (req, res) => {
     if (!leader) {
       return res.status(404).type('text/plain').send('Not found');
     }
-    if (!leader.ical_token || leader.ical_token !== key) {
+    if (!leader.ical_token || !icalTokenMatches(leader.ical_token, key)) {
       return res.status(401).type('text/plain').send('Unauthorized');
     }
 
@@ -1251,6 +1282,7 @@ app.get('/api/cal/:leader_id.ics', async (req, res) => {
     res.set('Cache-Control', 'no-cache');
     res.send(ical);
   } catch (error) {
-    res.status(500).type('text/plain').send(error.message);
+    console.error('ical feed error:', error.message);
+    res.status(500).type('text/plain').send('Internal error');
   }
 });
