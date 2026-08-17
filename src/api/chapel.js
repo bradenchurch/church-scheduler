@@ -1,9 +1,10 @@
-// Chapel-side companion flow API helpers (anonymous, no auth required).
+// Chapel-side companion flow API helpers.
+
+import { authedFetch } from '../lib/api';
 
 export async function submitChapelForm(payload) {
-  const res = await fetch('/api/chapel/submit', {
+  const res = await authedFetch('/api/chapel/submit', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
   const data = await res.json().catch(() => ({}));
