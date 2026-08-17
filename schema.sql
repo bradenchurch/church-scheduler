@@ -51,9 +51,13 @@ CREATE TABLE IF NOT EXISTS availability_windows (
   window_date DATE NOT NULL,
   start_time TIME NOT NULL,
   end_time TIME NOT NULL,
+  slot_duration_minutes INTEGER NOT NULL DEFAULT 30 CHECK (slot_duration_minutes IN (15, 20, 30, 45, 60)),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CHECK (end_time > start_time)
 );
+-- Idempotent: bring forward slot_duration_minutes on databases where
+-- availability_windows was created before this column was added (Aug 2026).
+ALTER TABLE availability_windows ADD COLUMN IF NOT EXISTS slot_duration_minutes INTEGER NOT NULL DEFAULT 30;
 CREATE INDEX IF NOT EXISTS idx_availability_windows_leader_date ON availability_windows(leader_id, window_date);
 
 CREATE TABLE IF NOT EXISTS bookings (

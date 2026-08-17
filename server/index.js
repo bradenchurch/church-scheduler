@@ -901,7 +901,7 @@ app.get('/api/availability/:leaderId', async (req, res) => {
     try {
       const windowsRes = await supabase
         .from('availability_windows')
-        .select('id, leader_id, window_date, start_time, end_time')
+        .select('id, leader_id, window_date, start_time, end_time, slot_duration_minutes')
         .eq('leader_id', leaderId)
         .gte('window_date', todayStr)
         .lte('window_date', laterStr)
@@ -936,7 +936,7 @@ app.get('/api/availability/:leaderId/windows', async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('availability_windows')
-      .select('id, leader_id, window_date, start_time, end_time')
+      .select('id, leader_id, window_date, start_time, end_time, slot_duration_minutes')
       .eq('leader_id', leaderId)
       .order('window_date')
       .order('start_time');
@@ -955,7 +955,7 @@ app.post('/api/availability/:leaderId/windows', requireSession, async (req, res)
     return res.status(403).json({ error: 'Forbidden' });
   }
   const { leaderId } = req.params;
-  const { window_date, start_time, end_time } = req.body;
+  const { window_date, start_time, end_time, slot_duration_minutes } = req.body;
 
   if (!window_date || !start_time || !end_time) {
     return res.status(400).json({ error: 'window_date, start_time, end_time required' });
@@ -968,10 +968,21 @@ app.post('/api/availability/:leaderId/windows', requireSession, async (req, res)
   }
   if (end_time <= start_time) return res.status(400).json({ error: 'end_time must be after start_time' });
 
+  // Slot duration: default 30 min; must be one of the allowed bookable increments.
+  const SLOT_DURATIONS = [15, 20, 30, 45, 60];
+  let slotDuration = 30;
+  if (slot_duration_minutes !== undefined && slot_duration_minutes !== null) {
+    const parsed = Number(slot_duration_minutes);
+    if (!Number.isInteger(parsed) || !SLOT_DURATIONS.includes(parsed)) {
+      return res.status(400).json({ error: 'slot_duration_minutes must be one of 15, 20, 30, 45, 60' });
+    }
+    slotDuration = parsed;
+  }
+
   try {
     const { data, error } = await supabase
       .from('availability_windows')
-      .insert([{ leader_id: leaderId, window_date, start_time, end_time }])
+      .insert([{ leader_id: leaderId, window_date, start_time, end_time, slot_duration_minutes: slotDuration }])
       .select();
     if (error) throw error;
     res.status(201).json(data[0]);
