@@ -56,16 +56,18 @@ function formatTime(t) {
   return String(t).slice(0, 5);
 }
 
-// Expand a date-specific availability window into 30-minute bookable increments.
-// e.g. "08:00"–"10:00" → ["08:00", "08:30", "09:00", "09:30"].
-function expandWindowTimes(start, end) {
+// Expand a date-specific availability window into bookable increments of
+// `slotDuration` minutes (default 30). e.g. "08:00"–"10:00" at 30m →
+// ["08:00", "08:30", "09:00", "09:30"]; at 15m → ["08:00", "08:15", …].
+function expandWindowTimes(start, end, slotDuration = 30) {
   if (!start || !end) return [];
+  const step = Number(slotDuration) > 0 ? Number(slotDuration) : 30;
   const [sh, sm] = String(start).split(':').map(Number);
   const [eh, em] = String(end).split(':').map(Number);
   const startMin = sh * 60 + sm;
   const endMin = eh * 60 + em;
   const out = [];
-  for (let m = startMin; m < endMin; m += 30) {
+  for (let m = startMin; m < endMin; m += step) {
     const h = Math.floor(m / 60);
     const mm = m % 60;
     out.push(`${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`);
@@ -139,7 +141,9 @@ export default function SlotPicker({ leaderId, availability, value = {}, onChang
   const windowsOnDate = selectedDate
     ? windows.filter((w) => String(w.window_date).slice(0, 10) === selectedDate)
     : [];
-  const windowTimes = windowsOnDate.flatMap((w) => expandWindowTimes(w.start_time, w.end_time));
+  const windowTimes = windowsOnDate.flatMap((w) =>
+    expandWindowTimes(w.start_time, w.end_time, w.slot_duration_minutes)
+  );
 
   const setDate = (d) => {
     const dateStr = toLocalDateString(d);
@@ -148,7 +152,7 @@ export default function SlotPicker({ leaderId, availability, value = {}, onChang
       const forDay = slots.filter((s) => Number(s.day_of_week) === d.getDay());
       const forWindows = windows
         .filter((w) => String(w.window_date).slice(0, 10) === dateStr)
-        .flatMap((w) => expandWindowTimes(w.start_time, w.end_time));
+        .flatMap((w) => expandWindowTimes(w.start_time, w.end_time, w.slot_duration_minutes));
       if (!forDay.some((s) => s.start_time === time) && !forWindows.includes(time)) time = '';
     }
     onChange({ preferred_slot_date: dateStr, preferred_slot_time: time });

@@ -64,12 +64,14 @@ function buildMonthCells(year, month) {
 function WindowPanel({ selectedDate, windows, loading, error, onClose, onAdd, onDelete }) {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [slotDuration, setSlotDuration] = useState(30);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setStartTime('');
     setEndTime('');
+    setSlotDuration(30);
     setFormError('');
   }, [selectedDate]);
 
@@ -88,9 +90,15 @@ function WindowPanel({ selectedDate, windows, loading, error, onClose, onAdd, on
 
     setSaving(true);
     try {
-      await onAdd({ window_date: selectedDate, start_time: startTime, end_time: endTime });
+      await onAdd({
+        window_date: selectedDate,
+        start_time: startTime,
+        end_time: endTime,
+        slot_duration_minutes: slotDuration,
+      });
       setStartTime('');
       setEndTime('');
+      setSlotDuration(30);
     } catch (err) {
       setFormError(err.message || 'Failed to add window.');
     } finally {
@@ -148,6 +156,7 @@ function WindowPanel({ selectedDate, windows, loading, error, onClose, onAdd, on
                   >
                     <span className="text-sm font-medium text-brown">
                       {formatTime12(w.start_time)} – {formatTime12(w.end_time)}
+                      <span className="text-brown-light"> ({(w.slot_duration_minutes || 30)}m slots)</span>
                     </span>
                     <button
                       onClick={() => onDelete(w.id)}
@@ -189,6 +198,30 @@ function WindowPanel({ selectedDate, windows, loading, error, onClose, onAdd, on
                   className="min-h-[44px] px-3 py-2 border-[1.5px] border-warm-border rounded-md bg-warm-white text-brown text-sm focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
                 />
               </label>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-semibold text-brown-light uppercase tracking-wider">Slot duration</span>
+              <div className="flex flex-wrap gap-2">
+                {[15, 20, 30, 45, 60].map((mins) => {
+                  const isSelected = slotDuration === mins;
+                  return (
+                    <button
+                      key={mins}
+                      type="button"
+                      onClick={() => setSlotDuration(mins)}
+                      aria-pressed={isSelected}
+                      className={`min-h-[44px] px-4 rounded-lg border-[1.5px] text-sm font-semibold transition-colors ${
+                        isSelected
+                          ? 'bg-burgundy text-white border-burgundy'
+                          : 'bg-warm-white text-brown border-warm-border hover:border-burgundy'
+                      }`}
+                    >
+                      {mins}m{mins === 30 ? ' (default)' : ''}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {formError && (
