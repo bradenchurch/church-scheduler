@@ -1,6 +1,7 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { signOut } from '../lib/auth';
 
 const linkClass = (active) =>
   `min-h-[44px] px-3 rounded-lg text-sm font-medium inline-flex items-center transition-colors ${
@@ -10,8 +11,14 @@ const linkClass = (active) =>
 export default function Nav() {
   const { user, role } = useAuth();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
 
   const isActive = (path) => pathname === path || pathname.startsWith(`${path}/`);
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/login');
+  };
 
   return (
     <nav className="flex items-center gap-1 flex-wrap">
@@ -46,9 +53,17 @@ export default function Nav() {
       )}
 
       {user ? (
-        <Link to="/settings" className={linkClass(isActive('/settings'))}>
-          Settings
-        </Link>
+        <>
+          <Link to="/settings" className={linkClass(isActive('/settings'))}>
+            Settings
+          </Link>
+          <button
+            onClick={handleSignOut}
+            className="min-h-[44px] px-3 rounded-lg text-sm font-medium inline-flex items-center transition-colors text-rose hover:underline"
+          >
+            Sign Out
+          </button>
+        </>
       ) : (
         <Link to="/login" className={linkClass(isActive('/login'))}>
           Login
