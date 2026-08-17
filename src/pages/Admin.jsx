@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { authedFetch } from '../lib/api';
 import SectionLabel from '../components/SectionLabel';
 
 export default function Admin() {
@@ -15,7 +16,7 @@ export default function Admin() {
   useEffect(() => {
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
 
-    fetch('/api/leaders').then(r => r.json()).then(setLeaders).catch(() => []);
+    authedFetch('/api/leaders').then(r => r.json()).then(setLeaders).catch(() => []);
     fetch('/api/companionships', { headers }).then(r => r.json()).then(setCompanionships).catch(() => []);
     // Resolve the canonical QR target from the server so the slug is never hardcoded client-side.
     fetch('/api/ward').then(r => r.json()).then(d => { if (d?.ok) setQrTarget(d.qrUrl); }).catch(() => {});

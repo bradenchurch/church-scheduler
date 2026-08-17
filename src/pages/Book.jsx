@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authedFetch } from '../lib/api';
 
 function CheckIcon() {
   return (
@@ -92,7 +93,7 @@ export default function Book() {
     scheduledDate.setDate(today.getDate() + daysUntil);
     const dateString = scheduledDate.toISOString().split('T')[0];
 
-    await fetch('/api/bookings', {
+    await authedFetch('/api/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ companionship_id: selectedComp.id, slot_id: slot.id, scheduled_date: dateString })

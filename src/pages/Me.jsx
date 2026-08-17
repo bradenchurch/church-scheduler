@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { authedFetch } from '../lib/api';
 import { PRESIDENCY_ROLES } from '../data/mockRoster';
 
 // Mock fallback for the current leader until /api/leaders has the real row.
@@ -49,7 +50,7 @@ export default function Me() {
   // Try to resolve the real leader name/role from /api/leaders; fall back to mock.
   useEffect(() => {
     let active = true;
-    fetch('/api/leaders')
+    authedFetch('/api/leaders')
       .then((r) => (r.ok ? r.json() : []))
       .then((data) => {
         if (!active || !Array.isArray(data)) return;
