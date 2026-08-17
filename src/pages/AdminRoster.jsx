@@ -1,5 +1,8 @@
-import React, { useState, useMemo } from 'react';
-import { mockDistricts, mockTotals } from '../data/mockRoster';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { authedFetch } from '../lib/api';
+
+// Stable fallback so derived arrays don't churn a new reference each render.
+const EMPTY_ARRAY = [];
 
 const CATEGORY_LABEL = {
   family: 'Family',
@@ -13,36 +16,93 @@ const CATEGORY_BADGE = {
   cross_district: 'bg-burgundy-ghost text-burgundy',
 };
 
-function filterDistrict(district, categoryFilter, q) {
-  return district.companionships
-    .map((comp) => {
-      const households = comp.households.filter((h) => {
-        const catOk = categoryFilter === 'all' || h.category === categoryFilter;
-        const searchOk = !q || h.name.toLowerCase().includes(q);
-        return catOk && searchOk;
-      });
-      return { ...comp, households };
-    })
-    .filter((comp) => {
-      const compNameMatches = !q || comp.name.toLowerCase().includes(q);
-      if (q && compNameMatches) return true;
-      return comp.households.length > 0;
-    });
-}
+// Presidency role titles by district (Long Valley 2nd Ward, see ARCHITECTURE.md):
+//   Cole Chollet   (District 1) — 1st Counselor
+//   Kawika Tupuola (District 2) — 2nd Counselor
+//   Sean Bryan     (District 3) — President
+const DISTRICT_ROLE = {
+  1: '1st Counselor',
+  2: '2nd Counselor',
+  3: 'President',
+};
 
 export default function AdminRoster() {
+  const [roster, setRoster] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const [districtFilter, setDistrictFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [expanded, setExpanded] = useState({});
   const [csvNote, setCsvNote] = useState(false);
 
+  const loadRoster = useCallback(async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await authedFetch('/api/admin/roster');
+      let data = null;
+      try {
+        data = await res.json();
+      } catch {
+        data = null;
+      }
+      if (!res.ok) {
+        throw new Error(data?.error || `Request failed (${res.status})`);
+      }
+      setRoster(data);
+    } catch (err) {
+      setError(err.message || 'Failed to load the roster.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadRoster();
+  }, [loadRoster]);
+
+  const totals = roster?.totals || null;
+  const districts = roster?.by_district || EMPTY_ARRAY;
+  const households = roster?.households || EMPTY_ARRAY;
+
   const q = searchTerm.trim().toLowerCase();
 
+  const visibleHouseholds = useMemo(() => {
+    return households.filter((hh) => {
+      const districtOk =
+        districtFilter === 'all' || String(hh.district_number) === String(districtFilter);
+      const catOk = categoryFilter === 'all' || hh.category === categoryFilter;
+      const searchOk =
+        !q ||
+        [
+          hh.head_name,
+          hh.family_name,
+          hh.address,
+          hh.phone,
+          hh.email,
+          ...(hh.members || []).map((m) => `${m.first_name || ''} ${m.last_name || ''}`),
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(q);
+      return districtOk && catOk && searchOk;
+    });
+  }, [households, districtFilter, categoryFilter, q]);
+
   const visibleDistricts = useMemo(() => {
-    const list = districtFilter === 'all' ? mockDistricts : mockDistricts.filter((d) => d.id === districtFilter);
-    return list.map((d) => ({ ...d, companionships: filterDistrict(d, categoryFilter, q) }));
-  }, [districtFilter, categoryFilter, q]);
+    const list =
+      districtFilter === 'all'
+        ? districts
+        : districts.filter((d) => String(d.district_number) === String(districtFilter));
+    return list.map((d) => ({
+      ...d,
+      households: visibleHouseholds.filter(
+        (hh) => String(hh.district_number) === String(d.district_number)
+      ),
+    }));
+  }, [districts, districtFilter, visibleHouseholds]);
 
   const toggleExpand = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
@@ -50,6 +110,38 @@ export default function AdminRoster() {
 
   const selectClass =
     'min-h-[44px] px-3 py-2 border-[1.5px] border-warm-border rounded-md bg-warm-white text-brown text-sm focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all';
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-xl border border-warm-border p-10 text-center">
+        <p className="text-sm text-brown-light">Loading roster…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white rounded-xl border border-warm-border p-10 text-center">
+        <p className="text-lg font-serif font-semibold text-rose">Couldn&apos;t load the roster</p>
+        <p className="text-sm text-brown-light mt-2">{error}</p>
+        <button
+          onClick={loadRoster}
+          className="mt-4 min-h-[44px] inline-flex items-center gap-2 px-5 rounded-lg border-[1.5px] border-warm-border bg-warm-white text-brown text-sm font-semibold hover:bg-cream transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (districts.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-warm-border p-10 text-center">
+        <p className="text-lg font-serif font-semibold text-brown">No roster data</p>
+        <p className="text-sm text-brown-light mt-1">The roster is empty right now.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -59,7 +151,7 @@ export default function AdminRoster() {
           <p className="text-xs uppercase tracking-widest text-brown-light font-semibold mb-1">Admin · Ward roster</p>
           <h1 className="text-3xl font-serif font-bold text-burgundy">Long Valley 2nd Ward — Full Roster</h1>
           <p className="text-brown-light mt-1 max-w-xl">
-            Presidency → companionships → households. Drill into a district to see who serves whom.
+            Presidency → districts → households. Drill into a district to see who serves whom.
           </p>
         </div>
         <button
@@ -85,15 +177,15 @@ export default function AdminRoster() {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white rounded-xl border border-warm-border p-5">
           <p className="text-xs uppercase tracking-wider text-brown-light font-semibold">Households</p>
-          <p className="text-3xl font-serif font-bold text-brown mt-1">{mockTotals.households}</p>
+          <p className="text-3xl font-serif font-bold text-brown mt-1">{totals?.households ?? '—'}</p>
         </div>
         <div className="bg-white rounded-xl border border-warm-border p-5">
-          <p className="text-xs uppercase tracking-wider text-brown-light font-semibold">Individuals</p>
-          <p className="text-3xl font-serif font-bold text-brown mt-1">{mockTotals.individuals}</p>
+          <p className="text-xs uppercase tracking-wider text-brown-light font-semibold">Members</p>
+          <p className="text-3xl font-serif font-bold text-brown mt-1">{totals?.members ?? '—'}</p>
         </div>
         <div className="bg-white rounded-xl border border-warm-border p-5">
           <p className="text-xs uppercase tracking-wider text-brown-light font-semibold">Companionships</p>
-          <p className="text-3xl font-serif font-bold text-brown mt-1">{mockTotals.companionships}</p>
+          <p className="text-3xl font-serif font-bold text-brown mt-1">{totals?.companionships ?? '—'}</p>
         </div>
       </div>
 
@@ -103,9 +195,9 @@ export default function AdminRoster() {
           <span className="text-xs font-semibold text-brown-light uppercase tracking-wider">District</span>
           <select value={districtFilter} onChange={(e) => setDistrictFilter(e.target.value)} className={selectClass}>
             <option value="all">All districts</option>
-            {mockDistricts.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name} ({d.role})
+            {districts.map((d) => (
+              <option key={d.district_number} value={d.district_number}>
+                {d.presidency_member?.name || `District ${d.district_number}`} ({DISTRICT_ROLE[d.district_number] || 'Presidency'})
               </option>
             ))}
           </select>
@@ -127,7 +219,7 @@ export default function AdminRoster() {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search households or companions…"
+            placeholder="Search households or members…"
             className="min-h-[44px] px-3 py-2 border-[1.5px] border-warm-border rounded-md bg-warm-white text-brown text-sm w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
           />
         </label>
@@ -136,20 +228,24 @@ export default function AdminRoster() {
       {/* District cards */}
       <div className="space-y-4">
         {visibleDistricts.map((district) => {
-          const isOpen = !!expanded[district.id];
+          const isOpen = !!expanded[district.district_number];
           return (
-            <div key={district.id} className="bg-white rounded-xl border border-warm-border shadow-sm overflow-hidden">
+            <div key={district.district_number} className="bg-white rounded-xl border border-warm-border shadow-sm overflow-hidden">
               <button
-                onClick={() => toggleExpand(district.id)}
+                onClick={() => toggleExpand(district.district_number)}
                 className="w-full flex items-center gap-4 px-5 py-4 text-left hover:bg-cream transition-colors"
               >
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-serif font-bold text-burgundy text-lg">{district.name}</span>
-                    <span className="text-xs italic text-brown-light">{district.role}</span>
+                    <span className="font-serif font-bold text-burgundy text-lg">
+                      {district.presidency_member?.name || `District ${district.district_number}`}
+                    </span>
+                    <span className="text-xs italic text-brown-light">
+                      {DISTRICT_ROLE[district.district_number] || 'Presidency'}
+                    </span>
                   </div>
                   <div className="text-sm text-brown-light mt-0.5">
-                    {district.companionshipCount} companionships · {district.householdCount} households
+                    {district.companionships_count} companionships · {district.households_count} households
                   </div>
                 </div>
                 <svg
@@ -169,28 +265,25 @@ export default function AdminRoster() {
 
               {isOpen && (
                 <div className="border-t border-warm-border px-5 py-4 space-y-3">
-                  {district.companionships.length === 0 ? (
-                    <p className="text-sm text-brown-light italic">No companionships match the current filters.</p>
+                  {district.households.length === 0 ? (
+                    <p className="text-sm text-brown-light italic">No households match the current filters.</p>
                   ) : (
-                    district.companionships.map((comp) => (
-                      <div key={comp.id} className="rounded-lg border border-warm-border bg-cream p-4">
-                        <div className="flex items-center justify-between gap-3 mb-2">
-                          <span className="font-serif font-semibold text-brown">{comp.name}</span>
-                          <span className="text-xs text-brown-light">{comp.households.length} household{comp.households.length === 1 ? '' : 's'}</span>
-                        </div>
-                        <ul className="space-y-1.5">
-                          {comp.households.map((h) => (
-                            <li key={h.id} className="flex items-center gap-3 text-sm text-brown">
-                              <span className="flex-1">{h.name}</span>
-                              <span className="text-xs text-brown-light">{h.individuals} individual{h.individuals === 1 ? '' : 's'}</span>
-                              <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${CATEGORY_BADGE[h.category]}`}>
-                                {CATEGORY_LABEL[h.category]}
-                              </span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))
+                    <ul className="space-y-1.5">
+                      {district.households.map((hh) => {
+                        const individuals = (hh.members || []).length + 1;
+                        return (
+                          <li key={hh.household_id} className="flex items-center gap-3 text-sm text-brown">
+                            <span className="flex-1">{hh.head_name || hh.family_name || hh.household_id}</span>
+                            <span className="text-xs text-brown-light">
+                              {individuals} individual{individuals === 1 ? '' : 's'}
+                            </span>
+                            <span className={`px-2 py-0.5 rounded-full text-[11px] font-semibold ${CATEGORY_BADGE[hh.category] || 'bg-cream text-brown-light'}`}>
+                              {CATEGORY_LABEL[hh.category] || hh.category}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   )}
                 </div>
               )}
