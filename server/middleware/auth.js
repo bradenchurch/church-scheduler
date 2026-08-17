@@ -9,6 +9,10 @@ dotenv.config();
 // without a magic-link round-trip. NEVER enable this in production.
 const MOCK_AUTH = process.env.MOCK_AUTH === 'true';
 
+if (MOCK_AUTH && process.env.NODE_ENV === 'production') {
+  throw new Error('MOCK_AUTH must not be enabled in production');
+}
+
 const supabaseUrl = process.env.SUPABASE_URL || 'https://example.supabase.co';
 
 // Token verification uses the SERVICE-ROLE key (not the anon key) so we can
@@ -39,7 +43,7 @@ async function resolveIdentity(user) {
   const { data: leader, error } = await supabaseAdmin
     .from('leaders')
     .select('id, role')
-    .eq('email', user.email)
+    .ilike('email', user.email)
     .maybeSingle();
 
   if (error) throw error;
