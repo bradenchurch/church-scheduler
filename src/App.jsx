@@ -16,6 +16,7 @@ import AdminRoster from './pages/AdminRoster';
 import AdminCompanionOverride from './pages/AdminCompanionOverride';
 import AdminQueue from './pages/AdminQueue';
 import AdminAvailability from './pages/AdminAvailability';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -110,6 +111,14 @@ function App() {
             element={
               <ProtectedRoute requireRole="leader">
                 <AdminAvailability />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ProtectedRoute requireRole="leader">
+                <AdminDashboard />
               </ProtectedRoute>
             }
           />

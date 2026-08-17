@@ -68,6 +68,23 @@ export default function Admin() {
       <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="min-w-0">
+            <h3 className="text-xl font-serif font-bold text-burgundy">Analytics Dashboard</h3>
+            <p className="text-sm text-brown-light mt-1">
+              Ward completion rate, district breakdown, and the &quot;who hasn&apos;t scheduled&quot; action list.
+            </p>
+          </div>
+          <Link
+            to="/admin/dashboard"
+            className="min-h-[44px] inline-flex items-center px-4 rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors"
+          >
+            Open analytics
+          </Link>
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
             <h3 className="text-xl font-serif font-bold text-burgundy">Availability Calendar</h3>
             <p className="text-sm text-brown-light mt-1">
               Publish date-specific windows when you&apos;re free to meet with assigned companionships.
