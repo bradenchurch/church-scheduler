@@ -1045,7 +1045,7 @@ app.get('/api/bookings/all', requireRole('leader'), async (req, res) => {
 });
 
 // GET /api/bookings/:leaderId
-app.get('/api/bookings/:leaderId', requireAuth, async (req, res) => {
+app.get('/api/bookings/:leaderId', requireSession, async (req, res) => {
   if (req.user.role !== 'admin' && req.user.leader_id !== req.params.leaderId) return res.status(403).json({ error: 'Forbidden' });
   const { leaderId } = req.params;
 
@@ -1156,7 +1156,7 @@ app.get('/api/slots/:leaderId', async (req, res) => {
 });
 
 // POST /api/slots/:leaderId
-app.post('/api/slots/:leaderId', requireAuth, async (req, res) => {
+app.post('/api/slots/:leaderId', requireSession, async (req, res) => {
   if (req.user.role !== 'admin' && req.user.leader_id !== req.params.leaderId) return res.status(403).json({ error: 'Forbidden' });
   const { leaderId } = req.params;
   const { day_of_week, start_time, duration_minutes } = req.body;
@@ -1409,6 +1409,30 @@ app.get('/api/me/ical-token', requireAuth, async (req, res) => {
       .from('leaders')
       .select('ical_token')
       .eq('id', req.user.leader_id)
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ ical_token: data?.ical_token || null });
+  } catch (error) {
+    console.error('ical-token lookup error:', error.message);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// GET /api/leader/:leaderId/ical-token — returns a specific leader's iCal token.
+// Admins may fetch any leader's token (to build that leader's subscription URL);
+// non-admins may only fetch their own. Uses requireSession so MOCK_AUTH smoke
+// tests can exercise the admin path without a real token round-trip.
+app.get('/api/leader/:leaderId/ical-token', requireSession, async (req, res) => {
+  const { leaderId } = req.params;
+  if (req.user.role !== 'admin' && req.user.leader_id !== leaderId) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('leaders')
+      .select('ical_token')
+      .eq('id', leaderId)
       .maybeSingle();
     if (error) throw error;
     res.json({ ical_token: data?.ical_token || null });
