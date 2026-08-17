@@ -20,6 +20,16 @@ ALTER TABLE leaders ADD COLUMN IF NOT EXISTS phone TEXT;
 -- as a ?key= query param (no OAuth). Populated by scripts/ical-tokens.mjs.
 ALTER TABLE leaders ADD COLUMN IF NOT EXISTS ical_token TEXT;
 
+-- Authorization role per leader ('admin' | 'leader'). Admin can manage any
+-- leader's dashboard + access /admin routes; leader manages only their own.
+-- This column was referenced by the auth middleware long before the DDL was
+-- committed, so it is added idempotently here (see server/middleware/auth.js).
+ALTER TABLE leaders ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'leader';
+
+-- Backfill: Braden (ward secretary) is the admin; presidency members are leaders.
+UPDATE leaders SET role = 'admin' WHERE id = 'braden';
+UPDATE leaders SET role = 'leader' WHERE id IN ('cole', 'kawika', 'sean');
+
 CREATE TABLE IF NOT EXISTS companionships (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   leader_id TEXT REFERENCES leaders(id) ON DELETE SET NULL,
