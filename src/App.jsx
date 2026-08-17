@@ -30,8 +30,22 @@ function App() {
 
       <main className="max-w-5xl mx-auto px-4 py-8">
         <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/book" element={<Book />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/book"
+            element={
+              <ProtectedRoute>
+                <Book />
+              </ProtectedRoute>
+            }
+          />
           <Route path="/login" element={<Login />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
 
