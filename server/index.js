@@ -684,12 +684,26 @@ app.get('/api/availability/:leaderId', async (req, res) => {
 });
 
 // GET /api/bookings/all
+//
+// Returns all interview bookings for the dashboard. Gated by
+// requireRole('leader'), which authenticates the caller (401) and admits
+// admins + leaders while rejecting companions (403).
+//
+// Least-privilege scoping: admins see every leader's bookings; leaders see
+// only their own district's bookings. `bookings` has no `leader_id` column,
+// so we scope through the `companionships` join — `companionships.leader_id`
+// must equal the caller's resolved `req.user.leader_id`.
 app.get('/api/bookings/all', requireRole('leader'), async (req, res) => {
-
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('bookings')
       .select('*, companionships!inner(*, leaders(id, name, email, phone)), slots(*)');
+
+    if (req.user.role !== 'admin') {
+      query = query.eq('companionships.leader_id', req.user.leader_id);
+    }
+
+    const { data, error } = await query;
     if (error) throw error;
     res.json(data);
   } catch (error) {
