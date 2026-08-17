@@ -18,6 +18,7 @@ import {
 } from './google.js';
 import { handleBookingConfirmation } from './notifications.js';
 import { getRoster, formatAddress, splitCompanions } from './roster.js';
+import { requireRole, requireCompanionFor } from './middleware/auth.js';
 
 dotenv.config();
 
@@ -678,7 +679,7 @@ app.get('/api/availability/:leaderId', async (req, res) => {
 });
 
 // GET /api/bookings/all
-app.get('/api/bookings/all', async (req, res) => {
+app.get('/api/bookings/all', requireRole('leader'), async (req, res) => {
 
   try {
     const { data, error } = await supabase
@@ -710,7 +711,7 @@ app.get('/api/bookings/:leaderId', requireAuth, async (req, res) => {
 });
 
 // POST /api/bookings
-app.post('/api/bookings', async (req, res) => {
+app.post('/api/bookings', requireRole('companion'), requireCompanionFor('companionship_id'), async (req, res) => {
   const { companionship_id, slot_id, scheduled_date } = req.body;
 
   try {
@@ -1026,7 +1027,7 @@ app.post('/api/companionships', requireAuth, requireAdmin, async (req, res) => {
 // NOTE: ical_token is intentionally excluded — it is a secret and must never
 // be returned to unauthenticated callers. The current leader's own token is
 // available via GET /api/me/ical-token (auth-gated).
-app.get('/api/leaders', async (req, res) => {
+app.get('/api/leaders', requireRole('leader'), async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('leaders')
