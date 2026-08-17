@@ -42,7 +42,7 @@ export default function Admin() {
     setQrLoading(true);
     setQrError('');
     try {
-      const res = await fetch(`/api/qr/generate?target=${encodeURIComponent(QR_TARGET)}`);
+      const res = await fetch(`/api/qr/generate?target=${encodeURIComponent(qrTarget)}`);
       const data = await res.json();
       if (!res.ok || !data.ok) {
         setQrError(data?.error || 'Failed to generate QR code');
@@ -132,7 +132,7 @@ export default function Admin() {
                 >
                   Download PNG
                 </a>
-                <code className="text-xs text-brown-light break-all">{QR_TARGET}</code>
+                <code className="text-xs text-brown-light break-all">{qrTarget}</code>
               </div>
             </>
           )}
