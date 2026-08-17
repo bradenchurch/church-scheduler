@@ -690,9 +690,11 @@ app.get('/api/availability/:leaderId', async (req, res) => {
 // admins + leaders while rejecting companions (403).
 //
 // Least-privilege scoping: admins see every leader's bookings; leaders see
-// only their own district's bookings. `bookings` has no `leader_id` column,
-// so we scope through the `companionships` join — `companionships.leader_id`
-// must equal the caller's resolved `req.user.leader_id`.
+// only bookings under their own companionship assignments. `bookings` has no
+// `leader_id` column, so we scope through the `companionships` join —
+// `companionships.leader_id` must equal the caller's resolved
+// `req.user.leader_id` (the leaders.id text id, NOT the Supabase auth UUID in
+// `req.user.id`).
 app.get('/api/bookings/all', requireRole('leader'), async (req, res) => {
   try {
     let query = supabase
