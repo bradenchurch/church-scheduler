@@ -1,5 +1,7 @@
 # Slot Duration Selector — Report
 
+PR: https://github.com/bradenchurch/church-scheduler/pull/29
+
 Branch: `feat/slot-duration-selector` · Worktree: `~/.openclaw/workspace/church-scheduler-tasks/cs-slot-duration/`
 
 ## Summary
