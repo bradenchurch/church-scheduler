@@ -180,7 +180,7 @@ export default function SlotPicker({ leaderId, availability, value = {}, onChang
               key={toLocalDateString(d)}
               type="button"
               onClick={() => setDate(d)}
-              className={`flex-shrink-0 min-w-[52px] min-h-[44px] rounded-lg border flex flex-col items-center justify-center transition-colors ${
+              className={`flex-shrink-0 min-w-[56px] min-h-[48px] rounded-lg border flex flex-col items-center justify-center transition-colors ${
                 isSelected
                   ? 'bg-burgundy text-white border-burgundy'
                   : isWeekend
@@ -204,7 +204,7 @@ export default function SlotPicker({ leaderId, availability, value = {}, onChang
         <select
           value={selectedTime}
           onChange={(e) => setTime(e.target.value)}
-          className="w-full min-h-[44px] rounded-lg border border-warm-border bg-warm-white px-3 text-base text-brown focus:outline-none focus:border-burgundy"
+          className="w-full min-h-[48px] rounded-lg border border-warm-border bg-warm-white px-3 text-base text-brown focus:outline-none focus:border-burgundy"
         >
           <option value="">No preference</option>
           {matchingSlots.map((s) => (

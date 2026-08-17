@@ -206,14 +206,14 @@ export default function Chapel() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full min-h-[44px] rounded-lg border border-warm-border bg-cream px-3 py-2 text-base text-brown placeholder:text-brown-light focus:outline-none focus:border-burgundy"
+                    className="w-full min-h-[48px] rounded-lg border border-warm-border bg-cream px-3 py-2 text-base text-brown placeholder:text-brown-light focus:outline-none focus:border-burgundy"
                     placeholder="your@email.com"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={magicLinkSending}
-                  className="w-full min-h-[44px] rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors disabled:opacity-40"
+                  className="w-full min-h-[48px] rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors disabled:opacity-40"
                 >
                   {magicLinkSending ? 'Sending link…' : 'Send magic link'}
                 </button>
@@ -292,7 +292,7 @@ export default function Chapel() {
 
           <button
             onClick={() => window.location.reload()}
-            className="w-full min-h-[44px] rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors"
+            className="w-full min-h-[48px] rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors"
           >
             Submit another report
           </button>
@@ -378,13 +378,13 @@ export default function Chapel() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(1)}
-                  className="min-h-[44px] px-4 rounded-lg border border-warm-border text-brown font-medium hover:bg-cream transition-colors"
+                  className="min-h-[48px] px-4 rounded-lg border border-warm-border text-brown font-medium hover:bg-cream transition-colors"
                 >
                   Back
                 </button>
                 <button
                   onClick={() => setStep(3)}
-                  className="flex-1 min-h-[44px] rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors"
+                  className="flex-1 min-h-[48px] rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors"
                 >
                   Continue
                 </button>
@@ -413,7 +413,7 @@ export default function Chapel() {
                         <select
                           value={fd.status}
                           onChange={(e) => setFamilyField(f.household_id, 'status', e.target.value)}
-                          className="w-full min-h-[44px] rounded-lg border border-warm-border bg-warm-white px-3 text-base text-brown focus:outline-none focus:border-burgundy"
+                          className="w-full min-h-[48px] rounded-lg border border-warm-border bg-warm-white px-3 text-base text-brown focus:outline-none focus:border-burgundy"
                         >
                           {FAMILY_STATUSES.map((s) => (
                             <option key={s.value} value={s.value}>
@@ -426,7 +426,7 @@ export default function Chapel() {
                           value={fd.notes}
                           onChange={(e) => setFamilyField(f.household_id, 'notes', e.target.value)}
                           placeholder="Notes (optional)"
-                          className="w-full min-h-[44px] rounded-lg border border-warm-border bg-warm-white px-3 text-base text-brown placeholder:text-brown-light focus:outline-none focus:border-burgundy"
+                          className="w-full min-h-[48px] rounded-lg border border-warm-border bg-warm-white px-3 text-base text-brown placeholder:text-brown-light focus:outline-none focus:border-burgundy"
                         />
                       </div>
                     );
@@ -437,13 +437,13 @@ export default function Chapel() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setStep(2)}
-                  className="min-h-[44px] px-4 rounded-lg border border-warm-border text-brown font-medium hover:bg-cream transition-colors"
+                  className="min-h-[48px] px-4 rounded-lg border border-warm-border text-brown font-medium hover:bg-cream transition-colors"
                 >
                   Back
                 </button>
                 <button
                   onClick={() => setStep(4)}
-                  className="flex-1 min-h-[44px] rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors"
+                  className="flex-1 min-h-[48px] rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors"
                 >
                   Continue
                 </button>
@@ -474,14 +474,14 @@ export default function Chapel() {
                 <button
                   onClick={() => setStep(3)}
                   disabled={submitting}
-                  className="min-h-[44px] px-4 rounded-lg border border-warm-border text-brown font-medium hover:bg-cream transition-colors disabled:opacity-40"
+                  className="min-h-[48px] px-4 rounded-lg border border-warm-border text-brown font-medium hover:bg-cream transition-colors disabled:opacity-40"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={submitting}
-                  className="flex-1 min-h-[44px] rounded-lg bg-sage text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
+                  className="flex-1 min-h-[48px] rounded-lg bg-sage text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
                 >
                   {submitting ? 'Submitting…' : 'Submit visit report'}
                 </button>

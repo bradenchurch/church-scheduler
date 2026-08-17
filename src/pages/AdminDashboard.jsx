@@ -215,12 +215,12 @@ export default function AdminDashboard() {
           {/* Action list */}
           <div>
             <SectionLabel>Who Hasn&apos;t Scheduled?</SectionLabel>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible">
               {FILTERS.map((f) => (
                 <button
                   key={f.key}
                   onClick={() => setFilter(f.key)}
-                  className={`min-h-[44px] px-4 rounded-lg text-sm font-semibold transition-colors ${
+                  className={`min-h-[48px] whitespace-nowrap flex-shrink-0 px-4 rounded-lg text-sm font-semibold transition-colors ${
                     filter === f.key
                       ? 'bg-burgundy text-white'
                       : 'bg-white border border-warm-border text-brown hover:border-brown'
@@ -258,19 +258,19 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <Badge status={c.status} />
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
+                        <Badge status={c.status} className="self-start sm:self-auto" />
                         {c.status === 'pending' && (
                           <>
                             <a
                               href={inviteHref(c)}
-                              className="min-h-[44px] inline-flex items-center px-3 rounded-lg bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-light transition-colors"
+                              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center px-4 rounded-lg bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-light transition-colors"
                             >
                               Text Invite
                             </a>
                             <button
                               onClick={() => copyLink(c)}
-                              className="min-h-[44px] inline-flex items-center px-3 rounded-lg border-[1.5px] border-warm-border text-brown text-sm font-semibold hover:border-brown transition-colors"
+                              className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center px-4 rounded-lg border-[1.5px] border-warm-border text-brown text-sm font-semibold hover:border-brown transition-colors"
                             >
                               {copiedId === c.id ? 'Copied' : 'Copy Link'}
                             </button>
@@ -280,7 +280,7 @@ export default function AdminDashboard() {
                           <button
                             onClick={() => markComplete(c)}
                             disabled={completingId === c.id}
-                            className="min-h-[44px] inline-flex items-center px-3 rounded-lg bg-sage text-white text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-colors"
+                            className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center px-4 rounded-lg bg-sage text-white text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-colors"
                           >
                             {completingId === c.id ? 'Marking…' : 'Mark Complete'}
                           </button>
