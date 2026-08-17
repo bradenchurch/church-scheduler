@@ -236,11 +236,11 @@ END:VCALENDAR`;
           <h2 className="text-2xl font-serif font-bold text-sage mb-2">{currentT.booked}</h2>
           <p className="text-brown mb-6">{currentT.scheduled}</p>
 
-          <div className="flex flex-col gap-3 mb-6 max-w-[260px] mx-auto">
-            <a href={googleLink} target="_blank" rel="noreferrer" className="min-h-[44px] bg-burgundy text-white py-2 px-4 rounded-lg font-semibold hover:bg-burgundy-light transition-colors inline-flex items-center justify-center">
+          <div className="flex flex-col gap-3 mb-6 w-full max-w-[280px] mx-auto">
+            <a href={googleLink} target="_blank" rel="noreferrer" className="min-h-[48px] w-full bg-burgundy text-white py-2 px-4 rounded-lg font-semibold hover:bg-burgundy-light transition-colors inline-flex items-center justify-center">
               {currentT.addToGoogle}
             </a>
-            <a href={icsLink} download="interview.ics" className="min-h-[44px] bg-transparent border-[1.5px] border-warm-border text-brown py-2 px-4 rounded-lg font-semibold hover:border-brown transition-colors inline-flex items-center justify-center">
+            <a href={icsLink} download="interview.ics" className="min-h-[48px] w-full bg-transparent border-[1.5px] border-warm-border text-brown py-2 px-4 rounded-lg font-semibold hover:border-brown transition-colors inline-flex items-center justify-center">
               {currentT.downloadIcs}
             </a>
           </div>
@@ -268,9 +268,9 @@ END:VCALENDAR`;
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
               placeholder={currentT.placeholder}
-              className="min-h-[44px] flex-1 border-[1.5px] border-warm-border rounded-md p-2 text-base text-ink focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
+              className="min-h-[48px] flex-1 border-[1.5px] border-warm-border rounded-md p-2 text-base text-ink focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
             />
-            <button type="submit" className="min-h-[44px] bg-burgundy text-white px-4 rounded-lg font-semibold hover:bg-burgundy-light transition-colors">{currentT.search}</button>
+            <button type="submit" className="min-h-[48px] bg-burgundy text-white px-4 rounded-lg font-semibold hover:bg-burgundy-light transition-colors">{currentT.search}</button>
           </form>
 
           <div className="space-y-2">
@@ -278,7 +278,7 @@ END:VCALENDAR`;
               <button
                 key={c.id}
                 onClick={() => handleSelectComp(c)}
-                className="w-full text-left p-3 border border-warm-border rounded-lg hover:border-burgundy hover:bg-cream transition-colors"
+                className="w-full text-left p-3 min-h-[48px] border border-warm-border rounded-lg hover:border-burgundy hover:bg-cream transition-colors"
               >
                 <div className="font-semibold text-ink">{c.companion1_name} & {c.companion2_name}</div>
                 <div className="text-sm text-brown-light">{currentT.interviewer}: {c.leaders?.name || 'Assigned Leader'}</div>
@@ -305,7 +305,7 @@ END:VCALENDAR`;
                   <button
                     key={s.id}
                     onClick={() => handleBook(s)}
-                    className="w-full text-left p-4 border border-warm-border rounded-lg hover:bg-warm-white hover:border-burgundy transition-all flex justify-between items-center"
+                    className="w-full text-left p-4 min-h-[48px] border border-warm-border rounded-lg hover:bg-warm-white hover:border-burgundy transition-all flex justify-between items-center"
                   >
                     <span className="font-semibold text-lg text-ink">{currentT.days[s.day_of_week]}</span>
                     <span className="text-brown">{s.start_time.slice(0,5)}</span>
@@ -317,7 +317,7 @@ END:VCALENDAR`;
                   <button
                     key={`${window.id}-${time}`}
                     onClick={() => handleBookWindow(window, time)}
-                    className="w-full text-left p-4 border border-warm-border rounded-lg hover:bg-warm-white hover:border-burgundy transition-all flex justify-between items-center"
+                    className="w-full text-left p-4 min-h-[48px] border border-warm-border rounded-lg hover:bg-warm-white hover:border-burgundy transition-all flex justify-between items-center"
                   >
                     <span className="font-semibold text-lg text-ink">{formatWindowDate(window.window_date)}</span>
                     <span className="text-brown">{time}</span>

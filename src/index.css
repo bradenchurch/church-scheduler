@@ -46,4 +46,24 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * Mobile touch & auto-zoom rules.
+ *
+ * iOS Safari auto-zooms into a focused form control whenever its computed
+ * font-size is below 16px. Force every input/select/textarea to at least
+ * 16px so focus never triggers a zoom, and kill the grey tap flash on links
+ * and buttons. `!important` is intentional here: it must win over utility
+ * classes like `.text-sm` that would otherwise re-shrink a control.
+ */
+input,
+select,
+textarea {
+  font-size: 16px !important;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
 }

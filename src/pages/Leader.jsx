@@ -179,16 +179,16 @@ export default function Leader() {
   return (
     <div className="space-y-8 max-w-2xl mx-auto">
       <div>
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">
           <h2 className="text-2xl font-serif font-bold capitalize text-burgundy">{displayName}'s Dashboard</h2>
 
           {isAdmin && (
-            <label className="flex flex-col gap-1 text-sm text-brown-light">
+            <label className="flex flex-col gap-1 text-sm text-brown-light w-full sm:w-auto">
               <span className="font-semibold text-brown">Leader</span>
               <select
                 value={effectiveLeaderId}
                 onChange={(e) => setSelectedLeaderId(e.target.value)}
-                className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all font-semibold text-burgundy"
+                className="min-h-[48px] w-full p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all font-semibold text-burgundy"
               >
                 {LEADERS.map((l) => (
                   <option key={l.id} value={l.id}>
@@ -214,13 +214,13 @@ export default function Leader() {
             <p className="text-xs uppercase tracking-widest text-brown-light font-semibold mb-1.5">
               Subscription URL
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <code className="flex-1 min-w-0 break-all text-xs text-brown">{feedUrl || 'Loading…'}</code>
               <button
                 type="button"
                 onClick={handleCopyFeedUrl}
                 disabled={!feedUrl}
-                className="min-h-[44px] shrink-0 px-4 rounded-lg bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                className="min-h-[48px] w-full sm:w-auto sm:shrink-0 px-4 rounded-lg bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-light transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {copied ? 'Copied' : 'Copy iCal Subscription Link'}
               </button>
@@ -242,13 +242,13 @@ export default function Leader() {
             <div className="flex gap-2">
               <button
                 onClick={handleCopyDigest}
-                className="min-h-[44px] bg-transparent border border-burgundy text-burgundy px-4 py-2 rounded-md hover:bg-burgundy-ghost transition-colors text-sm font-semibold"
+                className="min-h-[48px] bg-transparent border border-burgundy text-burgundy px-4 py-2 rounded-md hover:bg-burgundy-ghost transition-colors text-sm font-semibold"
               >
                 Copy Digest
               </button>
               <button
                 onClick={handleBulkComplete}
-                className="min-h-[44px] bg-burgundy text-white px-4 py-2 rounded-md hover:bg-burgundy-light transition-colors text-sm font-semibold"
+                className="min-h-[48px] bg-burgundy text-white px-4 py-2 rounded-md hover:bg-burgundy-light transition-colors text-sm font-semibold"
               >
                 Bulk Mark Complete
               </button>
@@ -292,7 +292,7 @@ export default function Leader() {
           {!addingSlot ? (
             <button
               onClick={() => setAddingSlot(true)}
-              className="min-h-[44px] w-full py-2 border-2 border-dashed border-warm-border text-burgundy rounded-lg hover:border-burgundy-light hover:bg-burgundy-ghost transition-colors font-semibold"
+              className="min-h-[48px] w-full py-2 border-2 border-dashed border-warm-border text-burgundy rounded-lg hover:border-burgundy-light hover:bg-burgundy-ghost transition-colors font-semibold"
             >
               + Add New Slot
             </button>
@@ -302,7 +302,7 @@ export default function Leader() {
                 <select
                   value={newSlotDay}
                   onChange={(e) => setNewSlotDay(parseInt(e.target.value))}
-                  className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all flex-1"
+                  className="min-h-[48px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all flex-1"
                 >
                   <option value={0}>Sunday</option>
                   <option value={1}>Monday</option>
@@ -316,12 +316,12 @@ export default function Leader() {
                   type="time"
                   value={newSlotTime}
                   onChange={(e) => setNewSlotTime(e.target.value)}
-                  className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all flex-1"
+                  className="min-h-[48px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all flex-1"
                 />
               </div>
               <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setAddingSlot(false)} className="min-h-[44px] px-4 py-2 text-brown-light font-semibold hover:underline">Cancel</button>
-                <button type="submit" className="min-h-[44px] px-4 py-2 bg-burgundy text-white rounded-md hover:bg-burgundy-light transition-colors font-semibold">Save Slot</button>
+                <button type="button" onClick={() => setAddingSlot(false)} className="min-h-[48px] px-4 py-2 text-brown-light font-semibold hover:underline">Cancel</button>
+                <button type="submit" className="min-h-[48px] px-4 py-2 bg-burgundy text-white rounded-md hover:bg-burgundy-light transition-colors font-semibold">Save Slot</button>
               </div>
             </form>
           )}

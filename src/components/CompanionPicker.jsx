@@ -121,13 +121,13 @@ export default function CompanionPicker({ onSelect }) {
             onFocus={() => setOpen(true)}
             placeholder="Start typing your name…"
             autoFocus
-            className="w-full min-h-[44px] bg-transparent px-3 py-2 text-base text-brown placeholder:text-brown-light focus:outline-none"
+            className="w-full min-h-[48px] bg-transparent px-3 py-2 text-base text-brown placeholder:text-brown-light focus:outline-none"
           />
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
             aria-label="Toggle results"
-            className="min-h-[44px] px-3 text-brown-light hover:text-burgundy"
+            className="min-h-[48px] px-3 text-brown-light hover:text-burgundy"
           >
             <ChevronIcon />
           </button>
@@ -152,7 +152,7 @@ export default function CompanionPicker({ onSelect }) {
                     e.preventDefault();
                     handleSelect(c);
                   }}
-                  className="w-full text-left px-4 py-3 min-h-[44px] hover:bg-cream transition-colors border-b border-warm-border last:border-b-0"
+                  className="w-full text-left px-4 py-3 min-h-[48px] hover:bg-cream transition-colors border-b border-warm-border last:border-b-0"
                 >
                   <span className="block font-semibold text-brown">{c.name}</span>
                   <span className="block text-sm text-brown-light">
