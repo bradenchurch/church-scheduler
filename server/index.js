@@ -17,7 +17,7 @@ import {
   GOOGLE_SCOPES,
 } from './google.js';
 import { handleBookingConfirmation } from './notifications.js';
-import { getRoster, formatAddress, splitCompanions } from './roster.js';
+import { getRoster, formatAddress, splitCompanions, getUnlinkedCompanions } from './roster.js';
 import { requireAuth as requireSession, requireRole, requireCompanionFor } from './middleware/auth.js';
 
 dotenv.config();
@@ -550,7 +550,7 @@ app.get('/api/admin/roster', requireAuth, requireAdmin, async (req, res) => {
       });
     }
 
-    res.json({ ward, totals, by_district, households });
+    res.json({ ward, totals, by_district, households, unlinked_companions: getUnlinkedCompanions() });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
