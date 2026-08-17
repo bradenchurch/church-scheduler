@@ -1,60 +1,66 @@
-# Slot Duration Selector — Report
+# Leader Admin Access + iCal Feed — Report
 
-PR: https://github.com/bradenchurch/church-scheduler/pull/29
+PR: https://github.com/bradenchurch/church-scheduler/pull/30
 
-Branch: `feat/slot-duration-selector` · Worktree: `~/.openclaw/workspace/church-scheduler-tasks/cs-slot-duration/`
+Branch: `fix/leader-admin-access-ical` · Worktree: `~/.openclaw/workspace/church-scheduler-tasks/cs-leader-fixes/`
 
 ## Summary
 
-Added a per-window **slot duration** selector (15 / 20 / 30 / 45 / 60 minutes) so presidency
-members can control how their published availability windows are split into bookable increments.
-A window published with 15-minute slots (e.g. 8:00–9:00 AM) is now bookable at 8:00, 8:15,
-8:30, and 8:45 — instead of always being hardcoded to 30-minute steps.
+Fixed two issues Braden hit on the live `/leader` page:
+
+1. **Admin access** — admins got "insufficient permissions" on `/leader`. Root cause was
+   deeper than a missing `leaderId`: the `leaders.role` column was referenced by the auth
+   middleware but its DDL was never committed, so role resolution always failed and `role`
+   resolved to `null` (which `ProtectedRoute` turns into "Access Denied").
+2. **Legacy Google OAuth** — replaced the Google Calendar connection path with a 1-click
+   **iCal Subscription Feed** box.
 
 ## What changed
 
-### 1. Schema (`schema.sql`)
-- `availability_windows` gains `slot_duration_minutes INTEGER NOT NULL DEFAULT 30` with a
-  `CHECK (… IN (15, 20, 30, 45, 60))` constraint.
-- Added an idempotent `ALTER TABLE … ADD COLUMN IF NOT EXISTS` so existing DBs are brought
-  forward (matching the repo's established migration pattern).
+### `server/index.js`
+- `GET /api/bookings/:leaderId` and `POST /api/slots/:leaderId` now use `requireSession`
+  (the MOCK_AUTH-aware middleware) instead of the local `requireAuth`, so admins can access
+  any leader and MOCK_AUTH smoke tests exercise the admin path.
+- Added `GET /api/leader/:leaderId/ical-token` (admin-or-owner) to return a specific leader's
+  iCal token for the subscription URL.
 
-### 2. Backend (`server/index.js`)
-- `POST /api/availability/:leaderId/windows`: accepts `slot_duration_minutes`; defaults to 30
-  when omitted, validates it is one of `[15, 20, 30, 45, 60]` (else 400), and persists it.
-- `GET /api/availability/:leaderId`: `windows[]` now includes `slot_duration_minutes`.
-- `GET /api/availability/:leaderId/windows`: rows now include `slot_duration_minutes`.
+### `src/pages/Leader.jsx`
+- Admins get a **Leader selector** dropdown (Cole Chollet / Kawika Tupuola / Sean Bryan),
+  defaulting to Cole. Non-admin leaders stay pinned to their own dashboard.
+- Removed Google OAuth UI; added an **iCal Subscription Feed** box with a "Copy iCal
+  Subscription Link" button and paste instructions for Apple / Google calendar.
 
-### 3. Availability UI (`src/pages/AdminAvailability.jsx`)
-- "Add a window" form gains a **Slot duration** pill selector (`15m`, `20m`, `30m (default)`,
-  `45m`, `60m`).
-- Window list items now show the duration, e.g. `8:00 AM – 10:00 AM (15m slots)`.
-
-### 4. Booking expansion (`src/components/SlotPicker.jsx` & `src/pages/Book.jsx`)
-- `expandWindowTimes(start, end, slotDuration = 30)` now steps by `slotDuration` minutes
-  (with a guard falling back to 30 for a non-positive value).
-- Both the chapel-side `SlotPicker` and the `Book` page pass each window's
-  `slot_duration_minutes` when expanding times; `Book` also sets the booked event duration
-  from the window's slot duration for the calendar links.
+### `schema.sql`
+- Added `leaders.role` column (idempotent `ALTER TABLE … ADD COLUMN IF NOT EXISTS`) and
+  backfill: `braden` = admin, `cole`/`kawika`/`sean` = leader.
 
 ## Verification
 
 | Check | Result |
 | --- | --- |
 | `npm run build` | ✅ 0 errors |
-| `npm run lint` | ✅ 0 errors (3 pre-existing warnings only) |
+| `npm run lint` | ✅ 0 errors (3 pre-existing warnings) |
 | `node --check server/index.js` | ✅ valid |
-| DB migration (`ALTER … ADD COLUMN IF NOT EXISTS`) | ✅ applied to shared Supabase `public` schema |
-| MOCK_AUTH smoke test — `GET /api/availability/cole/windows` | ✅ returns windows incl. `slot_duration_minutes` |
-| MOCK_AUTH smoke test — `POST …/windows` 15m | ✅ persisted `slot_duration_minutes: 15` |
-| MOCK_AUTH smoke test — `POST …/windows` 25m (invalid) | ✅ 400 `slot_duration_minutes must be one of 15, 20, 30, 45, 60` |
-| MOCK_AUTH smoke test — `POST …/windows` omitted | ✅ defaulted to `slot_duration_minutes: 30` |
-| `GET /api/availability/cole` | ✅ windows include `slot_duration_minutes` |
+| MOCK_AUTH `GET /api/bookings/cole` (admin) | ✅ 200 |
+| MOCK_AUTH `GET /api/slots/cole` (admin) | ✅ 200 |
+| MOCK_AUTH `GET /api/leader/cole/ical-token` (admin) | ✅ 200 (token returned) |
+| MOCK_AUTH non-admin leader → wrong leader | ✅ 403 |
+| MOCK_AUTH missing `X-Mock-User` | ✅ 401 |
 
-## Notes / decisions
+Smoke script: `scripts/smoke-leader-mock.sh` (sources `~/.openclaw/workspace/.secrets/church-scheduler*.env`).
 
-- **Default preserved:** omitting the field (and any pre-existing rows) resolves to 30 minutes,
-  so existing behavior is unchanged for windows created before this feature.
-- **Test data cleaned up:** the two smoke-test windows inserted for `cole` were deleted after
-  verification so no junk rows remain in production.
+## DB migration applied (shared Supabase `public` schema)
+
+- `ALTER TABLE leaders ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'leader'`
+- Backfilled: `braden` → `admin`, `cole`/`kawika`/`sean` → `leader`.
+- Rotated iCal tokens from `church-scheduler-ical-tokens.env` were written to
+  `leaders.ical_token` (previously NULL for all four leaders — the `/api/cal/:id.ics` feeds
+  were non-functional without them).
+
+## Notes / follow-ups
+
+- **Human follow-up still pending:** the "communicate new iCal subscription URLs to each
+  leader privately + re-subscribe" step from the rotation notes in
+  `church-scheduler-ical-tokens.env` has **not** been done. The URLs now resolve, but leaders
+  still need to be given their new `.ics` links.
 - No force-push, no `--admin` merge, no auto-merge — PR opened for Braden to review/merge.
