@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { authedFetch } from '../lib/api';
 
 function CheckIcon() {
   return (
@@ -27,6 +28,7 @@ export default function Book() {
   const [selectedComp, setSelectedComp] = useState(null);
   const [slots, setSlots] = useState([]);
   const [bookedDetails, setBookedDetails] = useState(null);
+  const [bookError, setBookError] = useState('');
 
   const t = {
     en: {
@@ -92,11 +94,17 @@ export default function Book() {
     scheduledDate.setDate(today.getDate() + daysUntil);
     const dateString = scheduledDate.toISOString().split('T')[0];
 
-    await fetch('/api/bookings', {
+    setBookError('');
+    const res = await authedFetch('/api/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ companionship_id: selectedComp.id, slot_id: slot.id, scheduled_date: dateString })
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setBookError(data?.error || 'Booking failed. Please try again.');
+      return;
+    }
     setBookedDetails({ date: dateString, time: slot.start_time, duration: slot.duration_minutes || 30 });
   };
 
@@ -201,6 +209,10 @@ END:VCALENDAR`;
           <button onClick={() => setSelectedComp(null)} className="text-sm text-brown-light mb-4 hover:underline">&larr; {currentT.back}</button>
           <h2 className="text-xl font-serif font-bold mb-2 text-burgundy">{currentT.pickTime}</h2>
           <p className="text-brown-light mb-6">{currentT.interviewer}: {selectedComp.leaders?.name}</p>
+
+          {bookError && (
+            <p className="text-sm rounded-lg px-3 py-2 bg-rose-light text-rose mb-4">{bookError}</p>
+          )}
 
           <div className="space-y-2">
             {slots.length === 0 ? (

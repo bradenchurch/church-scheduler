@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { signOut } from '../lib/auth';
+import { authedFetch } from '../lib/api';
 import Badge from '../components/Badge';
 import SectionLabel from '../components/SectionLabel';
 
@@ -103,7 +104,7 @@ export default function Dashboard() {
   }, [token, refreshQueue]);
 
   useEffect(() => {
-    fetch('/api/leaders').then((r) => r.json()).then(setLeadersList).catch(() => []);
+    authedFetch('/api/leaders').then((r) => r.json()).then(setLeadersList).catch(() => []);
   }, []);
 
   const handleAssignNow = async (requestId) => {

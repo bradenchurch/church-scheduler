@@ -144,34 +144,70 @@ export function requireRole(role) {
  * the caller is the assigned companion for the companionship identified by
  * req.params / req.body / req.query[paramName].
  *
- * STUB — the real companionship-assignment check is implemented in the
- * cs-chapel-companion-auth PR (it needs the Chapel magic-link sign-in UX to
- * know which companionship a companion belongs to). In real-auth mode this
- * fails closed so nobody can book a slot on a companionship they don't own.
+ * The `companionships` table links a companionship to its companions by email
+ * (companion1_email / companion2_email) — there is no user-id column. A caller
+ * is treated as the assigned companion when their authenticated email matches
+ * either companion email on the requested companionship row (case-insensitive).
  *
- * In MOCK_AUTH dev mode a trivial check compares the mock identity's
- * `companionship_id` against the target so smoke tests can exercise both the
- * assigned (201) and unassigned (403) paths.
+ * 401 unauthenticated (defense-in-depth — requireAuth should already have run),
+ * 400 missing/invalid companionship id, 403 not-assigned, 500 auth server error.
  */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function requireCompanionFor(paramName) {
-  return function companionGuard(req, res, next) {
+  return async function companionGuard(req, res, next) {
+    // requireAuth must have populated req.user already; guard anyway.
+    if (!req.user || !req.user.id) {
+      return res
+        .status(401)
+        .json({ error: 'Authentication required', code: 'UNAUTHORIZED' });
+    }
+
     const target =
       req.params?.[paramName] ??
       req.body?.[paramName] ??
       req.query?.[paramName];
 
-    if (MOCK_AUTH) {
-      if (req.user?.companionship_id && req.user.companionship_id === target) {
-        return next();
-      }
+    if (!target) {
       return res
-        .status(403)
-        .json({ error: 'Not assigned to this companionship', code: 'FORBIDDEN' });
+        .status(400)
+        .json({ error: `Missing '${paramName}'`, code: 'BAD_REQUEST' });
     }
 
-    // Real auth path: fail closed until the companionships-table lookup lands.
-    return res
-      .status(403)
-      .json({ error: 'Companion assignment verification unavailable', code: 'FORBIDDEN' });
+    // Reject non-UUID ids before hitting the DB.
+    if (!UUID_RE.test(String(target))) {
+      return res
+        .status(400)
+        .json({ error: 'Invalid companionship id', code: 'BAD_REQUEST' });
+    }
+
+    try {
+      const { data: comp, error } = await supabaseAdmin
+        .from('companionships')
+        .select('id, companion1_email, companion2_email')
+        .eq('id', target)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      const email = String(req.user.email || '').toLowerCase();
+      const assigned =
+        !!comp &&
+        [comp.companion1_email, comp.companion2_email].some(
+          (e) => !!e && String(e).toLowerCase() === email,
+        );
+
+      if (assigned) return next();
+
+      return res.status(403).json({
+        error: 'Not your assigned companionship',
+        code: 'FORBIDDEN_COMPANION',
+      });
+    } catch (err) {
+      console.error('[auth] companion assignment lookup error:', err.message);
+      return res
+        .status(500)
+        .json({ error: 'Authentication error', code: 'AUTH_ERROR' });
+    }
   };
 }

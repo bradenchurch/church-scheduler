@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import CompanionPicker from '../components/CompanionPicker';
 import SlotPicker from '../components/SlotPicker';
 import { submitChapelForm, getAvailability } from '../api/chapel';
+import { useAuth } from '../contexts/AuthContext';
+import { authedFetch } from '../lib/api';
+import { signInWithOtp } from '../lib/auth';
 
 const FAMILY_STATUSES = [
   { value: '', label: 'Select status…' },
@@ -73,6 +76,11 @@ const STEPS = [
 ];
 
 export default function Chapel() {
+  const { user, loading: authLoading } = useAuth();
+  const [email, setEmail] = useState('');
+  const [magicLinkSending, setMagicLinkSending] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [magicLinkError, setMagicLinkError] = useState('');
   const [step, setStep] = useState(1);
   const [selected, setSelected] = useState(null);
   const [availability, setAvailability] = useState(null);
@@ -84,6 +92,19 @@ export default function Chapel() {
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
 
+  const handleSendMagicLink = async (e) => {
+    e.preventDefault();
+    setMagicLinkSending(true);
+    setMagicLinkError('');
+    const { error } = await signInWithOtp(email, `${window.location.origin}/chapel`);
+    if (error) {
+      setMagicLinkError(error.message);
+    } else {
+      setMagicLinkSent(true);
+    }
+    setMagicLinkSending(false);
+  };
+
   const handleSelectCompanion = (c) => {
     setSelected(c);
     setError('');
@@ -93,7 +114,7 @@ export default function Chapel() {
     setResult(null);
 
     // Load families for the selected companionship.
-    fetch(`/api/families?companionship_id=${encodeURIComponent(c.companionship_id)}`)
+    authedFetch(`/api/families?companionship_id=${encodeURIComponent(c.companionship_id)}`)
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error('Failed to load families'))))
       .then((d) => {
         setFamilies(d.families || []);
@@ -155,6 +176,70 @@ export default function Chapel() {
       setSubmitting(false);
     }
   };
+
+  // ---- Not signed in: magic-link sign-in prompt (one-time per device) ----
+  if (authLoading) {
+    return <div className="max-w-md mx-auto p-4 text-brown-light">Loading…</div>;
+  }
+
+  if (!user) {
+    return (
+      <div className="max-w-md mx-auto">
+        <div className="rounded-xl shadow-sm border border-warm-border bg-warm-white overflow-hidden">
+          <div className="px-6 pt-6 pb-4 border-b border-warm-border">
+            <p className="text-xs uppercase tracking-widest mb-1 text-brown-light">
+              Ministering Visit Report
+            </p>
+            <h1 className="text-2xl font-serif font-bold text-burgundy">Sign in as companion</h1>
+          </div>
+          <div className="p-6 space-y-4">
+            <p className="text-sm text-brown">
+              To see the families assigned to your companionship, sign in with your email. This is a
+              one-time step on this device.
+            </p>
+            {!magicLinkSent ? (
+              <form onSubmit={handleSendMagicLink} className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-brown mb-1">Email</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full min-h-[44px] rounded-lg border border-warm-border bg-cream px-3 py-2 text-base text-brown placeholder:text-brown-light focus:outline-none focus:border-burgundy"
+                    placeholder="your@email.com"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={magicLinkSending}
+                  className="w-full min-h-[44px] rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors disabled:opacity-40"
+                >
+                  {magicLinkSending ? 'Sending link…' : 'Send magic link'}
+                </button>
+              </form>
+            ) : (
+              <div className="rounded-lg bg-sage-light border border-sage p-4 text-sm text-sage">
+                Check your email for the magic link. Tap it to sign in and continue.
+              </div>
+            )}
+            {magicLinkError && (
+              <p className="text-sm rounded-lg px-3 py-2 bg-rose-light text-rose">{magicLinkError}</p>
+            )}
+            {magicLinkSent && (
+              <button
+                type="button"
+                onClick={() => setMagicLinkSent(false)}
+                className="text-sm text-burgundy hover:underline"
+              >
+                Use a different email
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // ---- Success screen ----
   if (step === 5 && result) {

@@ -18,7 +18,7 @@ import {
 } from './google.js';
 import { handleBookingConfirmation } from './notifications.js';
 import { getRoster, formatAddress, splitCompanions } from './roster.js';
-import { requireRole, requireCompanionFor } from './middleware/auth.js';
+import { requireAuth as requireSession, requireRole, requireCompanionFor } from './middleware/auth.js';
 
 dotenv.config();
 
@@ -349,9 +349,11 @@ app.get('/api/companions', async (req, res) => {
   }
 });
 
-// GET /api/families?companion_name=...&companionship_id=... — public: the
-// families a companionship ministers to, plus its assigned presidency member.
-app.get('/api/families', async (req, res) => {
+// GET /api/families?companion_name=...&companionship_id=... — the families a
+// companionship ministers to, plus its assigned presidency member. Requires the
+// caller to be the assigned companion for that companionship (proof of
+// companionship), so ward member addresses are never exposed to unassigned users.
+app.get('/api/families', requireSession, requireCompanionFor('companionship_id'), async (req, res) => {
   const { companion_name, companionship_id } = req.query;
   try {
     const { companionships, householdById, presidencyByDistrict } = getRoster();
