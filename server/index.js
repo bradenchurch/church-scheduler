@@ -300,10 +300,18 @@ app.get('/api/companionships', async (req, res) => {
   }
 });
 
-// GET /api/companions?ward=long-valley-2nd-ward — public: all companionships
+// GET /api/companions?ward=long-valley-2nd-ward — auth-gated companion roster
 // grouped by district, with companionship pair info.
-app.get('/api/companions', async (req, res) => {
+//
+// Privacy policy (PII): this roster carries companion phone + email and the
+// presidency member's contact info. Only admins receive the full rows; all
+// other authenticated callers (leaders + companions) get name + district +
+// assigned presidency member id, with phone/email stripped. The Chapel
+// companion picker only needs names for self-identification; a companion's own
+// presidency member contact comes from GET /api/availability/:leaderId.
+app.get('/api/companions', requireSession, async (req, res) => {
   const ward = String(req.query.ward || 'long-valley-2nd-ward').trim();
+  const isAdmin = req.user?.role === 'admin';
   try {
     const { companionships, presidencyByDistrict } = getRoster();
 
@@ -334,12 +342,22 @@ app.get('/api/companions', async (req, res) => {
         const presidencyLeaderId = comps.map((c) => leaderById.get(c.id)).find(Boolean) || null;
         return {
           district_number: districtNumber,
-          presidency_member: { ...presidency, id: presidencyLeaderId },
-          companionships: comps.map((comp) => ({
-            id: comp.id,
-            assigned_to: leaderById.get(comp.id) || null,
-            ...splitCompanions(comp.companions),
-          })),
+          presidency_member: isAdmin
+            ? { ...presidency, id: presidencyLeaderId }
+            : { name: presidency.name, id: presidencyLeaderId },
+          companionships: comps.map((comp) => {
+            const { companion_1, companion_2 } = splitCompanions(comp.companions);
+            return {
+              id: comp.id,
+              assigned_to: leaderById.get(comp.id) || null,
+              companion_1: isAdmin
+                ? companion_1
+                : companion_1 && { name: companion_1.name },
+              companion_2: isAdmin
+                ? companion_2
+                : companion_2 && { name: companion_2.name },
+            };
+          }),
         };
       });
 

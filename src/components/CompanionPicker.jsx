@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { authedFetch } from '../lib/api';
 
 const WARD_SLUG = 'long-valley-2nd-ward';
 
@@ -53,7 +54,7 @@ export default function CompanionPicker({ onSelect }) {
 
   useEffect(() => {
     let active = true;
-    fetch(`/api/companions?ward=${encodeURIComponent(WARD_SLUG)}`)
+    authedFetch(`/api/companions?ward=${encodeURIComponent(WARD_SLUG)}`)
       .then((r) => {
         if (!r.ok) throw new Error('Failed to load companions');
         return r.json();
