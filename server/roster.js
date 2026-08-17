@@ -60,6 +60,35 @@ export function getRoster() {
   return _roster;
 }
 
+// Companions whose `notes` carry this marker have no household record in
+// roster-households.json — they exist in the companionships JSON but were never
+// mapped to a household, so an admin must attach them by hand. This is the
+// authoritative definition of "unlinked companion".
+const UNLINKED_NOTES_MARKER = 'not_in_households_json';
+
+// List companions with no household record, normalized to `{ id, name, district }`.
+//
+// Companions carry no `id` of their own in the source JSON, so the enclosing
+// companionship's id is used as the stable key. An unlinked companion is always
+// the non-head partner (the head carries a `cross_district` note instead), so
+// there is at most one per companionship and the companionship id is unique.
+export function getUnlinkedCompanions() {
+  const { companionships } = getRoster();
+  const unlinked = [];
+  for (const comp of companionships) {
+    for (const companion of comp.companions || []) {
+      if ((companion.notes || '').includes(UNLINKED_NOTES_MARKER)) {
+        unlinked.push({
+          id: comp.id,
+          name: companion.name,
+          district: comp.district,
+        });
+      }
+    }
+  }
+  return unlinked;
+}
+
 // Build a single-line address from a household head's structured fields.
 export function formatAddress(head) {
   if (!head) return '';
