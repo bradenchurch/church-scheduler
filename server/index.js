@@ -947,6 +947,49 @@ app.get('/api/availability/:leaderId/windows', async (req, res) => {
   }
 });
 
+// Shared validation for a single availability window payload. Returns
+// { error } on invalid input, or { value: { window_date, start_time,
+// end_time, slot_duration_minutes } } with slot_duration_minutes defaulted
+// to 30 and coerced to a number.
+const SLOT_DURATIONS = [15, 20, 30, 45, 60];
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const TIME_RE = /^\d{2}:\d{2}(:\d{2})?$/;
+
+function validateWindowInput(input) {
+  const { window_date, start_time, end_time, slot_duration_minutes } = input || {};
+
+  if (!window_date || !start_time || !end_time) {
+    return { error: 'window_date, start_time, end_time required' };
+  }
+  if (!DATE_RE.test(String(window_date))) {
+    return { error: 'window_date must be YYYY-MM-DD' };
+  }
+  if (!TIME_RE.test(String(start_time)) || !TIME_RE.test(String(end_time))) {
+    return { error: 'start_time / end_time must be HH:MM[:SS]' };
+  }
+  if (String(end_time) <= String(start_time)) {
+    return { error: 'end_time must be after start_time' };
+  }
+
+  let slotDuration = 30;
+  if (slot_duration_minutes !== undefined && slot_duration_minutes !== null) {
+    const parsed = Number(slot_duration_minutes);
+    if (!Number.isInteger(parsed) || !SLOT_DURATIONS.includes(parsed)) {
+      return { error: 'slot_duration_minutes must be one of 15, 20, 30, 45, 60' };
+    }
+    slotDuration = parsed;
+  }
+
+  return {
+    value: {
+      window_date: String(window_date),
+      start_time: String(start_time),
+      end_time: String(end_time),
+      slot_duration_minutes: slotDuration,
+    },
+  };
+}
+
 // POST /api/availability/:leaderId/windows — publish a date-specific window.
 // Gated: admin or the leader themselves. Uses requireSession (the MOCK_AUTH-aware
 // middleware) so smoke tests can exercise the auth gate.
@@ -955,37 +998,51 @@ app.post('/api/availability/:leaderId/windows', requireSession, async (req, res)
     return res.status(403).json({ error: 'Forbidden' });
   }
   const { leaderId } = req.params;
-  const { window_date, start_time, end_time, slot_duration_minutes } = req.body;
+  const parsed = validateWindowInput(req.body);
+  if (parsed.error) return res.status(400).json({ error: parsed.error });
 
-  if (!window_date || !start_time || !end_time) {
-    return res.status(400).json({ error: 'window_date, start_time, end_time required' });
+  try {
+    const { data, error } = await supabase
+      .from('availability_windows')
+      .insert([{ leader_id: leaderId, ...parsed.value }])
+      .select();
+    if (error) throw error;
+    res.status(201).json(data[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-  const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
-  if (!dateRegex.test(window_date)) return res.status(400).json({ error: 'window_date must be YYYY-MM-DD' });
-  if (!timeRegex.test(start_time) || !timeRegex.test(end_time)) {
-    return res.status(400).json({ error: 'start_time / end_time must be HH:MM[:SS]' });
-  }
-  if (end_time <= start_time) return res.status(400).json({ error: 'end_time must be after start_time' });
+});
 
-  // Slot duration: default 30 min; must be one of the allowed bookable increments.
-  const SLOT_DURATIONS = [15, 20, 30, 45, 60];
-  let slotDuration = 30;
-  if (slot_duration_minutes !== undefined && slot_duration_minutes !== null) {
-    const parsed = Number(slot_duration_minutes);
-    if (!Number.isInteger(parsed) || !SLOT_DURATIONS.includes(parsed)) {
-      return res.status(400).json({ error: 'slot_duration_minutes must be one of 15, 20, 30, 45, 60' });
+// POST /api/availability/:leaderId/windows/batch — publish many date-specific
+// windows in one call (used by the AdminAvailability "publish a month" flow).
+// Gated the same as the single-window endpoint: admin or the owning leader.
+app.post('/api/availability/:leaderId/windows/batch', requireSession, async (req, res) => {
+  if (req.user.role !== 'admin' && req.user.leader_id !== req.params.leaderId) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { leaderId } = req.params;
+  const { windows } = req.body || {};
+
+  if (!Array.isArray(windows) || windows.length === 0) {
+    return res.status(400).json({ error: 'windows must be a non-empty array' });
+  }
+
+  const rows = [];
+  for (let i = 0; i < windows.length; i++) {
+    const parsed = validateWindowInput(windows[i]);
+    if (parsed.error) {
+      return res.status(400).json({ error: `windows[${i}]: ${parsed.error}` });
     }
-    slotDuration = parsed;
+    rows.push({ leader_id: leaderId, ...parsed.value });
   }
 
   try {
     const { data, error } = await supabase
       .from('availability_windows')
-      .insert([{ leader_id: leaderId, window_date, start_time, end_time, slot_duration_minutes: slotDuration }])
+      .insert(rows)
       .select();
     if (error) throw error;
-    res.status(201).json(data[0]);
+    res.status(201).json(data || []);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
