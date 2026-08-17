@@ -674,6 +674,204 @@ app.post('/api/admin/queue/:id/complete', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/admin/analytics — analytics + "who hasn't scheduled" action list.
+//
+// Gated by requireRole('leader') (admits admins + leaders, rejects companions),
+// which authenticates via requireSession under the hood. Aggregates every
+// companionship against its most recent non-cancelled booking to derive a
+// per-companionship status: pending (no booking), booked, or completed.
+app.get('/api/admin/analytics', requireSession, requireRole('leader'), async (req, res) => {
+  try {
+    const [leadersRes, compsRes, slotsRes] = await Promise.all([
+      supabase.from('leaders').select('id, name').order('name'),
+      supabase.from('companionships').select('id, leader_id, companion1_name, companion2_name'),
+      supabase.from('slots').select('id, leader_id, start_time'),
+    ]);
+
+    if (leadersRes.error) throw leadersRes.error;
+    if (compsRes.error) throw compsRes.error;
+    if (slotsRes.error) throw slotsRes.error;
+
+    const leaders = leadersRes.data || [];
+    const comps = compsRes.data || [];
+    const slots = slotsRes.data || [];
+
+    // Bookings: prefer selecting window_id (date-specific bookings), but degrade
+    // to a window_id-less select on DBs where that migration hasn't landed yet.
+    let bookings = [];
+    try {
+      const bookingsRes = await supabase
+        .from('bookings')
+        .select('id, companionship_id, slot_id, window_id, scheduled_date, status')
+        .neq('status', 'cancelled')
+        .order('scheduled_date', { ascending: false });
+      if (bookingsRes.error) throw bookingsRes.error;
+      bookings = bookingsRes.data || [];
+    } catch {
+      const fallbackRes = await supabase
+        .from('bookings')
+        .select('id, companionship_id, slot_id, scheduled_date, status')
+        .neq('status', 'cancelled')
+        .order('scheduled_date', { ascending: false });
+      if (fallbackRes.error) throw fallbackRes.error;
+      bookings = fallbackRes.data || [];
+    }
+
+    // Availability windows: best-effort (the table may not be migrated yet).
+    let windows = [];
+    try {
+      const windowsRes = await supabase
+        .from('availability_windows')
+        .select('id, leader_id, window_date, start_time');
+      if (windowsRes.error) throw windowsRes.error;
+      windows = windowsRes.data || [];
+    } catch {
+      windows = [];
+    }
+
+    const leaderById = new Map(leaders.map((l) => [l.id, l]));
+    const slotTimeById = new Map(slots.map((s) => [s.id, s.start_time]));
+    const windowTimeById = new Map(windows.map((w) => [w.id, w.start_time]));
+
+    // Latest (most recent scheduled_date) non-cancelled booking per companionship.
+    // `bookings` is ordered descending, so the first hit per id is the latest.
+    const latestBookingByComp = new Map();
+    for (const b of bookings) {
+      if (!latestBookingByComp.has(b.companionship_id)) {
+        latestBookingByComp.set(b.companionship_id, b);
+      }
+    }
+
+    const statusFor = (comp) => {
+      const b = latestBookingByComp.get(comp.id);
+      if (!b) return 'pending';
+      return b.status === 'completed' ? 'completed' : 'booked';
+    };
+
+    // Canonical public base for per-companionship booking deep links.
+    const base = (process.env.PUBLIC_BASE_URL || 'https://church-scheduler-tawny.vercel.app').replace(/\/$/, '');
+
+    const companionships_status = comps.map((comp) => {
+      const b = latestBookingByComp.get(comp.id);
+      const leader = leaderById.get(comp.leader_id);
+      const booking_time = b
+        ? (b.slot_id ? slotTimeById.get(b.slot_id) : b.window_id ? windowTimeById.get(b.window_id) : null)
+        : null;
+      return {
+        id: comp.id,
+        elder1_name: comp.companion1_name || '',
+        elder2_name: comp.companion2_name || '',
+        leader_name: leader?.name || '',
+        leader_id: comp.leader_id || null,
+        status: statusFor(comp),
+        booking_id: b?.id || null,
+        booking_date: b?.scheduled_date || null,
+        booking_time: booking_time || null,
+        unique_booking_url: `${base}/book?companionship=${encodeURIComponent(comp.id)}`,
+        slug: comp.id,
+      };
+    });
+
+    const total_companionships = comps.length;
+    const completed_count = companionships_status.filter((c) => c.status === 'completed').length;
+    const booked_count = companionships_status.filter((c) => c.status === 'booked').length;
+    const pending_count = companionships_status.filter((c) => c.status === 'pending').length;
+
+    const ward_completion_rate =
+      total_companionships === 0 ? 0 : Math.round((completed_count / total_companionships) * 1000) / 10;
+
+    // Open capacity = unbooked published windows/slots. Future-dated windows and
+    // recurring slots that have no non-cancelled booking are "open".
+    const today = new Date().toISOString().slice(0, 10);
+    const bookedWindowIds = new Set(bookings.filter((b) => b.window_id).map((b) => b.window_id));
+    const bookedSlotIds = new Set(bookings.filter((b) => b.slot_id).map((b) => b.slot_id));
+    const openWindows = windows.filter((w) => w.window_date >= today && !bookedWindowIds.has(w.id));
+    const openSlots = slots.filter((s) => !bookedSlotIds.has(s.id));
+    const open_slots_count = openWindows.length + openSlots.length;
+
+    // District breakdown — one entry per leader with assigned companionships.
+    // District leaders are the 3 presidency members (cole / kawika / sean); the
+    // secretary (braden) has no companionships and drops out naturally.
+    const district_breakdown = [];
+    for (const leader of leaders) {
+      const districtComps = comps.filter((c) => c.leader_id === leader.id);
+      if (districtComps.length === 0) continue;
+
+      let total = 0;
+      let booked = 0;
+      let completed = 0;
+      let pending = 0;
+      for (const c of districtComps) {
+        total += 1;
+        const st = statusFor(c);
+        if (st === 'completed') completed += 1;
+        else if (st === 'booked') booked += 1;
+        else pending += 1;
+      }
+
+      district_breakdown.push({
+        leader_id: leader.id,
+        leader_name: leader.name,
+        total,
+        booked,
+        completed,
+        pending,
+        completion_rate: total === 0 ? 0 : Math.round((completed / total) * 1000) / 10,
+      });
+    }
+
+    res.json({
+      total_companionships,
+      booked_count,
+      completed_count,
+      pending_count,
+      ward_completion_rate,
+      open_slots_count,
+      district_breakdown,
+      companionships_status,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/bookings/:id/complete — mark a scheduled interview as completed.
+// Gated: admin or the leader who owns the companionship (mirrors the existing
+// PUT /api/bookings/:id/status ownership scoping).
+app.post('/api/bookings/:id/complete', requireSession, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    // Non-admins may only complete bookings under their own companionship.
+    if (req.user.role !== 'admin') {
+      const { data: booking, error: fetchErr } = await supabase
+        .from('bookings')
+        .select('companionships(leader_id)')
+        .eq('id', id)
+        .maybeSingle();
+      if (fetchErr) throw fetchErr;
+      if (!booking || booking.companionships?.leader_id !== req.user.leader_id) {
+        return res.status(403).json({ error: 'Forbidden' });
+      }
+    }
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .update({ status: 'completed' })
+      .eq('id', id)
+      .select()
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ error: 'not_found' });
+    }
+
+    res.json({ ok: true, booking: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.get('/api/availability/:leaderId', async (req, res) => {
   const { leaderId } = req.params;
 

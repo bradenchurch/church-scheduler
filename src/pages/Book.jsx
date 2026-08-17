@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { authedFetch } from '../lib/api';
 
 function CheckIcon() {
@@ -50,6 +51,8 @@ function formatWindowDate(dateStr) {
 }
 
 export default function Book() {
+  const [searchParams] = useSearchParams();
+  const prefillId = searchParams.get('companionship');
   const [lang, setLang] = useState('en');
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
@@ -93,6 +96,34 @@ export default function Book() {
   };
 
   const currentT = t[lang];
+
+  // Deep-link support: /book?companionship=<id> (sent via the admin dashboard's
+  // "Text Invite" / "Copy Link" actions) auto-selects the companionship so the
+  // companion lands directly on their interviewer's available times.
+  useEffect(() => {
+    if (!prefillId) return;
+    let cancelled = false;
+
+    fetch('/api/companionships')
+      .then((r) => r.json())
+      .then((list) => {
+        const comp = (Array.isArray(list) ? list : []).find((c) => c.id === prefillId);
+        if (!comp || cancelled) return null;
+        setSelectedComp(comp);
+        return fetch(`/api/availability/${comp.leader_id}`);
+      })
+      .then((res) => (res ? res.json() : null))
+      .then((data) => {
+        if (!data || cancelled) return;
+        setSlots(Array.isArray(data) ? data : data.slots || []);
+        setWindows(data.windows || []);
+      })
+      .catch(() => {});
+
+    return () => {
+      cancelled = true;
+    };
+  }, [prefillId]);
 
   const handleSearch = async (e) => {
     e.preventDefault();
