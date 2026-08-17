@@ -21,12 +21,41 @@ function CheckIcon() {
   );
 }
 
+// Expand a date-specific availability window into 30-minute bookable increments.
+// e.g. "08:00"–"10:00" → ["08:00", "08:30", "09:00", "09:30"].
+function expandWindowTimes(start, end) {
+  if (!start || !end) return [];
+  const [sh, sm] = String(start).split(':').map(Number);
+  const [eh, em] = String(end).split(':').map(Number);
+  const startMin = sh * 60 + sm;
+  const endMin = eh * 60 + em;
+  const out = [];
+  for (let m = startMin; m < endMin; m += 30) {
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    out.push(`${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`);
+  }
+  return out;
+}
+
+function formatWindowDate(dateStr) {
+  const d = new Date(`${dateStr}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 export default function Book() {
   const [lang, setLang] = useState('en');
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
   const [selectedComp, setSelectedComp] = useState(null);
   const [slots, setSlots] = useState([]);
+  const [windows, setWindows] = useState([]);
   const [bookedDetails, setBookedDetails] = useState(null);
   const [bookError, setBookError] = useState('');
 
@@ -78,6 +107,7 @@ export default function Book() {
     const res = await fetch(`/api/availability/${comp.leader_id}`);
     const data = await res.json();
     setSlots(Array.isArray(data) ? data : data.slots || []);
+    setWindows(data.windows || []);
   };
 
   const handleBook = async (slot) => {
@@ -106,6 +136,25 @@ export default function Book() {
       return;
     }
     setBookedDetails({ date: dateString, time: slot.start_time, duration: slot.duration_minutes || 30 });
+  };
+
+  const handleBookWindow = async (window, time) => {
+    setBookError('');
+    const res = await authedFetch('/api/bookings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        companionship_id: selectedComp.id,
+        window_id: window.id,
+        scheduled_date: window.window_date,
+      }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setBookError(data?.error || 'Booking failed. Please try again.');
+      return;
+    }
+    setBookedDetails({ date: window.window_date, time, duration: 30 });
   };
 
   const getCalendarLinks = () => {
@@ -215,19 +264,33 @@ END:VCALENDAR`;
           )}
 
           <div className="space-y-2">
-            {slots.length === 0 ? (
+            {slots.length === 0 && windows.length === 0 ? (
               <p className="text-brown-light italic">{currentT.noSlots}</p>
             ) : (
-              slots.map(s => (
-                <button
-                  key={s.id}
-                  onClick={() => handleBook(s)}
-                  className="w-full text-left p-4 border border-warm-border rounded-lg hover:bg-warm-white hover:border-burgundy transition-all flex justify-between items-center"
-                >
-                  <span className="font-semibold text-lg text-ink">{currentT.days[s.day_of_week]}</span>
-                  <span className="text-brown">{s.start_time.slice(0,5)}</span>
-                </button>
-              ))
+              <>
+                {slots.map(s => (
+                  <button
+                    key={s.id}
+                    onClick={() => handleBook(s)}
+                    className="w-full text-left p-4 border border-warm-border rounded-lg hover:bg-warm-white hover:border-burgundy transition-all flex justify-between items-center"
+                  >
+                    <span className="font-semibold text-lg text-ink">{currentT.days[s.day_of_week]}</span>
+                    <span className="text-brown">{s.start_time.slice(0,5)}</span>
+                  </button>
+                ))}
+                {windows.flatMap((w) =>
+                  expandWindowTimes(w.start_time, w.end_time).map((time) => ({ window: w, time }))
+                ).map(({ window, time }) => (
+                  <button
+                    key={`${window.id}-${time}`}
+                    onClick={() => handleBookWindow(window, time)}
+                    className="w-full text-left p-4 border border-warm-border rounded-lg hover:bg-warm-white hover:border-burgundy transition-all flex justify-between items-center"
+                  >
+                    <span className="font-semibold text-lg text-ink">{formatWindowDate(window.window_date)}</span>
+                    <span className="text-brown">{time}</span>
+                  </button>
+                ))}
+              </>
             )}
           </div>
         </div>

@@ -67,14 +67,30 @@ export async function handleBookingConfirmation(supabaseAdmin, booking) {
   const elderEmail = companionship.companion1_email || companionship.companion2_email || null;
   const invitee = elderEmail || leaderEmail;
 
-  // 2. Resolve slot time
-  const { data: slot } = booking.slot_id
-    ? await supabaseAdmin.from('slots').select('*').eq('id', booking.slot_id).single()
-    : { data: null };
+  // 2. Resolve slot/window time. A booking is anchored by either a recurring
+  // slot (slot_id) or a date-specific availability window (window_id).
+  let slot = null;
+  let windowRow = null;
+  if (booking.slot_id) {
+    const { data } = await supabaseAdmin.from('slots').select('*').eq('id', booking.slot_id).single();
+    slot = data;
+  } else if (booking.window_id) {
+    const { data } = await supabaseAdmin.from('availability_windows').select('*').eq('id', booking.window_id).single();
+    windowRow = data;
+  }
 
   const date = booking.scheduled_date ? String(booking.scheduled_date).slice(0, 10) : '';
-  const time = slot?.start_time ? String(slot.start_time).slice(0, 8) : '00:00:00';
-  const durationMinutes = slot?.duration_minutes || 30;
+  const time = slot?.start_time || windowRow?.start_time
+    ? String(slot?.start_time || windowRow?.start_time).slice(0, 8)
+    : '00:00:00';
+
+  let durationMinutes = slot?.duration_minutes || 30;
+  if (!slot && windowRow?.start_time && windowRow?.end_time) {
+    const [sh, sm] = String(windowRow.start_time).split(':').map(Number);
+    const [eh, em] = String(windowRow.end_time).split(':').map(Number);
+    const derived = eh * 60 + em - (sh * 60 + sm);
+    if (derived > 0) durationMinutes = derived;
+  }
 
   const summary = 'Ministering Interview';
   const description = `Ministering interview with ${leaderName}.`;

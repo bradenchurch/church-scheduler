@@ -42,6 +42,20 @@ CREATE TABLE IF NOT EXISTS slots (
   duration_minutes INTEGER NOT NULL DEFAULT 30
 );
 
+-- Date-specific availability windows published by a presidency member.
+-- Companionships book these via the existing /api/bookings endpoints.
+-- Distinct from the recurring `slots` table (which has day_of_week).
+CREATE TABLE IF NOT EXISTS availability_windows (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  leader_id TEXT NOT NULL REFERENCES leaders(id) ON DELETE CASCADE,
+  window_date DATE NOT NULL,
+  start_time TIME NOT NULL,
+  end_time TIME NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CHECK (end_time > start_time)
+);
+CREATE INDEX IF NOT EXISTS idx_availability_windows_leader_date ON availability_windows(leader_id, window_date);
+
 CREATE TABLE IF NOT EXISTS bookings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   companionship_id UUID REFERENCES companionships(id) ON DELETE CASCADE,
@@ -49,6 +63,11 @@ CREATE TABLE IF NOT EXISTS bookings (
   scheduled_date DATE NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('pending', 'booked', 'completed', 'cancelled')) DEFAULT 'pending'
 );
+
+-- Traceability for date-specific bookings: when a companionship books a
+-- date-specific availability window, slot_id is NULL and window_id points at
+-- the availability_windows row.
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS window_id UUID REFERENCES availability_windows(id) ON DELETE SET NULL;
 
 CREATE TABLE IF NOT EXISTS config (
   key TEXT PRIMARY KEY,

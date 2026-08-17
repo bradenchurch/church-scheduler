@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authedFetch } from '../lib/api';
 import SectionLabel from '../components/SectionLabel';
@@ -63,7 +64,24 @@ export default function Admin() {
         <SectionLabel>Admin · Portal</SectionLabel>
         <h1 className="text-3xl font-serif font-bold text-burgundy mt-1">Admin Portal</h1>
       </div>
-      
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-0">
+            <h3 className="text-xl font-serif font-bold text-burgundy">Availability Calendar</h3>
+            <p className="text-sm text-brown-light mt-1">
+              Publish date-specific windows when you&apos;re free to meet with assigned companionships.
+            </p>
+          </div>
+          <Link
+            to="/admin/availability"
+            className="min-h-[44px] inline-flex items-center px-4 rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors"
+          >
+            Open calendar
+          </Link>
+        </div>
+      </div>
+
       <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
         <h3 className="text-xl font-serif font-bold mb-4 text-burgundy">Add Companionship</h3>
         <form onSubmit={handleAddComp} className="space-y-4">
