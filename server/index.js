@@ -678,6 +678,13 @@ app.get('/api/availability/:leaderId', async (req, res) => {
   const { leaderId } = req.params;
 
   try {
+    // Date-specific windows for the next 90 days (Chapel-side SlotPicker shows
+    // a rolling 30-day strip, so 90 days gives ample headroom). Stored as plain
+    // TIME (no timezone) to match the existing `slots` convention.
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const laterStr = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
     const [leaderRes, slotsRes] = await Promise.all([
       supabase.from('leaders').select('id, name, email, phone').eq('id', leaderId).maybeSingle(),
       supabase.from('slots').select('id, day_of_week, start_time, duration_minutes').eq('leader_id', leaderId).order('day_of_week').order('start_time'),
@@ -689,13 +696,110 @@ app.get('/api/availability/:leaderId', async (req, res) => {
       return res.status(404).json({ error: 'leader_not_found' });
     }
 
+    // Date-specific windows are best-effort: if the availability_windows table
+    // hasn't been migrated yet (schema.sql applied via Supabase dashboard),
+    // degrade to an empty list rather than 500-ing the whole availability feed.
+    let windows = [];
+    try {
+      const windowsRes = await supabase
+        .from('availability_windows')
+        .select('id, leader_id, window_date, start_time, end_time')
+        .eq('leader_id', leaderId)
+        .gte('window_date', todayStr)
+        .lte('window_date', laterStr)
+        .order('window_date')
+        .order('start_time');
+      if (windowsRes.error) throw windowsRes.error;
+      windows = windowsRes.data || [];
+    } catch {
+      windows = [];
+    }
+
     res.json({
       leader_id: leaderRes.data.id,
       name: leaderRes.data.name,
       email: leaderRes.data.email,
       phone: leaderRes.data.phone || '',
       slots: slotsRes.data || [],
+      windows,
     });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/availability/:leaderId/windows — all date-specific windows for a
+// leader (no date filter). Anonymous, matching the main availability endpoint.
+// Used by the AdminAvailability page to render per-date badge counts across
+// any month (including past months).
+app.get('/api/availability/:leaderId/windows', async (req, res) => {
+  const { leaderId } = req.params;
+
+  try {
+    const { data, error } = await supabase
+      .from('availability_windows')
+      .select('id, leader_id, window_date, start_time, end_time')
+      .eq('leader_id', leaderId)
+      .order('window_date')
+      .order('start_time');
+    if (error) throw error;
+    res.json({ windows: data || [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/availability/:leaderId/windows — publish a date-specific window.
+// Gated: admin or the leader themselves. Uses requireSession (the MOCK_AUTH-aware
+// middleware) so smoke tests can exercise the auth gate.
+app.post('/api/availability/:leaderId/windows', requireSession, async (req, res) => {
+  if (req.user.role !== 'admin' && req.user.leader_id !== req.params.leaderId) {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+  const { leaderId } = req.params;
+  const { window_date, start_time, end_time } = req.body;
+
+  if (!window_date || !start_time || !end_time) {
+    return res.status(400).json({ error: 'window_date, start_time, end_time required' });
+  }
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+  const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
+  if (!dateRegex.test(window_date)) return res.status(400).json({ error: 'window_date must be YYYY-MM-DD' });
+  if (!timeRegex.test(start_time) || !timeRegex.test(end_time)) {
+    return res.status(400).json({ error: 'start_time / end_time must be HH:MM[:SS]' });
+  }
+  if (end_time <= start_time) return res.status(400).json({ error: 'end_time must be after start_time' });
+
+  try {
+    const { data, error } = await supabase
+      .from('availability_windows')
+      .insert([{ leader_id: leaderId, window_date, start_time, end_time }])
+      .select();
+    if (error) throw error;
+    res.status(201).json(data[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/availability/windows/:id — remove a published window.
+// Gated: admin or the owning leader.
+app.delete('/api/availability/windows/:id', requireSession, async (req, res) => {
+  const { id } = req.params;
+  if (req.user.role !== 'admin') {
+    const { data: win, error: fetchErr } = await supabase
+      .from('availability_windows')
+      .select('leader_id')
+      .eq('id', id)
+      .maybeSingle();
+    if (fetchErr || !win || win.leader_id !== req.user.leader_id) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+  }
+  try {
+    const { error } = await supabase.from('availability_windows').delete().eq('id', id);
+    if (error) throw error;
+    res.status(204).end();
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -751,12 +855,22 @@ app.get('/api/bookings/:leaderId', requireAuth, async (req, res) => {
 
 // POST /api/bookings
 app.post('/api/bookings', requireRole('companion'), requireCompanionFor('companionship_id'), async (req, res) => {
-  const { companionship_id, slot_id, scheduled_date } = req.body;
+  const { companionship_id, slot_id, window_id, scheduled_date } = req.body;
 
   try {
+    // A booking is anchored by either a recurring slot_id OR a date-specific
+    // window_id (+ scheduled_date = the window's date). Both may not be set.
+    const insert = {
+      companionship_id,
+      scheduled_date,
+      status: 'booked',
+      slot_id: slot_id || null,
+      window_id: window_id || null,
+    };
+
     const { data, error } = await supabase
       .from('bookings')
-      .insert([{ companionship_id, slot_id, scheduled_date, status: 'booked' }])
+      .insert([insert])
       .select();
     if (error) throw error;
     const booking = data[0];

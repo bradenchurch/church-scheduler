@@ -56,6 +56,23 @@ function formatTime(t) {
   return String(t).slice(0, 5);
 }
 
+// Expand a date-specific availability window into 30-minute bookable increments.
+// e.g. "08:00"–"10:00" → ["08:00", "08:30", "09:00", "09:30"].
+function expandWindowTimes(start, end) {
+  if (!start || !end) return [];
+  const [sh, sm] = String(start).split(':').map(Number);
+  const [eh, em] = String(end).split(':').map(Number);
+  const startMin = sh * 60 + sm;
+  const endMin = eh * 60 + em;
+  const out = [];
+  for (let m = startMin; m < endMin; m += 30) {
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    out.push(`${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`);
+  }
+  return out;
+}
+
 /**
  * Optional "preferred meeting slot" picker. Shows the next 30 days (weekdays
  * preferred) plus a time dropdown derived from the leader's recurring weekly
@@ -110,18 +127,29 @@ export default function SlotPicker({ leaderId, availability, value = {}, onChang
   }, [leaderId, availability]);
 
   const slots = fetchedAvailability?.slots || [];
+  const windows = fetchedAvailability?.windows || [];
   const selectedDate = value.preferred_slot_date || '';
   const selectedTime = value.preferred_slot_time || '';
   const weekday = selectedDate ? new Date(`${selectedDate}T00:00:00`).getDay() : null;
   const matchingSlots =
     weekday == null ? slots : slots.filter((s) => Number(s.day_of_week) === weekday);
 
+  // Date-specific windows that fall on the selected date, expanded into 30-min
+  // bookable increments. These supplement (not replace) the recurring slots.
+  const windowsOnDate = selectedDate
+    ? windows.filter((w) => String(w.window_date).slice(0, 10) === selectedDate)
+    : [];
+  const windowTimes = windowsOnDate.flatMap((w) => expandWindowTimes(w.start_time, w.end_time));
+
   const setDate = (d) => {
     const dateStr = toLocalDateString(d);
     let time = value.preferred_slot_time || '';
     if (time) {
       const forDay = slots.filter((s) => Number(s.day_of_week) === d.getDay());
-      if (!forDay.some((s) => s.start_time === time)) time = '';
+      const forWindows = windows
+        .filter((w) => String(w.window_date).slice(0, 10) === dateStr)
+        .flatMap((w) => expandWindowTimes(w.start_time, w.end_time));
+      if (!forDay.some((s) => s.start_time === time) && !forWindows.includes(time)) time = '';
     }
     onChange({ preferred_slot_date: dateStr, preferred_slot_time: time });
   };
@@ -181,15 +209,20 @@ export default function SlotPicker({ leaderId, availability, value = {}, onChang
               {s.duration_minutes ? ` (${s.duration_minutes} min)` : ''}
             </option>
           ))}
+          {windowTimes.map((t) => (
+            <option key={`win-${t}`} value={t}>
+              {formatTime(t)} (available window)
+            </option>
+          ))}
         </select>
       </div>
 
-      {loaded && slots.length === 0 && (
+      {loaded && slots.length === 0 && windows.length === 0 && (
         <p className="text-xs text-brown-light">
           Your presidency member hasn&apos;t added availability yet — feel free to skip this.
         </p>
       )}
-      {selectedDate && weekday != null && matchingSlots.length === 0 && (
+      {selectedDate && weekday != null && matchingSlots.length === 0 && windowTimes.length === 0 && (
         <p className="text-xs text-amber">No available times on that day. Pick another day or leave “No preference”.</p>
       )}
     </div>
