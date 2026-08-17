@@ -401,12 +401,15 @@ app.get('/api/families', requireSession, requireCompanionFor('companionship_id')
   }
 });
 
-// POST /api/chapel/submit — anonymous chapel-side companion visit submission.
+// POST /api/chapel/submit — chapel-side companion visit submission.
 // Body: { companionship_id, companion_name, families_visited?, visit_notes?,
 //         preferred_slot_date?, preferred_slot_time? }
-// Validates the companionship exists, looks up its assigned leader, and inserts
-// a chapel_submissions row routed to that presidency member's queue.
-app.post('/api/chapel/submit', async (req, res) => {
+// Requires the caller to be the assigned companion for the companionship
+// (requireCompanionFor matches req.user.email against companion1_email /
+// companion2_email), so visit reports can't be spoofed into another leader's
+// queue. Validates the companionship exists, looks up its assigned leader, and
+// inserts a chapel_submissions row routed to that presidency member's queue.
+app.post('/api/chapel/submit', requireSession, requireCompanionFor('companionship_id'), async (req, res) => {
   const {
     companionship_id,
     companion_name,
