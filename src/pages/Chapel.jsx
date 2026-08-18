@@ -75,6 +75,25 @@ const STEPS = [
   { n: 4, label: 'Notes & submit' },
 ];
 
+function formatActiveBooking(booking) {
+  if (!booking) return '';
+  const d = new Date(`${booking.scheduled_date}T12:00:00`);
+  const dateLabel = Number.isNaN(d.getTime())
+    ? String(booking.scheduled_date || '')
+    : d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' });
+  let timeLabel = '';
+  if (booking.start_time) {
+    const [h, m] = String(booking.start_time).split(':').map(Number);
+    if (!Number.isNaN(h) && !Number.isNaN(m)) {
+      const period = h >= 12 ? 'PM' : 'AM';
+      const hour12 = h % 12 === 0 ? 12 : h % 12;
+      timeLabel = `${hour12}:${String(m).padStart(2, '0')} ${period}`;
+    }
+  }
+  const withLeader = booking.leader_name ? ` with ${booking.leader_name}` : '';
+  return `${dateLabel}${timeLabel ? ` at ${timeLabel}` : ''}${withLeader}`;
+}
+
 export default function Chapel() {
   const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
@@ -91,6 +110,8 @@ export default function Chapel() {
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState('');
+  const [activeBooking, setActiveBooking] = useState(null);
+  const [checkingActive, setCheckingActive] = useState(false);
 
   const handleSendMagicLink = async (e) => {
     e.preventDefault();
@@ -112,6 +133,16 @@ export default function Chapel() {
     setVisitNotes('');
     setFamilyData({});
     setResult(null);
+    setActiveBooking(null);
+
+    // Double-booking prevention: surface an existing appointment so the
+    // companion doesn't request a conflicting preferred slot.
+    setCheckingActive(true);
+    authedFetch(`/api/companionships/${encodeURIComponent(c.companionship_id)}/active-booking`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setActiveBooking(d?.active ? d.booking : null))
+      .catch(() => setActiveBooking(null))
+      .finally(() => setCheckingActive(false));
 
     // Load families for the selected companionship.
     authedFetch(`/api/families?companionship_id=${encodeURIComponent(c.companionship_id)}`)
@@ -349,6 +380,21 @@ export default function Chapel() {
 
           {step === 2 && selected && (
             <>
+              {!checkingActive && activeBooking && (
+                <div className="rounded-lg bg-sage-light border border-sage p-4">
+                  <p className="text-xs uppercase tracking-widest text-sage mb-1">
+                    ✓ Appointment already scheduled
+                  </p>
+                  <p className="text-sm text-brown">{formatActiveBooking(activeBooking)}</p>
+                  <a
+                    href={`/book?companionship=${encodeURIComponent(selected.companionship_id)}`}
+                    className="mt-2 inline-block text-sm font-semibold text-burgundy hover:underline"
+                  >
+                    Reschedule or change time →
+                  </a>
+                </div>
+              )}
+
               <div className="rounded-lg bg-burgundy-ghost border border-burgundy p-4">
                 <p className="text-xs uppercase tracking-widest text-burgundy-light mb-1">
                   You&apos;re assigned to

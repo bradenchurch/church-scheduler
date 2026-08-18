@@ -26,6 +26,46 @@ function tintFor(leaderId) {
   return DISTRICT_TINTS[String(leaderId).toLowerCase()] || FALLBACK_TINT;
 }
 
+// Normalize a phone number for an `sms:`/`tel:` URI (strip spaces/dashes/parens,
+// keep a leading +).
+function normalizePhone(value) {
+  return String(value || '').replace(/[^\d+]/g, '');
+}
+
+// Next calendar occurrence of a weekday (0=Sun..6=Sat), as YYYY-MM-DD.
+function nextOccurrence(dayOfWeek) {
+  const today = new Date();
+  const currentDay = today.getDay();
+  let daysUntil = dayOfWeek - currentDay;
+  if (daysUntil <= 0) daysUntil += 7;
+  const d = new Date(today);
+  d.setDate(today.getDate() + daysUntil);
+  return d.toISOString().split('T')[0];
+}
+
+// Expand a date-specific availability window into bookable start times.
+function expandWindowTimes(start, end, slotDuration = 30) {
+  if (!start || !end) return [];
+  const step = Number(slotDuration) > 0 ? Number(slotDuration) : 30;
+  const [sh, sm] = String(start).split(':').map(Number);
+  const [eh, em] = String(end).split(':').map(Number);
+  const startMin = sh * 60 + sm;
+  const endMin = eh * 60 + em;
+  const out = [];
+  for (let m = startMin; m < endMin; m += step) {
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    out.push(`${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`);
+  }
+  return out;
+}
+
+function formatWindowDate(dateStr) {
+  const d = new Date(`${dateStr}T12:00:00`);
+  if (Number.isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' });
+}
+
 function MetricCard({ eyebrow, value, sub }) {
   return (
     <div className="bg-white rounded-xl border border-warm-border shadow-sm p-6">
@@ -71,6 +111,107 @@ function DistrictCard({ district }) {
   );
 }
 
+function CallBookDrawer({ comp, data, loading, error, message, bookingSlot, onClose, onBook }) {
+  const phones = [comp.companion1_phone, comp.companion2_phone].map(normalizePhone).filter(Boolean);
+  const names = [comp.elder1_name, comp.elder2_name].filter(Boolean);
+
+  const recurring = (data?.slots || []).map((s) => ({
+    id: s.id,
+    label: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][s.day_of_week],
+    time: String(s.start_time || '').slice(0, 5),
+    day_of_week: s.day_of_week,
+  }));
+
+  const windowSlots = (data?.windows || []).flatMap((w) =>
+    expandWindowTimes(w.start_time, w.end_time, w.slot_duration_minutes).map((time) => ({
+      id: w.id,
+      label: formatWindowDate(w.window_date),
+      time,
+      window_date: w.window_date,
+    }))
+  );
+
+  const slots = [...recurring, ...windowSlots];
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-t-2xl bg-warm-white border-t border-warm-border shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 pt-5 pb-4 border-b border-warm-border flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-widest text-muted">Call &amp; Book</p>
+            <h2 className="text-xl font-serif font-bold text-burgundy mt-1">
+              {names.length ? names.join(' & ') : 'Unnamed companionship'}
+            </h2>
+            <p className="text-sm text-brown-light mt-0.5">{comp.leader_name || 'Unassigned'}</p>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label="Close"
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg text-brown-light hover:text-brown hover:bg-cream transition-colors"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          {/* Tap-to-dial contacts */}
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-widest text-muted">Tap to call</p>
+            {phones.length === 0 && (
+              <p className="text-sm text-brown-light">No phone numbers on file for this companionship.</p>
+            )}
+            {phones.map((p, i) => (
+              <a
+                key={`${p}-${i}`}
+                href={`tel:${p}`}
+                className="min-h-[48px] w-full flex items-center justify-center gap-2 rounded-lg bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-light transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+                {i === 0 ? (names[0] || 'Companion 1') : (names[1] || 'Companion 2')} · {p}
+              </a>
+            ))}
+          </div>
+
+          {/* Book a slot on their behalf */}
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-widest text-muted">Book a slot</p>
+            {loading && <p className="text-sm text-brown-light">Loading availability…</p>}
+            {!loading && error && <p className="text-sm rounded-lg px-3 py-2 bg-rose-light text-rose">{error}</p>}
+            {!loading && !error && slots.length === 0 && (
+              <p className="text-sm text-brown-light">No availability published yet.</p>
+            )}
+            {!loading && !error && slots.map((s) => (
+              <button
+                key={`${s.id}-${s.time}`}
+                onClick={() => onBook(s)}
+                disabled={bookingSlot === s.id}
+                className="w-full min-h-[48px] flex items-center justify-between px-4 rounded-lg border border-warm-border text-brown hover:border-burgundy hover:bg-cream transition-colors disabled:opacity-40"
+              >
+                <span className="font-semibold">{s.label}</span>
+                <span className="text-brown-light">{s.time}</span>
+              </button>
+            ))}
+            {message && <p className="text-sm rounded-lg px-3 py-2 bg-sage-light text-sage">{message}</p>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const { user, role, token, loading } = useAuth();
   const [data, setData] = useState(null);
@@ -80,6 +221,12 @@ export default function AdminDashboard() {
   const [copiedId, setCopiedId] = useState('');
   const [completingId, setCompletingId] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [callBookComp, setCallBookComp] = useState(null);
+  const [drawerData, setDrawerData] = useState(null);
+  const [drawerLoading, setDrawerLoading] = useState(false);
+  const [drawerError, setDrawerError] = useState('');
+  const [drawerMessage, setDrawerMessage] = useState('');
+  const [drawerBookingSlot, setDrawerBookingSlot] = useState(null);
 
   const fetchAnalytics = useCallback(async () => {
     setLoadingData(true);
@@ -115,6 +262,14 @@ export default function AdminDashboard() {
 
   const inviteHref = (c) => {
     const body = `Hi there, here is the link to schedule our Elders Quorum interview: ${c.unique_booking_url}`;
+    const phones = [c.companion1_phone, c.companion2_phone].map(normalizePhone).filter(Boolean);
+    if (phones.length >= 2) {
+      // Group text: address both companions in a single message thread.
+      return `sms:${phones.join(',')}?body=${encodeURIComponent(body)}`;
+    }
+    if (phones.length === 1) {
+      return `sms:${phones[0]}?body=${encodeURIComponent(body)}`;
+    }
     return `sms:?body=${encodeURIComponent(body)}`;
   };
 
@@ -152,6 +307,70 @@ export default function AdminDashboard() {
       setError(err.message);
     } finally {
       setExporting(false);
+    }
+  };
+
+  // Call & Book drawer: open the availability for a companionship's assigned
+  // leader so the secretary can book a slot on their behalf while on the phone.
+  const openCallBook = async (c) => {
+    setCallBookComp(c);
+    setDrawerData(null);
+    setDrawerError('');
+    setDrawerMessage('');
+    setDrawerBookingSlot(null);
+    if (!c.leader_id) {
+      setDrawerError('This companionship has no assigned presidency member.');
+      return;
+    }
+    setDrawerLoading(true);
+    try {
+      const res = await fetch(`/api/availability/${encodeURIComponent(c.leader_id)}`);
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data) throw new Error(data?.error || 'Failed to load availability');
+      setDrawerData(data);
+    } catch (err) {
+      setDrawerError(err.message || 'Failed to load availability');
+    } finally {
+      setDrawerLoading(false);
+    }
+  };
+
+  const closeCallBook = () => {
+    setCallBookComp(null);
+    setDrawerData(null);
+    setDrawerMessage('');
+    setDrawerError('');
+    setDrawerBookingSlot(null);
+  };
+
+  const bookForComp = async (slot) => {
+    if (!callBookComp) return;
+    setDrawerBookingSlot(slot.id);
+    setDrawerError('');
+    setDrawerMessage('');
+    try {
+      const scheduledDate = slot.window_date || nextOccurrence(slot.day_of_week);
+      const res = await authedFetch('/api/admin/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companionship_id: callBookComp.id,
+          slot_id: slot.window_date ? null : slot.id,
+          window_id: slot.window_date ? slot.id : null,
+          scheduled_date: scheduledDate,
+        }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setDrawerError(body?.error || 'Booking failed. Please try again.');
+        return;
+      }
+      setDrawerMessage(`Booked ${slot.start_time || slot.time} on ${scheduledDate}.`);
+      await fetchAnalytics();
+    } catch (err) {
+      setDrawerError(err.message || 'Booking failed.');
+    } finally {
+      setDrawerBookingSlot(null);
     }
   };
 
@@ -287,6 +506,15 @@ export default function AdminDashboard() {
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
                         <Badge status={c.status} className="self-start sm:self-auto" />
+                        <button
+                          onClick={() => openCallBook(c)}
+                          className="min-h-[48px] w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 rounded-lg border-[1.5px] border-burgundy text-burgundy text-sm font-semibold hover:bg-burgundy-ghost transition-colors"
+                        >
+                          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                          </svg>
+                          Call &amp; Book
+                        </button>
                         {c.status === 'pending' && (
                           <>
                             <a
@@ -320,6 +548,19 @@ export default function AdminDashboard() {
             </div>
           </div>
         </>
+      )}
+
+      {callBookComp && (
+        <CallBookDrawer
+          comp={callBookComp}
+          data={drawerData}
+          loading={drawerLoading}
+          error={drawerError}
+          message={drawerMessage}
+          bookingSlot={drawerBookingSlot}
+          onClose={closeCallBook}
+          onBook={bookForComp}
+        />
       )}
     </div>
   );
