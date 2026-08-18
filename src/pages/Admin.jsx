@@ -20,7 +20,8 @@ export default function Admin() {
   const [addAdminMessage, setAddAdminMessage] = useState('');
   const { token } = useAuth();
 
-  const admins = (leaders || []).filter((l) => l.role === 'admin');
+  const uniqueLeaders = Array.from(new Map((leaders || []).map(l => [l.id, l])).values());
+  const admins = uniqueLeaders.filter((l) => l.role === 'admin');
 
   useEffect(() => {
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -266,7 +267,7 @@ export default function Admin() {
               className="min-h-[44px] p-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all bg-white"
             >
               <option value="">Select Interviewer...</option>
-              {leaders.map(l => (
+              {uniqueLeaders.map(l => (
                 <option key={l.id} value={l.id}>{l.name}</option>
               ))}
             </select>
