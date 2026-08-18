@@ -12,6 +12,8 @@ export default function Admin() {
   const [qrLoading, setQrLoading] = useState(false);
   const [qrError, setQrError] = useState('');
   const [qrTarget, setQrTarget] = useState('');
+  const [welcomeLinks, setWelcomeLinks] = useState([]);
+  const [copiedLeaderId, setCopiedLeaderId] = useState('');
   const { token } = useAuth();
 
   useEffect(() => {
@@ -19,9 +21,20 @@ export default function Admin() {
 
     authedFetch('/api/leaders').then(r => r.json()).then(setLeaders).catch(() => []);
     fetch('/api/companionships', { headers }).then(r => r.json()).then(setCompanionships).catch(() => []);
+    authedFetch('/api/admin/welcome-links').then(r => r.json()).then(d => setWelcomeLinks(d?.leaders || [])).catch(() => []);
     // Resolve the canonical QR target from the server so the slug is never hardcoded client-side.
     fetch('/api/ward').then(r => r.json()).then(d => { if (d?.ok) setQrTarget(d.qrUrl); }).catch(() => {});
   }, [token]);
+
+  const copyWelcomeText = async (leader) => {
+    try {
+      await navigator.clipboard.writeText(leader.sms_text);
+    } catch {
+      // Clipboard API unavailable (e.g. insecure context) — degrade silently.
+    }
+    setCopiedLeaderId(leader.id);
+    window.setTimeout(() => setCopiedLeaderId(''), 2000);
+  };
 
   const handleAddComp = async (e) => {
     e.preventDefault();
@@ -63,6 +76,56 @@ export default function Admin() {
       <div>
         <SectionLabel>Admin · Portal</SectionLabel>
         <h1 className="text-3xl font-serif font-bold text-burgundy mt-1">Admin Portal</h1>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div className="min-w-0">
+            <h3 className="text-xl font-serif font-bold text-burgundy">Presidency Welcome Links</h3>
+            <p className="text-sm text-brown-light mt-1">
+              One-tap text templates for Cole, Kawika, and Sean to log in and set their availability.
+            </p>
+          </div>
+          <Link
+            to="/admin/flyer"
+            className="min-h-[44px] inline-flex items-center px-4 rounded-lg border-[1.5px] border-warm-border text-brown font-semibold hover:border-brown transition-colors"
+          >
+            Printable flyer
+          </Link>
+        </div>
+
+        <div className="space-y-3">
+          {welcomeLinks.map((leader) => (
+            <div key={leader.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border border-warm-border bg-cream">
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-brown">
+                  {leader.name}
+                  <span className="ml-2 text-xs font-normal text-brown-light">
+                    {leader.role_title} · District {leader.district}
+                  </span>
+                </div>
+                <p className="text-sm text-brown-light break-all mt-0.5">{leader.sms_text}</p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <a
+                  href={leader.sms_href}
+                  className="min-h-[44px] inline-flex items-center justify-center px-4 rounded-lg bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-light transition-colors"
+                >
+                  Send Text
+                </a>
+                <button
+                  onClick={() => copyWelcomeText(leader)}
+                  className="min-h-[44px] inline-flex items-center justify-center px-4 rounded-lg border-[1.5px] border-warm-border text-brown text-sm font-semibold hover:border-brown transition-colors"
+                >
+                  {copiedLeaderId === leader.id ? 'Copied' : 'Copy Text'}
+                </button>
+              </div>
+            </div>
+          ))}
+          {welcomeLinks.length === 0 && (
+            <p className="text-sm text-brown-light italic">Loading welcome links…</p>
+          )}
+        </div>
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">

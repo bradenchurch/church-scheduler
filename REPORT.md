@@ -1,54 +1,63 @@
-# Mobile-First UI/UX Optimization Pass — Report
+# Admin Management Suite — Report
 
-**Branch:** `feat/mobile-ui-ux-optimization`
-**Scope:** Presidency members (Cole, Kawika, Sean, Braden) and companionships use
-phones for 90%+ of interactions. This pass makes the entire app thumb-friendly,
-auto-zoom-free, and single-column on small viewports.
+**Branch:** `feat/admin-management-tools`
+**Scope:** Five administrative & lifecycle features for Elders Quorum management:
+presidency welcome links, CSV export, printable QR flyer, single-add companionship,
+and CSV roster import.
 
 ## Changes
 
-### 1. Global head & touch rules
-- `index.html` — viewport now `width=device-width, initial-scale=1, maximum-scale=1,
-  user-scalable=no`; title corrected to `EQ Scheduler`.
-- `src/index.css` — added:
-  - `input, select, textarea { font-size: 16px !important }` so iOS Safari never
-    auto-zooms on focus (`!important` intentionally beats `.text-sm` utilities).
-  - `-webkit-tap-highlight-color: transparent` on `body` and `*` (no grey tap flash).
+### 1. Presidency Welcome Links (`server/index.js` + `src/pages/Admin.jsx`)
+- New endpoint `GET /api/admin/welcome-links` — gated `requireSession` +
+  `requireRole('admin')`. Returns one entry per interviewer (Cole Chollet / Kawika
+  Tupuola / Sean Bryan) with name, role title, district, email, a deep-link
+  `availability_url` (`/admin/availability`), a pre-written `sms_text`, and an
+  `sms:` href. Names/emails resolve from the `leaders` table (static fallback if
+  the DB is down).
+- `Admin.jsx` gains a "Presidency Welcome Links" card at the top of the portal with
+  **Send Text** (`sms:`) and **Copy Text** (clipboard) actions per leader, plus a
+  **Printable flyer** link.
 
-### 2. Availability Calendar (`src/pages/AdminAvailability.jsx`)
-- **Sticky bottom action bar** (`sm:hidden fixed bottom-0 … bg-white/95 backdrop-blur
-  border-t`): the "Publish N windows" button is always under the thumb on mobile. The
-  inline submit is now `hidden sm:block`; page container gets `pb-28 sm:pb-6` so content
-  isn't hidden behind the bar.
-- **Thumb-friendly targets**: all buttons/date shortcuts/time presets/slot-duration pills
-  bumped `min-h-[44px]` → `min-h-[48px]`. Date shortcuts and time presets stack full-width
-  on mobile (`flex-col sm:flex-row`, `w-full sm:w-auto`). Slot-duration pills tile via
-  `flex-1 min-w-[64px]`.
-- **Compact mobile month grid**: day cells `min-h-[48px] sm:min-h-[56px]` so numbers and
-  selection indicators don't wrap awkwardly on 375px screens.
+### 2. CSV Export (`server/index.js` + `src/pages/AdminDashboard.jsx`)
+- New endpoint `GET /api/admin/export.csv` — gated `requireSession` +
+  `requireRole('leader')` (admins + presidency, matching the analytics page).
+  Streams a UTF-8 (BOM-prefixed) `text/csv` download of
+  `District, Leader, Companion 1, Companion 2, Status, Scheduled Date, Scheduled Time`.
+- Extracted the analytics aggregation into a shared `computeRosterStatuses()`
+  helper so the dashboard and the CSV export stay in lock-step (the
+  `/api/admin/analytics` route was refactored to call it — no behavior change).
+- `AdminDashboard.jsx` gains an **Export CSV** button in the header that downloads
+  `interview-progress.csv` via a new `downloadCsv()` helper in `src/lib/api.js`.
 
-### 3. Admin Dashboard (`src/pages/AdminDashboard.jsx`)
-- Metrics/district cards already stack via `grid-cols-1 sm:grid-cols-3`.
-- **Scrollable filter pills**: `Unscheduled | Scheduled | Completed | All` now live in a
-  horizontal `overflow-x-auto` track on mobile (`sm:flex-wrap sm:overflow-visible`), each
-  `whitespace-nowrap flex-shrink-0 min-h-[48px]`.
-- **Thumb-friendly action buttons**: "Text Invite" (`sms:`) / "Copy Link" / "Mark Complete"
-  are now full-width `min-h-[48px]` on mobile and inline on desktop; badge aligns
-  `self-start` so it doesn't stretch.
+### 3. Printable Bulletin QR Flyer (`src/pages/AdminFlyer.jsx` + `src/index.css`)
+- New `AdminFlyer` page at route `/admin/flyer` (registered in `App.jsx`,
+  admin-gated). Renders the ward name, a large QR code (from `/api/qr/generate`,
+  targeting `/q/long-valley-2nd-ward`), and the 3-step instructions
+  (1. Scan QR · 2. Select companionship · 3. Pick a time slot).
+- **Print Flyer** button calls `window.print()`; a `@media print` block in
+  `src/index.css` hides the app header/nav + `.no-print` chrome and lets the
+  `.flyer-sheet` fill the page.
 
-### 4. Leader (`src/pages/Leader.jsx`)
-- Leader selector is full-width on mobile (`w-full` label/select, `flex-col sm:flex-row`
-  header).
-- "Copy iCal Subscription Link" is now a full-width, `min-h-[48px]` prominent button on
-  mobile (still inline on desktop), with the existing instant "Copied" feedback.
+### 4. Single Add Companionship (`src/pages/AdminRoster.jsx` + `server/index.js`)
+- `POST /api/companionships` now accepts optional `companion1_email` /
+  `companion2_email` (previously name-only).
+- `AdminRoster.jsx` gains an **Add Companionship** modal (companion names, an
+  interviewer dropdown fed by `/api/leaders`, and optional emails) that POSTs to
+  `/api/companionships` and refreshes the roster.
 
-### 5. Chapel & Booking (`src/pages/Chapel.jsx`, `src/pages/Book.jsx`,
-   `src/components/SlotPicker.jsx`, `src/components/CompanionPicker.jsx`)
-- Slot-picker buttons are full-width and `min-h-[48px]`.
-- "Add to Google Calendar" and "Download .ics" are full-width `min-h-[48px]` on the
-  booking confirmation.
-- SlotPicker date pills bumped to `min-w-[56px] min-h-[48px]`; time select `min-h-[48px]`.
-- Chapel step controls and CompanionPicker inputs/results bumped to `min-h-[48px]`.
+### 5. CSV Roster Import (`server/index.js` + `src/pages/AdminRoster.jsx`)
+- New endpoint `POST /api/admin/import-roster` — gated `requireSession` +
+  `requireRole('admin')`. Accepts the CSV as `{ csv: "…" }` JSON or a raw
+  `text/csv` body. Includes a minimal RFC-4180 parser (quoted fields, CRLF/LF,
+  blank-line skip) and flexible header detection (Companion 1/2, Elder 1/2,
+  Assigned Leader / District, emails) with a positional fallback.
+- **Upsert preserves history:** rows are matched by email (highest priority) then
+  by an order/format-insensitive name-pair token; matches are updated **in place**
+  (id preserved, so `bookings` FK rows survive) and non-matches are inserted.
+  Missing emails in the CSV never wipe existing contact info. Returns
+  `{ added, updated, total }`.
+- `AdminRoster.jsx` gains an **Import CSV** modal with drag-and-drop (or click to
+  browse) and an instant results summary.
 
 ## Verification
 
@@ -56,19 +65,22 @@ auto-zoom-free, and single-column on small viewports.
 | --- | --- |
 | `npm run build` | ✅ 0 errors (pre-existing chunk-size warning only) |
 | `npm run lint` (oxlint) | ✅ 0 errors (3 pre-existing warnings, unchanged) |
-| AuthContext unchanged | ✅ restored after screenshot harness |
+| `scripts/smoke-admin-tools.sh` | ✅ 12/12 checks pass (see below) |
 
-Screenshots (375×812 @2x, headless Chrome) captured to `screenshots/`:
-- `mobile-availability.png` — sticky Publish bar + stacked date shortcuts
-- `mobile-dashboard.png` — stacked metric/district cards
-- `mobile-dashboard-actions.png` — scrollable filter pills + full-width Text Invite
-- `mobile-leader.png` — full-width selector + prominent Copy iCal
-- `mobile-booking.png` — full-width slot buttons
-- `mobile-booking-booked.png` — full-width Add-to-Google / Download .ics
+Smoke test (`MOCK_AUTH=true` + real Supabase) results:
+- `GET /api/admin/welcome-links` — 401 (no auth), 403 (leader), 200 + 3 leaders (admin).
+- `GET /api/admin/export.csv` — 401 (no auth), 403 (companion), 200 + CSV header (admin).
+- `POST /api/admin/import-roster` — 401, 403 (leader), 400 (empty), 400 (header-only),
+  200 `{ added: 0, updated: 1, total: 1 }` (idempotent name-only update of a seeded row).
+- `GET /api/admin/analytics` — 200 (regression guard for the shared-helper refactor).
 
 ## Notes / follow-ups
 - No force-push, no `--admin` merge, no auto-merge — PR opened for Braden to review/merge.
-- Screenshots were produced with a temporary mock-AuthContext + mock-API harness (not
-  committed); production code is untouched by the harness.
-- The `min-h-[44px]` → `min-h-[48px]` bump was scoped to the named pages/components;
-  remaining 44px targets elsewhere (e.g. Nav) are left as-is to keep the diff focused.
+- `computeRosterStatuses()` is now the single source of truth for per-companionship
+  status; the analytics route was refactored onto it and re-verified against the live DB.
+- District numbers are derived from the known leader mapping (cole→1, kawika→2,
+  sean→3); unassigned companionships export an empty District cell.
+- The import matcher uses last-name-independent tokenization (handles "First Last"
+  vs "Last, First" and reordered companions), but duplicate full names in a roster
+  would still match to the first existing row — a future enhancement could key
+  purely on emails when the Church export provides them.
