@@ -132,6 +132,7 @@ export default function AdminAvailability() {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [slotDuration, setSlotDuration] = useState(30);
+  const [bufferMinutes, setBufferMinutes] = useState(0);
   const [repeatWeekly, setRepeatWeekly] = useState(false);
   const [repeatWeeks, setRepeatWeeks] = useState(4);
   const [formError, setFormError] = useState('');
@@ -265,6 +266,7 @@ export default function AdminAvailability() {
         start_time: startTime,
         end_time: endTime,
         slot_duration_minutes: slotDuration,
+        buffer_minutes: bufferMinutes,
       })),
     };
 
@@ -566,6 +568,30 @@ export default function AdminAvailability() {
             </div>
           </div>
 
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-semibold text-brown-light uppercase tracking-wider">Buffer time</span>
+            <div className="flex flex-wrap gap-2">
+              {[0, 5, 10].map((mins) => {
+                const isSelected = bufferMinutes === mins;
+                return (
+                  <button
+                    key={mins}
+                    type="button"
+                    onClick={() => setBufferMinutes(mins)}
+                    aria-pressed={isSelected}
+                    className={`min-h-[48px] flex-1 min-w-[64px] px-4 rounded-lg border-[1.5px] text-sm font-semibold transition-colors ${
+                      isSelected
+                        ? 'bg-burgundy text-white border-burgundy'
+                        : 'bg-warm-white text-brown border-warm-border hover:border-burgundy'
+                    }`}
+                  >
+                    {mins === 0 ? 'None' : `${mins}m`}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Repeat weekly */}
           <div className="flex flex-col gap-2 rounded-lg border border-warm-border bg-cream p-4">
             <label className="flex items-center gap-3 cursor-pointer">
@@ -639,7 +665,7 @@ export default function AdminAvailability() {
                     </span>
                     <span className="text-sm text-brown">
                       {formatTime12(w.start_time)} – {formatTime12(w.end_time)}
-                      <span className="text-brown-light"> ({(w.slot_duration_minutes || 30)}m slots)</span>
+                      <span className="text-brown-light"> ({(w.slot_duration_minutes || 30)}m slots{w.buffer_minutes ? `, ${w.buffer_minutes}m buffer` : ''})</span>
                     </span>
                   </div>
                   <button
