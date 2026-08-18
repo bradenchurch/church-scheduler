@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { authedFetch } from '../lib/api';
+import { authedFetch, downloadCsv } from '../lib/api';
 import Badge from '../components/Badge';
 import SectionLabel from '../components/SectionLabel';
 
@@ -79,6 +79,7 @@ export default function AdminDashboard() {
   const [filter, setFilter] = useState('pending');
   const [copiedId, setCopiedId] = useState('');
   const [completingId, setCompletingId] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   const fetchAnalytics = useCallback(async () => {
     setLoadingData(true);
@@ -142,6 +143,18 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleExportCsv = async () => {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      await downloadCsv('/api/admin/export.csv', 'interview-progress.csv');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-8 text-center text-brown-light">Loading authentication…</div>;
   }
@@ -163,12 +176,26 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <SectionLabel>Admin · Analytics</SectionLabel>
-        <h1 className="text-3xl font-serif font-bold text-burgundy mt-1">Analytics Dashboard</h1>
-        <p className="text-brown-light mt-1 max-w-xl">
-          Ward-wide interview completion and a live action list of who still needs to schedule.
-        </p>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <SectionLabel>Admin · Analytics</SectionLabel>
+          <h1 className="text-3xl font-serif font-bold text-burgundy mt-1">Analytics Dashboard</h1>
+          <p className="text-brown-light mt-1 max-w-xl">
+            Ward-wide interview completion and a live action list of who still needs to schedule.
+          </p>
+        </div>
+        <button
+          onClick={handleExportCsv}
+          disabled={exporting}
+          className="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-lg bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-light disabled:opacity-40 transition-colors"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          {exporting ? 'Exporting…' : 'Export CSV'}
+        </button>
       </div>
 
       {error && (

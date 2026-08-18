@@ -67,3 +67,31 @@ textarea {
 * {
   -webkit-tap-highlight-color: transparent;
 }
+
+/*
+ * Print rules — the /admin/flyer page is the only thing meant to be printed.
+ * When printing, drop the app chrome (header/nav + the screen-only controls
+ * marked `.no-print`) and let the flyer sheet fill the page.
+ */
+@media print {
+  header {
+    display: none !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .flyer-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    max-width: 100% !important;
+  }
+}

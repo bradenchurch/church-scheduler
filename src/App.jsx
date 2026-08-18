@@ -17,6 +17,7 @@ import AdminCompanionOverride from './pages/AdminCompanionOverride';
 import AdminQueue from './pages/AdminQueue';
 import AdminAvailability from './pages/AdminAvailability';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminFlyer from './pages/AdminFlyer';
 
 function App() {
   return (
@@ -119,6 +120,14 @@ function App() {
             element={
               <ProtectedRoute requireRole="leader">
                 <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/flyer"
+            element={
+              <ProtectedRoute requireRole="admin">
+                <AdminFlyer />
               </ProtectedRoute>
             }
           />

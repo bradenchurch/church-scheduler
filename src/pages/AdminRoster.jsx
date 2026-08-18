@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { authedFetch } from '../lib/api';
+import { authedFetch, downloadCsv } from '../lib/api';
 
 // Stable fallback so derived arrays don't churn a new reference each render.
 const EMPTY_ARRAY = [];
@@ -35,7 +35,20 @@ export default function AdminRoster() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [expanded, setExpanded] = useState({});
-  const [csvNote, setCsvNote] = useState(false);
+
+  const [addOpen, setAddOpen] = useState(false);
+  const [addForm, setAddForm] = useState({ companion1_name: '', companion2_name: '', leader_id: '', companion1_email: '', companion2_email: '' });
+  const [addSaving, setAddSaving] = useState(false);
+  const [addError, setAddError] = useState('');
+  const [addSuccess, setAddSuccess] = useState('');
+
+  const [importOpen, setImportOpen] = useState(false);
+  const [importDrag, setImportDrag] = useState(false);
+  const [importSaving, setImportSaving] = useState(false);
+  const [importError, setImportError] = useState('');
+  const [importResult, setImportResult] = useState(null);
+
+  const [leaders, setLeaders] = useState([]);
 
   const loadRoster = useCallback(async () => {
     setLoading(true);
@@ -106,7 +119,82 @@ export default function AdminRoster() {
 
   const toggleExpand = (id) => setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const handleExportCsv = () => setCsvNote(true);
+  const loadLeaders = useCallback(async () => {
+    try {
+      const res = await authedFetch('/api/leaders');
+      const data = await res.json().catch(() => []);
+      if (res.ok && Array.isArray(data)) setLeaders(data);
+    } catch {
+      // leave leaders empty
+    }
+  }, []);
+
+  useEffect(() => {
+    loadLeaders();
+  }, [loadLeaders]);
+
+  const handleExportCsv = async () => {
+    try {
+      await downloadCsv('/api/admin/export.csv', 'interview-progress.csv');
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleAddSubmit = async (e) => {
+    e.preventDefault();
+    setAddSaving(true);
+    setAddError('');
+    setAddSuccess('');
+    try {
+      const res = await authedFetch('/api/companionships', {
+        method: 'POST',
+        body: JSON.stringify(addForm),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Failed to add companionship');
+      setAddSuccess(`Added ${data.companion1_name}${data.companion2_name ? ` & ${data.companion2_name}` : ''}.`);
+      setAddForm({ companion1_name: '', companion2_name: '', leader_id: '', companion1_email: '', companion2_email: '' });
+      await loadRoster();
+    } catch (err) {
+      setAddError(err.message);
+    } finally {
+      setAddSaving(false);
+    }
+  };
+
+  const handleImportFile = async (file) => {
+    if (!file) return;
+    setImportSaving(true);
+    setImportError('');
+    setImportResult(null);
+    try {
+      const text = await file.text();
+      const res = await authedFetch('/api/admin/import-roster', {
+        method: 'POST',
+        body: JSON.stringify({ csv: text }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Import failed');
+      setImportResult(data);
+      await loadRoster();
+    } catch (err) {
+      setImportError(err.message);
+    } finally {
+      setImportSaving(false);
+    }
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    setImportDrag(false);
+    handleImportFile(e.dataTransfer?.files?.[0]);
+  };
+
+  const onFileSelect = (e) => {
+    handleImportFile(e.target?.files?.[0]);
+    e.target.value = '';
+  };
 
   const selectClass =
     'min-h-[44px] px-3 py-2 border-[1.5px] border-warm-border rounded-md bg-warm-white text-brown text-sm focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all';
@@ -154,24 +242,41 @@ export default function AdminRoster() {
             Presidency → districts → households. Drill into a district to see who serves whom.
           </p>
         </div>
-        <button
-          onClick={handleExportCsv}
-          className="min-h-[44px] inline-flex items-center gap-2 px-5 rounded-lg border-[1.5px] border-warm-border bg-warm-white text-brown text-sm font-semibold hover:bg-cream transition-colors"
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          Export CSV
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleExportCsv}
+            className="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-lg border-[1.5px] border-warm-border bg-warm-white text-brown text-sm font-semibold hover:bg-cream transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Export CSV
+          </button>
+          <button
+            onClick={() => setImportOpen(true)}
+            className="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-lg border-[1.5px] border-warm-border bg-warm-white text-brown text-sm font-semibold hover:bg-cream transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+            Import CSV
+          </button>
+          <button
+            onClick={() => setAddOpen(true)}
+            className="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-lg bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-light transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Companionship
+          </button>
+        </div>
       </div>
-
-      {csvNote && (
-        <p className="text-sm text-brown-light rounded-lg border border-warm-border bg-cream px-4 py-3">
-          CSV export is a stub for now — it will be implemented in Phase C.
-        </p>
-      )}
 
       {/* Totals bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -291,6 +396,75 @@ export default function AdminRoster() {
           );
         })}
       </div>
+
+      {/* Add Companionship modal */}
+      {addOpen && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center p-4 bg-black/40" onClick={() => setAddOpen(false)}>
+          <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-warm-border p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <h2 className="text-xl font-serif font-bold text-burgundy">Add Companionship</h2>
+              <button onClick={() => setAddOpen(false)} aria-label="Close" className="text-brown-light hover:text-rose transition-colors">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+            <form onSubmit={handleAddSubmit} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <input type="text" placeholder="Companion 1 Name" required value={addForm.companion1_name} onChange={(e) => setAddForm({ ...addForm, companion1_name: e.target.value })} className="min-h-[44px] px-3 py-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all" />
+                <input type="text" placeholder="Companion 2 Name" value={addForm.companion2_name} onChange={(e) => setAddForm({ ...addForm, companion2_name: e.target.value })} className="min-h-[44px] px-3 py-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all" />
+              </div>
+              <select required value={addForm.leader_id} onChange={(e) => setAddForm({ ...addForm, leader_id: e.target.value })} className="min-h-[44px] px-3 py-2 border-[1.5px] border-warm-border rounded-md w-full bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all">
+                <option value="">Select interviewer…</option>
+                {leaders.map((l) => (
+                  <option key={l.id} value={l.id}>{l.name}</option>
+                ))}
+              </select>
+              <input type="email" placeholder="Companion 1 Email (optional)" value={addForm.companion1_email} onChange={(e) => setAddForm({ ...addForm, companion1_email: e.target.value })} className="min-h-[44px] px-3 py-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all" />
+              <input type="email" placeholder="Companion 2 Email (optional)" value={addForm.companion2_email} onChange={(e) => setAddForm({ ...addForm, companion2_email: e.target.value })} className="min-h-[44px] px-3 py-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all" />
+              {addError && <p className="text-sm text-rose">{addError}</p>}
+              {addSuccess && <p className="text-sm text-sage">{addSuccess}</p>}
+              <div className="flex justify-end gap-2">
+                <button type="button" onClick={() => setAddOpen(false)} className="min-h-[44px] px-4 rounded-lg border-[1.5px] border-warm-border text-brown text-sm font-semibold hover:bg-cream transition-colors">Cancel</button>
+                <button type="submit" disabled={addSaving} className="min-h-[44px] px-4 rounded-lg bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-light disabled:opacity-40 transition-colors">{addSaving ? 'Adding…' : 'Add'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Import roster CSV modal */}
+      {importOpen && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center p-4 bg-black/40" onClick={() => setImportOpen(false)}>
+          <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-warm-border p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-2">
+              <h2 className="text-xl font-serif font-bold text-burgundy">Import Roster CSV</h2>
+              <button onClick={() => setImportOpen(false)} aria-label="Close" className="text-brown-light hover:text-rose transition-colors">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+            <p className="text-sm text-brown-light mb-4">
+              Drag-and-drop a ward roster CSV from the Church directory. Columns: Companion 1, Companion 2, Assigned Leader / District, Companion 1 Email, Companion 2 Email.
+            </p>
+            <label
+              onDragOver={(e) => { e.preventDefault(); setImportDrag(true); }}
+              onDragLeave={() => setImportDrag(false)}
+              onDrop={onDrop}
+              className={`flex flex-col items-center justify-center gap-2 min-h-[160px] rounded-lg border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${importDrag ? 'border-burgundy bg-burgundy-ghost' : 'border-warm-border bg-cream'}`}
+            >
+              <input type="file" accept=".csv,text/csv,text/plain" onChange={onFileSelect} className="hidden" />
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-burgundy"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
+              <span className="text-sm font-semibold text-brown">Drop CSV here or click to browse</span>
+              <span className="text-xs text-brown-light">Existing companionships are updated in place (bookings preserved).</span>
+            </label>
+            {importSaving && <p className="text-sm text-brown-light mt-3">Importing…</p>}
+            {importError && <p className="text-sm text-rose mt-3">{importError}</p>}
+            {importResult && (
+              <p className="text-sm text-sage mt-3">
+                Import complete — {importResult.added} added, {importResult.updated} updated ({importResult.total} total).
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
