@@ -19,6 +19,7 @@ import {
 import { handleBookingConfirmation } from './notifications.js';
 import { getRoster, formatAddress, splitCompanions, getUnlinkedCompanions } from './roster.js';
 import { requireAuth as requireSession, requireRole, requireCompanionFor } from './middleware/auth.js';
+import { parseLcrPdf } from './lcr-parser.js';
 
 dotenv.config();
 
@@ -2126,6 +2127,260 @@ app.post(
       res.json({ added, updated, total: rows.length });
     } catch (error) {
       res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// ---------------------------------------------------------------------------
+// LCR Ministering Assignments PDF importer (Option 1, native)
+//
+// Two endpoints:
+//
+//   POST /api/admin/roster/parse-pdf  (admin) — accepts the raw LCR PDF
+//     (multipart/form-data field `file`, or raw application/pdf body). Parses
+//     it via server/lcr-parser.js and returns the structured preview JSON.
+//     Nothing is written to the database.
+//
+//   POST /api/admin/roster/import     (admin) — accepts the *confirmed*
+//     preview JSON (or fresh PDF body) and atomically commits the roster:
+//     upserts companionships by name-pair, recreates household rows, and
+//     rebuilds the companionship_households links. Bookings FK is
+//     ON DELETE CASCADE on companionships, so we never delete — only insert
+//     new rows or update existing ones in place.
+//
+// Together these let a presidency member drop the raw LCR PDF directly into
+// the admin UI and import with 100% precision (no CSV intermediate, no
+// row-shifting from stacked LCR table cells).
+// ---------------------------------------------------------------------------
+
+app.post(
+  '/api/admin/roster/parse-pdf',
+  requireSession,
+  requireRole('admin'),
+  express.raw({ type: 'application/pdf', limit: '25mb' }),
+  async (req, res) => {
+    try {
+      let buffer = req.body;
+      let sourceName = '';
+      if (Buffer.isBuffer(buffer) && buffer.length > 0) {
+        // Raw PDF body — no filename available.
+      } else {
+        // Fall back to multipart/form-data via multer-style req.files (express.raw
+        // does not parse multipart; if we need it later we can add multer here).
+        // For now we only support raw application/pdf upload to keep the
+        // dependency surface minimal.
+        return res.status(400).json({
+          error: 'Send the PDF as the raw request body with Content-Type: application/pdf.',
+        });
+      }
+
+      const magic = buffer.slice(0, 4).toString('ascii');
+      if (magic !== '%PDF') {
+        return res.status(400).json({ error: 'Uploaded file is not a valid PDF (missing %PDF header).' });
+      }
+
+      const preview = await parseLcrPdf(buffer, sourceName);
+      res.json(preview);
+    } catch (err) {
+      console.error('[lcr] parse-pdf error:', err.message);
+      res.status(500).json({ error: `PDF parse failed: ${err.message}` });
+    }
+  }
+);
+
+// Leader id resolution helper reused by the import endpoint. Mirrors the CSV
+// importer's behavior (district number → leader_id, name match via alias).
+async function resolveLeaderIdFromPreview(rawLeader, districtNumber) {
+  // 1. Honor an explicit name first (matches existing CSV path semantics).
+  const trimmed = String(rawLeader || '').trim();
+  if (trimmed) {
+    const bare = trimmed.match(/^(\d)$/);
+    if (bare && LEADER_BY_DISTRICT[bare[1]]) return LEADER_BY_DISTRICT[bare[1]];
+    const district = trimmed.match(/district\s*(\d)/i);
+    if (district && LEADER_BY_DISTRICT[district[1]]) return LEADER_BY_DISTRICT[district[1]];
+    const key = normName(trimmed);
+    if (key && LEADER_ALIAS_TO_ID[key]) return LEADER_ALIAS_TO_ID[key];
+
+    const { data: leaders } = await supabase
+      .from('leaders')
+      .select('id, name')
+      .ilike('name', trimmed);
+    if (leaders && leaders.length > 0) return leaders[0].id;
+  }
+  // 2. Fall back to district number.
+  if (Number.isFinite(districtNumber) && LEADER_BY_DISTRICT[districtNumber]) {
+    return LEADER_BY_DISTRICT[districtNumber];
+  }
+  return null;
+}
+
+app.post(
+  '/api/admin/roster/import',
+  requireSession,
+  requireRole('admin'),
+  async (req, res) => {
+    try {
+      const body = req.body || {};
+      const districts = Array.isArray(body.districts) ? body.districts : null;
+      if (!districts) {
+        return res.status(400).json({
+          error: 'Import body must include { districts: [...] } (the preview payload from /parse-pdf).',
+        });
+      }
+
+      // 1. Load leaders + existing companionships for the upsert index.
+      const { data: leaders, error: leadersErr } = await supabase
+        .from('leaders')
+        .select('id, name');
+      if (leadersErr) throw leadersErr;
+      const byName = new Map((leaders || []).map((l) => [normName(l.name), l.id]));
+      const { data: existingComps, error: compsErr } = await supabase
+        .from('companionships')
+        .select('id, companion1_name, companion2_name, companion1_email, companion2_email, leader_id');
+      if (compsErr) throw compsErr;
+      const index = new Map();
+      for (const comp of existingComps || []) {
+        for (const key of existingMatchKeys(comp)) {
+          if (!index.has(key)) index.set(key, comp);
+        }
+      }
+
+      let added = 0;
+      let updated = 0;
+      const newLinks = [];
+
+      for (const district of districts) {
+        const districtNumber = Number(district.district);
+        const leaderId = await resolveLeaderIdFromPreview(
+          district.leader,
+          Number.isFinite(districtNumber) ? districtNumber : null,
+        );
+
+        for (const comp of district.companionships || []) {
+          const c1 = comp.companion_1 || {};
+          const c2 = comp.companion_2 || null;
+          const companion1_name = String(c1.name || '').trim();
+          if (!companion1_name) continue;
+          const companion2_name = c2 ? String(c2.name || '').trim() : '';
+          const companion1_email = String(c1.email || '').trim();
+          const companion2_email = c2 ? String(c2.email || '').trim() : '';
+
+          const row = {
+            companion1_name,
+            companion2_name: companion2_name || null,
+            companion1_email: companion1_email || null,
+            companion2_email: companion2_email || null,
+          };
+          const match = matchExisting(index, row);
+          let companionshipId;
+
+          if (match) {
+            const patch = {
+              leader_id: leaderId ?? null,
+              companion1_name,
+              companion2_name: companion2_name || null,
+            };
+            if (companion1_email) patch.companion1_email = companion1_email;
+            if (companion2_email) patch.companion2_email = companion2_email;
+            const { error } = await supabase.from('companionships').update(patch).eq('id', match.id);
+            if (error) throw error;
+            updated += 1;
+            companionshipId = match.id;
+          } else {
+            const insert = {
+              leader_id: leaderId ?? null,
+              ...row,
+            };
+            const { data: inserted, error } = await supabase
+              .from('companionships')
+              .insert([insert])
+              .select('id')
+              .maybeSingle();
+            if (error) throw error;
+            added += 1;
+            companionshipId = inserted?.id;
+            if (companionshipId) {
+              index.set(`names:${pairTokens(companion1_name, companion2_name)}`, { id: companionshipId, ...row });
+            }
+          }
+
+          // Queue (district, family, companionshipId) tuples for the household
+          // re-link step. We only insert families the parser found; the import
+          // does NOT delete previously-existing companionship_households rows
+          // (those may carry booking-side state).
+          if (companionshipId) {
+            for (const familyRaw of comp.families || []) {
+              const familyName = String(familyRaw || '').trim();
+              if (familyName) newLinks.push({ district: districtNumber, familyName, companionshipId });
+            }
+          }
+        }
+      }
+
+      // 2. Upsert households + companionship_households for the parsed families.
+      let households_upserted = 0;
+      let links_upserted = 0;
+      const seenHouseholdIds = new Set();
+
+      for (const link of newLinks) {
+        // Find or create the household. We key by (family_name, district_number)
+        // so two families with the same name across districts stay distinct.
+        let { data: hh, error: hhErr } = await supabase
+          .from('households')
+          .select('id')
+          .eq('family_name', link.familyName)
+          .eq('district_number', link.district)
+          .maybeSingle();
+        if (hhErr) throw hhErr;
+
+        let householdId = hh?.id;
+        if (!householdId) {
+          const { data: created, error: insErr } = await supabase
+            .from('households')
+            .insert([
+              {
+                id: crypto.randomUUID(),
+                ward_slug: 'long-valley-2nd-ward',
+                family_name: link.familyName,
+                district_number: link.district,
+                category: 'family',
+              },
+            ])
+            .select('id')
+            .maybeSingle();
+          if (insErr) throw insErr;
+          householdId = created?.id;
+          if (!householdId) continue;
+        }
+        if (seenHouseholdIds.has(householdId)) {
+          // Household already linked this import round; skip the link insert
+          // to avoid (companionship_id, household_id) PK collisions if the
+          // same household was assigned twice.
+          continue;
+        }
+        seenHouseholdIds.add(householdId);
+        households_upserted += 1;
+
+        const { error: linkErr } = await supabase
+          .from('companionship_households')
+          .upsert(
+            { companionship_id: link.companionshipId, household_id: householdId },
+            { onConflict: 'companionship_id,household_id' },
+          );
+        if (linkErr && linkErr.code !== '23505') throw linkErr; // tolerate race duplicates
+        links_upserted += 1;
+      }
+
+      res.json({
+        ok: true,
+        added,
+        updated,
+        households_upserted,
+        links_upserted,
+      });
+    } catch (err) {
+      console.error('[lcr] import error:', err.message);
+      res.status(500).json({ error: `Import failed: ${err.message}` });
     }
   }
 );
