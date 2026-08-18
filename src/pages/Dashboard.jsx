@@ -56,11 +56,6 @@ export default function Dashboard() {
 
       const leaderStats = {};
 
-      // Initialize known leaders from request if they have no companionships yet
-      ['Cole', 'Kawika', 'Sean'].forEach(l => {
-        leaderStats[l] = { total: 0, completed: 0 };
-      });
-
       const enrichedComps = (Array.isArray(compData) ? compData : []).map(c => {
         const leaderName = c.leaders?.name || 'Unassigned';
         if (!leaderStats[leaderName]) leaderStats[leaderName] = { total: 0, completed: 0 };
