@@ -14,7 +14,13 @@ export default function Admin() {
   const [qrTarget, setQrTarget] = useState('');
   const [welcomeLinks, setWelcomeLinks] = useState([]);
   const [copiedLeaderId, setCopiedLeaderId] = useState('');
+  const [newAdminEmail, setNewAdminEmail] = useState('');
+  const [addingAdmin, setAddingAdmin] = useState(false);
+  const [addAdminError, setAddAdminError] = useState('');
+  const [addAdminMessage, setAddAdminMessage] = useState('');
   const { token } = useAuth();
+
+  const admins = (leaders || []).filter((l) => l.role === 'admin');
 
   useEffect(() => {
     const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
@@ -50,6 +56,33 @@ export default function Admin() {
       const added = await res.json();
       setCompanionships([...companionships, added]);
       setNewComp({ companion1_name: '', companion2_name: '', leader_id: '' });
+    }
+  };
+
+  const handleAddAdmin = async (e) => {
+    e.preventDefault();
+    setAddingAdmin(true);
+    setAddAdminError('');
+    setAddAdminMessage('');
+    try {
+      const res = await authedFetch('/api/admin/add-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newAdminEmail }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAddAdminError(data?.error || 'Could not add co-admin.');
+        return;
+      }
+      setAddAdminMessage(`${data?.leader?.email || newAdminEmail} is now an admin.`);
+      setNewAdminEmail('');
+      // Refresh the leaders list so the new role shows immediately.
+      authedFetch('/api/leaders').then((r) => r.json()).then(setLeaders).catch(() => {});
+    } catch {
+      setAddAdminError('Network error adding co-admin.');
+    } finally {
+      setAddingAdmin(false);
     }
   };
 
@@ -126,6 +159,55 @@ export default function Admin() {
             <p className="text-sm text-brown-light italic">Loading welcome links…</p>
           )}
         </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+          <div className="min-w-0">
+            <h3 className="text-xl font-serif font-bold text-burgundy">Admins &amp; Secretaries</h3>
+            <p className="text-sm text-brown-light mt-1">
+              People who can manage the ward and book on behalf of companionships.
+            </p>
+          </div>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          {admins.map((a) => (
+            <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg border border-warm-border bg-cream">
+              <span className="min-h-[44px] inline-flex items-center justify-center rounded-full bg-burgundy text-white text-xs font-bold px-3">
+                Admin
+              </span>
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-brown">{a.name || 'Secretary'}</div>
+                <div className="text-sm text-brown-light break-all">{a.email}</div>
+              </div>
+            </div>
+          ))}
+          {admins.length === 0 && (
+            <p className="text-sm text-brown-light italic">No admins listed yet.</p>
+          )}
+        </div>
+
+        <form onSubmit={handleAddAdmin} className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="email"
+            required
+            value={newAdminEmail}
+            onChange={(e) => setNewAdminEmail(e.target.value)}
+            placeholder="Secretary email address"
+            className="min-h-[44px] flex-1 p-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
+          />
+          <button
+            type="submit"
+            disabled={addingAdmin}
+            className="min-h-[44px] bg-burgundy text-white px-4 rounded-lg font-semibold hover:bg-burgundy-light disabled:opacity-40 transition-colors"
+          >
+            {addingAdmin ? 'Adding…' : '+ Add Co-Admin'}
+          </button>
+        </form>
+
+        {addAdminError && <p className="text-sm rounded-lg px-3 py-2 bg-rose-light text-rose mt-3">{addAdminError}</p>}
+        {addAdminMessage && <p className="text-sm rounded-lg px-3 py-2 bg-sage-light text-sage mt-3">{addAdminMessage}</p>}
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">

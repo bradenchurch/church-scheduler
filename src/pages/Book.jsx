@@ -52,6 +52,61 @@ function formatWindowDate(dateStr) {
   });
 }
 
+// Humanize an appointment date + time for the "already scheduled" banner and
+// the calendar links. Times are stored as "HH:MM[:SS]" (no timezone).
+function formatAppointment(dateStr, timeStr) {
+  const d = new Date(`${dateStr}T12:00:00`);
+  const dateLabel = Number.isNaN(d.getTime())
+    ? String(dateStr || '')
+    : d.toLocaleDateString('en-US', {
+        weekday: 'long',
+        month: 'short',
+        day: 'numeric',
+        timeZone: 'UTC',
+      });
+
+  let timeLabel = '';
+  if (timeStr) {
+    const [h, m] = String(timeStr).split(':').map(Number);
+    if (!Number.isNaN(h) && !Number.isNaN(m)) {
+      const period = h >= 12 ? 'PM' : 'AM';
+      const hour12 = h % 12 === 0 ? 12 : h % 12;
+      timeLabel = `${hour12}:${String(m).padStart(2, '0')} ${period}`;
+    }
+  }
+  return { dateLabel, timeLabel };
+}
+
+// Build Google Calendar + .ics download links for an appointment.
+function buildCalendarLinks({ date, time, duration = 30, leaderName = '' }) {
+  if (!date || !time) return {};
+  const d = new Date(`${date}T${String(time).slice(0, 5)}`);
+  if (Number.isNaN(d.getTime())) return {};
+  const end = new Date(d.getTime() + (Number(duration) || 30) * 60000);
+
+  const startStr = d.toISOString().replace(/-|:|\.\d+/g, '');
+  const endStr = end.toISOString().replace(/-|:|\.\d+/g, '');
+
+  const title = 'Ministering Interview';
+  const details = `Ministering Interview with ${leaderName}`;
+
+  const googleLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(details)}`;
+
+  const icsContent =
+`BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+DTSTART:${startStr}
+DTEND:${endStr}
+SUMMARY:${title}
+DESCRIPTION:${details}
+END:VEVENT
+END:VCALENDAR`;
+  const icsLink = 'data:text/calendar;charset=utf8,' + encodeURIComponent(icsContent);
+
+  return { googleLink, icsLink };
+}
+
 export default function Book() {
   const [searchParams] = useSearchParams();
   const prefillId = searchParams.get('companionship');
@@ -62,6 +117,10 @@ export default function Book() {
   const [slots, setSlots] = useState([]);
   const [windows, setWindows] = useState([]);
   const [bookedDetails, setBookedDetails] = useState(null);
+  const [activeBooking, setActiveBooking] = useState(null);
+  const [checkingActive, setCheckingActive] = useState(false);
+  const [rescheduling, setRescheduling] = useState(false);
+  const [rescheduleNote, setRescheduleNote] = useState('');
   const [bookError, setBookError] = useState('');
 
   const t = {
@@ -99,9 +158,28 @@ export default function Book() {
 
   const currentT = t[lang];
 
+  const fetchActiveBooking = async (compId) => {
+    setCheckingActive(true);
+    try {
+      const res = await authedFetch(`/api/companionships/${encodeURIComponent(compId)}/active-booking`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data?.active && data.booking) {
+        setActiveBooking(data.booking);
+      } else {
+        setActiveBooking(null);
+      }
+    } catch {
+      setActiveBooking(null);
+    } finally {
+      setCheckingActive(false);
+    }
+  };
+
   // Deep-link support: /book?companionship=<id> (sent via the admin dashboard's
   // "Text Invite" / "Copy Link" actions) auto-selects the companionship so the
-  // companion lands directly on their interviewer's available times.
+  // companion lands directly on their interviewer's available times — or on the
+  // "already scheduled" banner if they already hold an active appointment.
   useEffect(() => {
     if (!prefillId) return;
     let cancelled = false;
@@ -112,6 +190,7 @@ export default function Book() {
         const comp = (Array.isArray(list) ? list : []).find((c) => c.id === prefillId);
         if (!comp || cancelled) return null;
         setSelectedComp(comp);
+        if (!cancelled) fetchActiveBooking(comp.id);
         return fetch(`/api/availability/${comp.leader_id}`);
       })
       .then((res) => (res ? res.json() : null))
@@ -137,6 +216,10 @@ export default function Book() {
 
   const handleSelectComp = async (comp) => {
     setSelectedComp(comp);
+    setActiveBooking(null);
+    setRescheduleNote('');
+    setBookError('');
+    fetchActiveBooking(comp.id);
     const res = await fetch(`/api/availability/${comp.leader_id}`);
     const data = await res.json();
     setSlots(Array.isArray(data) ? data : data.slots || []);
@@ -190,34 +273,38 @@ export default function Book() {
     setBookedDetails({ date: window.window_date, time, duration: window.slot_duration_minutes || 30 });
   };
 
+  // Reschedule: release the old slot (cancel the booking) and reopen the picker.
+  const handleReschedule = async () => {
+    if (!activeBooking?.id || rescheduling) return;
+    setRescheduling(true);
+    setRescheduleNote('');
+    setBookError('');
+
+    try {
+      const res = await authedFetch(`/api/bookings/${activeBooking.id}/reschedule`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setBookError(data?.error || 'Could not reschedule. Please try again.');
+        return;
+      }
+      setActiveBooking(null);
+      setRescheduleNote('Your previous appointment was released. Choose a new time below.');
+    } finally {
+      setRescheduling(false);
+    }
+  };
+
   const getCalendarLinks = () => {
     if (!bookedDetails) return {};
-
-    // YYYYMMDDTHHMMSSZ format for calendar
-    const d = new Date(bookedDetails.date + 'T' + bookedDetails.time);
-    const end = new Date(d.getTime() + bookedDetails.duration * 60000);
-
-    const startStr = d.toISOString().replace(/-|:|.\d+/g, '');
-    const endStr = end.toISOString().replace(/-|:|.\d+/g, '');
-
-    const title = "Ministering Interview";
-    const details = "Ministering Interview with " + (selectedComp?.leaders?.name || '');
-
-    const googleLink = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(details)}`;
-
-    const icsContent =
-`BEGIN:VCALENDAR
-VERSION:2.0
-BEGIN:VEVENT
-DTSTART:${startStr}
-DTEND:${endStr}
-SUMMARY:${title}
-DESCRIPTION:${details}
-END:VEVENT
-END:VCALENDAR`;
-    const icsLink = "data:text/calendar;charset=utf8," + encodeURIComponent(icsContent);
-
-    return { googleLink, icsLink };
+    return buildCalendarLinks({
+      date: bookedDetails.date,
+      time: bookedDetails.time,
+      duration: bookedDetails.duration,
+      leaderName: selectedComp?.leaders?.name || '',
+    });
   };
 
   if (bookedDetails) {
@@ -286,11 +373,28 @@ END:VCALENDAR`;
             ))}
           </div>
         </div>
+      ) : checkingActive ? (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border text-center">
+          <p className="text-brown-light">Checking appointment status…</p>
+        </div>
+      ) : activeBooking ? (
+        // Active appointment card — the companionship already has a booked slot.
+        <ActiveAppointmentCard
+          booking={activeBooking}
+          leaderName={activeBooking.leader_name || selectedComp.leaders?.name || ''}
+          onReschedule={handleReschedule}
+          rescheduling={rescheduling}
+          onBack={() => setSelectedComp(null)}
+        />
       ) : (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
           <button onClick={() => setSelectedComp(null)} className="text-sm text-brown-light mb-4 hover:underline">&larr; {currentT.back}</button>
           <h2 className="text-xl font-serif font-bold mb-2 text-burgundy">{currentT.pickTime}</h2>
           <p className="text-brown-light mb-6">{currentT.interviewer}: {selectedComp.leaders?.name}</p>
+
+          {rescheduleNote && (
+            <p className="text-sm rounded-lg px-3 py-2 bg-sage-light text-sage mb-4">{rescheduleNote}</p>
+          )}
 
           {bookError && (
             <p className="text-sm rounded-lg px-3 py-2 bg-rose-light text-rose mb-4">{bookError}</p>
@@ -328,6 +432,61 @@ END:VCALENDAR`;
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Active-appointment card shown when the companionship already has a booked
+// (or pending) appointment. Prominent banner + two primary actions:
+// "Add to Calendar" and "Reschedule Appointment".
+function ActiveAppointmentCard({ booking, leaderName, onReschedule, rescheduling, onBack }) {
+  const { dateLabel, timeLabel } = formatAppointment(booking.scheduled_date, booking.start_time);
+  const { googleLink, icsLink } = buildCalendarLinks({
+    date: booking.scheduled_date,
+    time: booking.start_time,
+    duration: booking.duration_minutes,
+    leaderName,
+  });
+
+  return (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+      <button onClick={onBack} className="text-sm text-brown-light mb-4 hover:underline">&larr; Back</button>
+
+      <div className="rounded-xl bg-sage-light border border-sage p-6 text-center">
+        <div className="flex justify-center mb-3">
+          <CheckIcon />
+        </div>
+        <h2 className="text-xl font-serif font-bold text-sage mb-2">Appointment Scheduled</h2>
+        <p className="text-brown text-base mb-1">
+          {dateLabel}{timeLabel ? ` at ${timeLabel}` : ''}
+        </p>
+        {leaderName && <p className="text-brown-light text-sm">with {leaderName}</p>}
+      </div>
+
+      <div className="flex flex-col gap-3 mt-6 w-full max-w-[280px] mx-auto">
+        <a
+          href={googleLink}
+          target="_blank"
+          rel="noreferrer"
+          className="min-h-[48px] w-full bg-burgundy text-white py-2 px-4 rounded-lg font-semibold hover:bg-burgundy-light transition-colors inline-flex items-center justify-center"
+        >
+          Add to Calendar
+        </a>
+        <a
+          href={icsLink}
+          download="interview.ics"
+          className="min-h-[48px] w-full bg-transparent border-[1.5px] border-warm-border text-brown py-2 px-4 rounded-lg font-semibold hover:border-brown transition-colors inline-flex items-center justify-center"
+        >
+          Download .ics
+        </a>
+        <button
+          onClick={onReschedule}
+          disabled={rescheduling}
+          className="min-h-[48px] w-full bg-amber text-white py-2 px-4 rounded-lg font-semibold hover:opacity-90 disabled:opacity-40 transition-colors inline-flex items-center justify-center"
+        >
+          {rescheduling ? 'Releasing slot…' : 'Reschedule Appointment'}
+        </button>
+      </div>
     </div>
   );
 }

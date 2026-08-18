@@ -348,6 +348,11 @@ async function computeRosterStatuses() {
     }
   }
 
+  // Static roster carries the companions' phone numbers (the companionships
+  // table only has email). Used to build group-SMS links on the dashboard.
+  const { companionships: rosterComps } = getRoster();
+  const rosterByCompId = new Map((rosterComps || []).map((rc) => [rc.id, rc]));
+
   const statusFor = (comp) => {
     const b = latestBookingByComp.get(comp.id);
     if (!b) return 'pending';
@@ -362,10 +367,14 @@ async function computeRosterStatuses() {
     const booking_time = b
       ? (b.slot_id ? slotTimeById.get(b.slot_id) : b.window_id ? windowTimeById.get(b.window_id) : null)
       : null;
+    const rosterComp = rosterByCompId.get(comp.id);
+    const { companion_1, companion_2 } = splitCompanions(rosterComp?.companions || []);
     return {
       id: comp.id,
       elder1_name: comp.companion1_name || '',
       elder2_name: comp.companion2_name || '',
+      companion1_phone: companion_1?.phone || '',
+      companion2_phone: companion_2?.phone || '',
       leader_name: leader?.name || '',
       leader_id: comp.leader_id || null,
       status: statusFor(comp),
@@ -1334,6 +1343,17 @@ app.post('/api/bookings', requireRole('companion'), requireCompanionFor('compani
   const { companionship_id, slot_id, window_id, scheduled_date } = req.body;
 
   try {
+    // Double-booking prevention: a companionship may hold only one active
+    // (booked/pending) appointment at a time. Reject a second conflicting slot
+    // before it is written, so the client banner is backed by a server guard.
+    const active = await findActiveBooking(companionship_id);
+    if (active) {
+      return res.status(409).json({
+        error: 'You already have an active appointment',
+        active_booking_id: active.id,
+      });
+    }
+
     // A booking is anchored by either a recurring slot_id OR a date-specific
     // window_id (+ scheduled_date = the window's date). Both may not be set.
     const insert = {
@@ -1404,6 +1424,181 @@ app.put('/api/bookings/:id/status', requireAuth, async (req, res) => {
       .select();
     if (error) throw error;
     res.json(data[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- Active-booking lookup (double-booking prevention + reschedule) ---
+
+// Returns the companionship's most recent active booking (status 'booked' or
+// 'pending'), or null. Shared by the /book active-appointment banner, the
+// server-side double-booking guard, and the reschedule flow.
+async function findActiveBooking(companionshipId) {
+  const { data, error } = await supabase
+    .from('bookings')
+    .select('id, companionship_id, slot_id, window_id, scheduled_date, status')
+    .eq('companionship_id', companionshipId)
+    .in('status', ['booked', 'pending'])
+    .order('scheduled_date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error;
+  return data || null;
+}
+
+// GET /api/companionships/:id/active-booking — the companionship's active
+// (booked/pending) appointment with its resolved date, start time, duration,
+// and assigned leader name, or { active: false } when none exists.
+// Authenticated (any role) so the /book page can render the "already scheduled"
+// banner for the companion, and MOCK_AUTH smoke tests can exercise it.
+app.get('/api/companionships/:id/active-booking', requireSession, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const booking = await findActiveBooking(id);
+
+    if (!booking) {
+      return res.json({ active: false, booking: null });
+    }
+
+    let scheduledDate = booking.scheduled_date;
+    let startTime = null;
+    let durationMinutes = 30;
+
+    if (booking.slot_id) {
+      const { data: slot } = await supabase
+        .from('slots')
+        .select('start_time, duration_minutes')
+        .eq('id', booking.slot_id)
+        .maybeSingle();
+      if (slot) {
+        startTime = slot.start_time;
+        durationMinutes = slot.duration_minutes || 30;
+      }
+    } else if (booking.window_id) {
+      const { data: win } = await supabase
+        .from('availability_windows')
+        .select('window_date, start_time, slot_duration_minutes')
+        .eq('id', booking.window_id)
+        .maybeSingle();
+      if (win) {
+        scheduledDate = win.window_date || scheduledDate;
+        startTime = win.start_time;
+        durationMinutes = win.slot_duration_minutes || 30;
+      }
+    }
+
+    let leaderName = '';
+    const { data: comp } = await supabase
+      .from('companionships')
+      .select('leader_id, leaders(name)')
+      .eq('id', id)
+      .maybeSingle();
+    if (comp?.leaders?.name) leaderName = comp.leaders.name;
+
+    res.json({
+      active: true,
+      booking: {
+        id: booking.id,
+        scheduled_date: scheduledDate,
+        start_time: startTime,
+        duration_minutes: durationMinutes,
+        leader_name: leaderName,
+        status: booking.status,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/bookings/:id/reschedule — cancel an existing appointment so its
+// slot opens back up and the companionship can pick a new date & time.
+// Ownership: admin, the assigned leader, or the companion themself (email
+// match). Because bookings carry no per-slot capacity counter, "releasing" a
+// slot is exactly the status → 'cancelled' transition (open capacity is derived
+// by excluding cancelled bookings in the analytics aggregation).
+app.post('/api/bookings/:id/reschedule', requireSession, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const { data: booking, error: fetchErr } = await supabase
+      .from('bookings')
+      .select('id, companionship_id, status, companionships(leader_id, companion1_email, companion2_email)')
+      .eq('id', id)
+      .maybeSingle();
+    if (fetchErr) throw fetchErr;
+    if (!booking) return res.status(404).json({ error: 'not_found' });
+
+    const isAdmin = req.user.role === 'admin';
+    const ownsAsLeader = booking.companionships?.leader_id === req.user.leader_id;
+    const email = String(req.user.email || '').toLowerCase();
+    const ownsAsCompanion =
+      !!booking.companionships &&
+      [booking.companionships.companion1_email, booking.companionships.companion2_email].some(
+        (e) => !!e && String(e).toLowerCase() === email,
+      );
+
+    if (!isAdmin && !ownsAsLeader && !ownsAsCompanion) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const { data: updated, error: updErr } = await supabase
+      .from('bookings')
+      .update({ status: 'cancelled' })
+      .eq('id', id)
+      .select()
+      .maybeSingle();
+    if (updErr) throw updErr;
+    if (!updated) return res.status(404).json({ error: 'not_found' });
+
+    res.json({ ok: true, released: true, booking: updated });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/admin/bookings — book on behalf of a companionship (Call & Book
+// drawer). Admin-only; mirrors POST /api/bookings but skips the companion
+// email-match gate and enforces single-active-booking server-side.
+app.post('/api/admin/bookings', requireSession, requireRole('admin'), async (req, res) => {
+  const { companionship_id, slot_id, window_id, scheduled_date } = req.body || {};
+  if (!companionship_id || (!slot_id && !window_id)) {
+    return res.status(400).json({ error: 'companionship_id and slot_id (or window_id) are required' });
+  }
+
+  try {
+    const active = await findActiveBooking(companionship_id);
+    if (active) {
+      return res.status(409).json({
+        error: 'This companionship already has an active appointment',
+        active_booking_id: active.id,
+      });
+    }
+
+    const insert = {
+      companionship_id,
+      scheduled_date,
+      status: 'booked',
+      slot_id: slot_id || null,
+      window_id: window_id || null,
+    };
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .insert([insert])
+      .select();
+    if (error) throw error;
+    const booking = data[0];
+
+    try {
+      await handleBookingConfirmation(supabaseAdmin, booking);
+    } catch (notifErr) {
+      console.error('Booking notification error:', notifErr.message);
+    }
+
+    res.status(201).json(booking);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1673,6 +1868,68 @@ app.get('/api/admin/welcome-links', requireSession, requireRole('admin'), async 
     });
 
     res.json({ leaders: links });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// POST /api/admin/add-admin — grant the admin role to an email address (add a
+// Co-Admin / Secretary). If a leaders row already exists for the email, promote
+// it in place; otherwise insert a new secretary row (id derived from the email
+// local part). Admin-only.
+app.post('/api/admin/add-admin', requireSession, requireRole('admin'), async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'A valid email address is required' });
+  }
+
+  try {
+    const { data: existing, error: lookupErr } = await supabase
+      .from('leaders')
+      .select('id, name, email, role')
+      .ilike('email', email)
+      .maybeSingle();
+    if (lookupErr) throw lookupErr;
+
+    if (existing) {
+      const { data: updated, error: updErr } = await supabase
+        .from('leaders')
+        .update({ role: 'admin', active: true })
+        .eq('id', existing.id)
+        .select('id, name, email, role')
+        .maybeSingle();
+      if (updErr) throw updErr;
+      return res.json({ ok: true, leader: updated, created: false });
+    }
+
+    const local = email
+      .split('@')[0]
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    let id = local || `admin-${crypto.randomBytes(4).toString('hex')}`;
+
+    // Avoid a primary-key collision if a different leader already uses this id.
+    const { data: idTaken } = await supabase.from('leaders').select('id').eq('id', id).maybeSingle();
+    if (idTaken) id = `${id}-${crypto.randomBytes(3).toString('hex')}`;
+
+    const name =
+      email
+        .split('@')[0]
+        .split(/[._-]/)
+        .filter(Boolean)
+        .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+        .join(' ') || 'Secretary';
+
+    const { data: inserted, error: insErr } = await supabase
+      .from('leaders')
+      .insert([{ id, name, email, role: 'admin', active: true }])
+      .select('id, name, email, role')
+      .maybeSingle();
+    if (insErr) throw insErr;
+
+    res.status(201).json({ ok: true, leader: inserted, created: true });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
