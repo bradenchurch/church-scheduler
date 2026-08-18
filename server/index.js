@@ -311,7 +311,7 @@ async function computeRosterStatuses() {
   try {
     const bookingsRes = await supabase
       .from('bookings')
-      .select('id, companionship_id, slot_id, window_id, scheduled_date, status')
+      .select('id, companionship_id, slot_id, window_id, scheduled_date, status, notes')
       .neq('status', 'cancelled')
       .order('scheduled_date', { ascending: false });
     if (bookingsRes.error) throw bookingsRes.error;
@@ -319,7 +319,7 @@ async function computeRosterStatuses() {
   } catch {
     const fallbackRes = await supabase
       .from('bookings')
-      .select('id, companionship_id, slot_id, scheduled_date, status')
+      .select('id, companionship_id, slot_id, scheduled_date, status, notes')
       .neq('status', 'cancelled')
       .order('scheduled_date', { ascending: false });
     if (fallbackRes.error) throw fallbackRes.error;
@@ -381,6 +381,7 @@ async function computeRosterStatuses() {
       booking_id: b?.id || null,
       booking_date: b?.scheduled_date || null,
       booking_time: booking_time || null,
+      notes: b?.notes || null,
       unique_booking_url: `${base}/book?companionship=${encodeURIComponent(comp.id)}`,
       slug: comp.id,
     };
@@ -1171,11 +1172,12 @@ app.get('/api/availability/:leaderId/windows', async (req, res) => {
 // end_time, slot_duration_minutes } } with slot_duration_minutes defaulted
 // to 30 and coerced to a number.
 const SLOT_DURATIONS = [15, 20, 30, 45, 60];
+const BUFFER_MINUTES = [0, 5, 10];
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const TIME_RE = /^\d{2}:\d{2}(:\d{2})?$/;
 
 function validateWindowInput(input) {
-  const { window_date, start_time, end_time, slot_duration_minutes } = input || {};
+  const { window_date, start_time, end_time, slot_duration_minutes, buffer_minutes } = input || {};
 
   if (!window_date || !start_time || !end_time) {
     return { error: 'window_date, start_time, end_time required' };
@@ -1199,12 +1201,22 @@ function validateWindowInput(input) {
     slotDuration = parsed;
   }
 
+  let bufferMinutes = 0;
+  if (buffer_minutes !== undefined && buffer_minutes !== null) {
+    const parsed = Number(buffer_minutes);
+    if (!Number.isInteger(parsed) || !BUFFER_MINUTES.includes(parsed)) {
+      return { error: 'buffer_minutes must be one of 0, 5, 10' };
+    }
+    bufferMinutes = parsed;
+  }
+
   return {
     value: {
       window_date: String(window_date),
       start_time: String(start_time),
       end_time: String(end_time),
       slot_duration_minutes: slotDuration,
+      buffer_minutes: bufferMinutes,
     },
   };
 }
@@ -1340,9 +1352,35 @@ app.get('/api/bookings/:leaderId', requireSession, async (req, res) => {
 
 // POST /api/bookings
 app.post('/api/bookings', requireRole('companion'), requireCompanionFor('companionship_id'), async (req, res) => {
-  const { companionship_id, slot_id, window_id, scheduled_date } = req.body;
+  const { companionship_id, slot_id, window_id, scheduled_date, notes } = req.body;
 
   try {
+    // 1-hour lead time check for today
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat('en-US', { timeZone: 'America/Denver', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).format(now);
+    const [datePart, timePart] = fmt.split(', ');
+    const [mm, dd, yyyy] = datePart.split('/');
+    const denverDate = `${yyyy}-${mm}-${dd}`;
+    const [nowH, nowM] = timePart.split(':').map(Number);
+    const currentMin = nowH * 60 + nowM;
+
+    let startTime = null;
+    if (window_id) {
+      const { data: w } = await supabase.from('availability_windows').select('start_time').eq('id', window_id).single();
+      if (w) startTime = w.start_time;
+    } else if (slot_id) {
+      const { data: s } = await supabase.from('slots').select('start_time').eq('id', slot_id).single();
+      if (s) startTime = s.start_time;
+    }
+
+    if (startTime && scheduled_date === denverDate) {
+      const [sh, sm] = startTime.split(':').map(Number);
+      const startMin = sh * 60 + sm;
+      if (startMin < currentMin + 60) {
+        return res.status(400).json({ error: 'Bookings require at least 1 hour advance notice' });
+      }
+    }
+
     // Double-booking prevention: a companionship may hold only one active
     // (booked/pending) appointment at a time. Reject a second conflicting slot
     // before it is written, so the client banner is backed by a server guard.
@@ -1362,6 +1400,7 @@ app.post('/api/bookings', requireRole('companion'), requireCompanionFor('compani
       status: 'booked',
       slot_id: slot_id || null,
       window_id: window_id || null,
+      notes: notes || null,
     };
 
     const { data, error } = await supabase
@@ -1437,7 +1476,7 @@ app.put('/api/bookings/:id/status', requireAuth, async (req, res) => {
 async function findActiveBooking(companionshipId) {
   const { data, error } = await supabase
     .from('bookings')
-    .select('id, companionship_id, slot_id, window_id, scheduled_date, status')
+    .select('id, companionship_id, slot_id, window_id, scheduled_date, status, notes')
     .eq('companionship_id', companionshipId)
     .in('status', ['booked', 'pending'])
     .order('scheduled_date', { ascending: false })

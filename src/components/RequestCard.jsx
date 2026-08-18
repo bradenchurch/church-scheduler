@@ -181,6 +181,16 @@ export default function RequestCard({ submission, onComplete }) {
         </div>
       )}
 
+      {/* Booking Notes */}
+      {submission.booking_notes && (
+        <div className="rounded-lg bg-cream border border-warm-border px-4 py-3">
+          <p className="text-xs uppercase tracking-widest text-brown-light font-semibold mb-1">
+            Needs / Topics
+          </p>
+          <p className="text-sm text-brown whitespace-pre-wrap">{submission.booking_notes}</p>
+        </div>
+      )}
+
       {/* Completed presidency notes (read-only) */}
       {isCompleted && submission.presidency_notes && (
         <div className="rounded-lg bg-sage-light border border-sage/20 px-4 py-3">

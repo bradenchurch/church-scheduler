@@ -25,15 +25,17 @@ function CheckIcon() {
 // Expand a date-specific availability window into bookable increments of
 // `slotDuration` minutes (default 30). e.g. "08:00"–"10:00" at 30m →
 // ["08:00", "08:30", "09:00", "09:30"]; at 15m → ["08:00", "08:15", …].
-function expandWindowTimes(start, end, slotDuration = 30) {
+function expandWindowTimes(start, end, slotDuration = 30, bufferMinutes = 0) {
   if (!start || !end) return [];
-  const step = Number(slotDuration) > 0 ? Number(slotDuration) : 30;
+  const duration = Number(slotDuration) > 0 ? Number(slotDuration) : 30;
+  const buffer = Number(bufferMinutes) > 0 ? Number(bufferMinutes) : 0;
+  const step = duration + buffer;
   const [sh, sm] = String(start).split(':').map(Number);
   const [eh, em] = String(end).split(':').map(Number);
   const startMin = sh * 60 + sm;
   const endMin = eh * 60 + em;
   const out = [];
-  for (let m = startMin; m < endMin; m += step) {
+  for (let m = startMin; m + duration <= endMin; m += step) {
     const h = Math.floor(m / 60);
     const mm = m % 60;
     out.push(`${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`);
@@ -122,6 +124,7 @@ export default function Book() {
   const [rescheduling, setRescheduling] = useState(false);
   const [rescheduleNote, setRescheduleNote] = useState('');
   const [bookError, setBookError] = useState('');
+  const [notes, setNotes] = useState('');
 
   const t = {
     en: {
@@ -244,7 +247,7 @@ export default function Book() {
     const res = await authedFetch('/api/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ companionship_id: selectedComp.id, slot_id: slot.id, scheduled_date: dateString })
+      body: JSON.stringify({ companionship_id: selectedComp.id, slot_id: slot.id, scheduled_date: dateString, notes })
     });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
@@ -263,6 +266,7 @@ export default function Book() {
         companionship_id: selectedComp.id,
         window_id: window.id,
         scheduled_date: window.window_date,
+        notes,
       }),
     });
     if (!res.ok) {
@@ -306,6 +310,28 @@ export default function Book() {
       leaderName: selectedComp?.leaders?.name || '',
     });
   };
+
+
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  const todayDateStr = `${y}-${m}-${d}`;
+  const currentMin = now.getHours() * 60 + now.getMinutes();
+
+  const availableWindowsList = windows.flatMap((w) =>
+    expandWindowTimes(w.start_time, w.end_time, w.slot_duration_minutes, w.buffer_minutes)
+      .map((time) => ({ window: w, time }))
+  ).filter(({ window, time }) => {
+    if (String(window.window_date).slice(0, 10) === todayDateStr) {
+      const [th, tm] = time.split(':').map(Number);
+      const timeMin = th * 60 + tm;
+      if (timeMin < currentMin + 60) {
+        return false;
+      }
+    }
+    return true;
+  });
 
   if (bookedDetails) {
     const { googleLink, icsLink } = getCalendarLinks();
@@ -400,8 +426,21 @@ export default function Book() {
             <p className="text-sm rounded-lg px-3 py-2 bg-rose-light text-rose mb-4">{bookError}</p>
           )}
 
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-brown mb-2">
+              Any family needs or specific topics you'd like to discuss? <span className="font-normal text-brown-light">(optional)</span>
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="w-full rounded-lg border border-warm-border bg-warm-white p-3 text-base text-brown placeholder-brown-light focus:outline-none focus:border-burgundy"
+              rows="2"
+              placeholder="E.g., We'd love to talk about temple prep..."
+            />
+          </div>
+
           <div className="space-y-2">
-            {slots.length === 0 && windows.length === 0 ? (
+            {slots.length === 0 && availableWindowsList.length === 0 ? (
               <p className="text-brown-light italic">{currentT.noSlots}</p>
             ) : (
               <>
@@ -415,9 +454,7 @@ export default function Book() {
                     <span className="text-brown">{s.start_time.slice(0,5)}</span>
                   </button>
                 ))}
-                {windows.flatMap((w) =>
-                  expandWindowTimes(w.start_time, w.end_time, w.slot_duration_minutes).map((time) => ({ window: w, time }))
-                ).map(({ window, time }) => (
+                {availableWindowsList.map(({ window, time }) => (
                   <button
                     key={`${window.id}-${time}`}
                     onClick={() => handleBookWindow(window, time)}

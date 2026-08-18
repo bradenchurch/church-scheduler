@@ -62,12 +62,16 @@ CREATE TABLE IF NOT EXISTS availability_windows (
   start_time TIME NOT NULL,
   end_time TIME NOT NULL,
   slot_duration_minutes INTEGER NOT NULL DEFAULT 30 CHECK (slot_duration_minutes IN (15, 20, 30, 45, 60)),
+  buffer_minutes INTEGER NOT NULL DEFAULT 0 CHECK (buffer_minutes IN (0, 5, 10)),
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CHECK (end_time > start_time)
 );
 -- Idempotent: bring forward slot_duration_minutes on databases where
 -- availability_windows was created before this column was added (Aug 2026).
 ALTER TABLE availability_windows ADD COLUMN IF NOT EXISTS slot_duration_minutes INTEGER NOT NULL DEFAULT 30;
+-- Optional break (0, 5, or 10 minutes) inserted between published slots.
+-- Added Aug 2026: companions see back-to-back slots spread out by this gap.
+ALTER TABLE availability_windows ADD COLUMN IF NOT EXISTS buffer_minutes INTEGER NOT NULL DEFAULT 0;
 CREATE INDEX IF NOT EXISTS idx_availability_windows_leader_date ON availability_windows(leader_id, window_date);
 
 CREATE TABLE IF NOT EXISTS bookings (
@@ -75,6 +79,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   companionship_id UUID REFERENCES companionships(id) ON DELETE CASCADE,
   slot_id UUID REFERENCES slots(id) ON DELETE SET NULL,
   scheduled_date DATE NOT NULL,
+  notes TEXT,
   status TEXT NOT NULL CHECK (status IN ('pending', 'booked', 'completed', 'cancelled')) DEFAULT 'pending'
 );
 
@@ -82,6 +87,10 @@ CREATE TABLE IF NOT EXISTS bookings (
 -- date-specific availability window, slot_id is NULL and window_id points at
 -- the availability_windows row.
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS window_id UUID REFERENCES availability_windows(id) ON DELETE SET NULL;
+
+-- Optional family-needs / discussion-topics note the companion leaves at
+-- booking time, surfaced to the presidency on the admin dashboard + leader page.
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS notes TEXT;
 
 CREATE TABLE IF NOT EXISTS config (
   key TEXT PRIMARY KEY,

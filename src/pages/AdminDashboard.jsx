@@ -502,6 +502,12 @@ export default function AdminDashboard() {
                             ? ` · ${c.booking_date}${c.booking_time ? ` ${String(c.booking_time).slice(0, 5)}` : ''}`
                             : ''}
                         </div>
+                        {c.notes && (
+                          <div className="mt-2 text-sm text-brown bg-cream rounded-md p-2">
+                            <span className="font-semibold text-xs uppercase tracking-wider text-brown-light mr-2">Needs / Topics</span>
+                            {c.notes}
+                          </div>
+                        )}
                       </div>
 
                       <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto">
