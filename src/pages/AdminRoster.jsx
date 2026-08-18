@@ -123,7 +123,10 @@ export default function AdminRoster() {
     try {
       const res = await authedFetch('/api/leaders');
       const data = await res.json().catch(() => []);
-      if (res.ok && Array.isArray(data)) setLeaders(data);
+      if (res.ok && Array.isArray(data)) {
+        const uniqueLeaders = Array.from(new Map(data.map(l => [l.id, l])).values());
+        setLeaders(uniqueLeaders);
+      }
     } catch {
       // leave leaders empty
     }

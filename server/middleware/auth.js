@@ -68,6 +68,7 @@ async function resolveIdentity(user) {
  * 401 on a missing/invalid token, 500 on a server-side Supabase error.
  */
 export async function requireAuth(req, res, next) {
+  console.log("MOCK_AUTH IS: ", MOCK_AUTH);
   if (MOCK_AUTH) {
     const raw = req.headers['x-mock-user'];
     if (!raw) {

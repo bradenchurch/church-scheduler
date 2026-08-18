@@ -287,6 +287,20 @@ function resolveLeaderId(raw, byName) {
   return null;
 }
 
+function dedupeLeaders(leaders) {
+  const byId = new Map();
+  const byEmail = new Map();
+  const unique = [];
+  for (const l of leaders) {
+    if (byId.has(l.id)) continue;
+    if (l.email && byEmail.has(l.email)) continue;
+    byId.set(l.id, true);
+    if (l.email) byEmail.set(l.email, true);
+    unique.push(l);
+  }
+  return unique;
+}
+
 // Shared aggregation: every companionship joined against its most recent
 // non-cancelled booking to derive status + leader + scheduled date/time. Used
 // by GET /api/admin/analytics and GET /api/admin/export.csv so the two stay in
@@ -303,7 +317,7 @@ async function computeRosterStatuses() {
   if (compsRes.error) throw compsRes.error;
   if (slotsRes.error) throw slotsRes.error;
 
-  const leaders = leadersRes.data || [];
+  const leaders = dedupeLeaders(leadersRes.data || []);
   const comps = compsRes.data || [];
   const slots = slotsRes.data || [];
 
@@ -2152,7 +2166,7 @@ app.get('/api/leaders', requireRole('leader'), async (req, res) => {
       .from('leaders')
       .select('id, name, email, google_calendar_id, active, role, phone');
     if (error) throw error;
-    res.json(data);
+    res.json(dedupeLeaders(data || []));
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

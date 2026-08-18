@@ -2,18 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import Badge from '../components/Badge';
 
-// Active presidency leaders an admin can switch between on /leader.
-const LEADERS = [
-  { id: 'cole', name: 'Cole Chollet' },
-  { id: 'kawika', name: 'Kawika Tupuola' },
-  { id: 'sean', name: 'Sean Bryan' },
-];
-
-const leaderNameFor = (id) => {
-  const found = LEADERS.find((l) => l.id === id);
-  return found ? found.name : id;
-};
-
 function CalendarIcon() {
   return (
     <svg
@@ -40,6 +28,7 @@ export default function Leader() {
   const { leaderId, token, user, role } = useAuth();
   const isAdmin = role === 'admin';
 
+  const [leaders, setLeaders] = useState([]);
   const [selectedLeaderId, setSelectedLeaderId] = useState(null);
   const [slots, setSlots] = useState([]);
   const [bookings, setBookings] = useState([]);
@@ -47,14 +36,33 @@ export default function Leader() {
   const [icalToken, setIcalToken] = useState(null);
   const [copied, setCopied] = useState(false);
 
-  // Admins manage any leader and default to the first active leader (Cole);
+  useEffect(() => {
+    if (!isAdmin) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    fetch(`/api/leaders`, { headers })
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          const uniqueLeaders = Array.from(new Map(data.map(l => [l.id, l])).values());
+          setLeaders(uniqueLeaders);
+        }
+      })
+      .catch(() => {});
+  }, [isAdmin, token]);
+
+  // Admins manage any leader and default to the first active leader;
   // non-admin leaders are pinned to their own leader id.
-  const effectiveLeaderId = isAdmin ? selectedLeaderId || LEADERS[0].id : leaderId;
+  const effectiveLeaderId = isAdmin ? selectedLeaderId || (leaders.length > 0 ? leaders[0].id : null) : leaderId;
+
+  const leaderNameFor = (id) => {
+    const found = leaders.find((l) => l.id === id);
+    return found ? found.name : id;
+  };
 
   // Load slots + bookings for the effective leader.
   useEffect(() => {
     if (!effectiveLeaderId) {
-      setLoading(false);
+      if (!isAdmin) setLoading(false);
       return;
     }
     setLoading(true);
@@ -68,7 +76,7 @@ export default function Leader() {
       if (Array.isArray(bData)) setBookings(bData);
       setLoading(false);
     });
-  }, [effectiveLeaderId, token]);
+  }, [effectiveLeaderId, token, isAdmin]);
 
   // Load the effective leader's iCal token. Admins can fetch any leader's token;
   // non-admin leaders only fetch their own.
@@ -190,7 +198,7 @@ export default function Leader() {
                 onChange={(e) => setSelectedLeaderId(e.target.value)}
                 className="min-h-[48px] w-full p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all font-semibold text-burgundy"
               >
-                {LEADERS.map((l) => (
+                {leaders.map((l) => (
                   <option key={l.id} value={l.id}>
                     {l.name}
                   </option>

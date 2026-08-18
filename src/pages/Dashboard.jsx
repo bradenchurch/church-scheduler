@@ -104,7 +104,11 @@ export default function Dashboard() {
   }, [token, refreshQueue]);
 
   useEffect(() => {
-    authedFetch('/api/leaders').then((r) => r.json()).then(setLeadersList).catch(() => []);
+    authedFetch('/api/leaders').then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) {
+        setLeadersList(Array.from(new Map(data.map(l => [l.id, l])).values()));
+      }
+    }).catch(() => []);
   }, []);
 
   const handleAssignNow = async (requestId) => {
