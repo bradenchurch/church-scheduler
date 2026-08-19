@@ -101,7 +101,7 @@ import pdfParse from 'pdf-parse/lib/pdf-parse.js';
 // Examples that must NOT match:
 //   "Bracken, Kenneth Mar"          ← "Mar" is a middle name, not a month
 //   "Miles, Wyatt"                  ← missing Male|Female
-const MEMBER_LINE_RE = /^[A-Z][a-zA-Z'’.\u0101.-]+,\s+[A-Z][a-zA-Z'’.\u0101.-]+(?:\s+[A-Z][a-zA-Z'’.\u0101.-]+)*\s*(?:Male|Female)\s*\d{1,2}\s*[A-Z][a-z]{2}$/;
+const MEMBER_LINE_RE = /^[\p{L}'’.\-]+(?:\s+[\p{L}'’.\-]+)*,\s*[\p{L}'’.\-]+(?:\s+[\p{L}'’.\-]+)*\s*(?:Male|Female)\s*\d{1,2}\s*[A-Z][a-z]{2}$/u;
 
 // District header: "District N" exactly.
 const DISTRICT_HEADER_RE = /^District\s+(\d+)$/;
@@ -126,6 +126,9 @@ const PAGE_FOOTER_LINE_RE = /^\d+\s+For Church Use Only\b/;
 // Dot separator used as visual page break.
 const DOT_SEPARATOR_RE = /^\.+\s*$/;
 
+// Standalone gender/date line that indicates a wrapped member line (e.g. "Female 17 Apr").
+const MEMBER_SUFFIX_RE = /^(?:Male|Female)\s*\d{1,2}\s*[A-Z][a-z]{2}$/i;
+
 // Repeated presidency footer line that appears at the bottom of every page.
 // e.g., "Presidency Member: Chollet, Cole 435-218-1455 | cole.chollet1@gmail.com"
 const PRESIDENCY_FOOTER_RE = /^Presidency Member:.+\|\s*\S+@\S+/;
@@ -133,6 +136,37 @@ const PRESIDENCY_FOOTER_RE = /^Presidency Member:.+\|\s*\S+@\S+/;
 // ---------------------------------------------------------------------------
 // Line extraction
 // ---------------------------------------------------------------------------
+
+/**
+ * Reassemble long family member lines wrapped across multiple lines by pdf-parse.
+ */
+function mergeWrappedLines(lines) {
+  const result = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (MEMBER_SUFFIX_RE.test(line)) {
+      let joined = line;
+      while (result.length > 0) {
+        const prev = result[result.length - 1];
+        if (
+          !MEMBER_SUFFIX_RE.test(prev) &&
+          !/(?:Male|Female)\s*\d{1,2}\s*[A-Z][a-z]{2}$/i.test(prev) &&
+          !/^\d+|@|District|Presidency/i.test(prev)
+        ) {
+          result.pop();
+          joined = prev + ' ' + joined;
+          if (prev.includes(',')) break;
+        } else {
+          break;
+        }
+      }
+      result.push(joined);
+    } else {
+      result.push(line);
+    }
+  }
+  return result;
+}
 
 /**
  * Extract a flat, ordered list of text lines from a PDF buffer.
@@ -145,7 +179,7 @@ async function pdfToLines(buffer) {
     if (!trimmed) continue;
     lines.push(trimmed);
   }
-  return lines;
+  return mergeWrappedLines(lines);
 }
 
 /**
@@ -185,10 +219,11 @@ function classifyLine(line) {
   if (PRESIDENCY_HEADER_RE.test(line)) return 'presidency';
   if (MEMBER_LINE_RE.test(line)) return 'member';
 
-  // Name heuristic: "<Last>, <First...>" (possibly multi-word first/middle),
-  // or a single capitalized word (like "Evans", "Mann", "Walker" — single-
-  // word family surnames that LCR emits for families whose head-of-household
-  // has no first name in the directory).
+  // Name heuristic: "<Last>, <First...>" (possibly multi-word first/middle and
+  // multi-word compound surnames like "Van Dyke, John" or "De La Cruz, Maria"),
+  // or a single capitalized / compound surname (like "Evans", "Van Dyke" —
+  // surnames that LCR emits for families whose head-of-household has no first
+  // name in the directory). Supports Unicode letters (\p{L}).
   //
   // Constraints we enforce to avoid false positives:
   //   - Must start with an uppercase letter.
@@ -196,7 +231,7 @@ function classifyLine(line) {
   //   - Must NOT match the city/state/zip shape "CityName ST 12345".
   //   - Must NOT be a multi-word sentence (which would be an address or
   //     other body text).
-  if (/^[A-Z][a-zA-Z'’.\-]+(?:,\s+[A-Z][a-zA-Z'’.\-]+(?:\s+[A-Z][a-zA-Z'’.\-]+)*)?$/.test(line)) {
+  if (/^\p{Lu}[\p{L}'’.\-]*(?:\s+[\p{L}'’.\-]+)*(?:,\s+\p{Lu}[\p{L}'’.\-]*(?:\s+[\p{L}'’.\-]+)*)?$/u.test(line)) {
     return 'name';
   }
 
@@ -290,15 +325,16 @@ function groupIntoCompanionships(records) {
   for (const rec of records) {
     if (!rec.is_family) {
       // Companion record. A non-family record is either C1 or C2 of a
-      // companionship. If `current` already has C1+C2, this record is C1 of
-      // the NEXT companionship — close the previous one first so its trailing
-      // families stay attached.
-      if (!current || current.companion_2) {
+      // companionship. If `current` already has C1+C2, OR `current` is a
+      // solo companion that already has families attached, this record is C1
+      // of the NEXT companionship — close the previous one first so its
+      // trailing families stay attached.
+      if (!current || current.companion_2 || current.families.length > 0) {
         closeCurrent();
         startNew(rec);
       } else {
-        // current has only C1 — this is C2. Keep `current` open so trailing
-        // families attach to this companionship (NOT to a phantom next one).
+        // current has only C1 and no families yet — this is C2. Keep `current`
+        // open so trailing families attach to this companionship.
         current.companion_2 = { name: rec.name };
       }
     } else {
@@ -349,7 +385,6 @@ function groupIntoCompanionships(records) {
 function splitByDistrict(lines) {
   const sections = [];
   let current = null;
-  let preface = [];
 
   const ensureSection = (district, leader = '') => {
     if (!current || current.district !== district) {
@@ -378,7 +413,7 @@ function splitByDistrict(lines) {
     current.lines.push(line);
   }
 
-  return { sections, preface };
+  return sections;
 }
 
 // ---------------------------------------------------------------------------
@@ -449,14 +484,10 @@ function parseDistrict(section) {
 export async function parseLcrPdf(buffer, sourceFilename = '') {
   const rawLines = await pdfToLines(buffer);
   const lines = filterNoise(rawLines);
-  const { sections, preface } = splitByDistrict(lines);
+  const sections = splitByDistrict(lines);
 
-  const ward_name = preface.length > 0
-    ? preface
-        .find((l) => WARD_LINE_RE.test(l))
-        ?.replace(/\s+\(\d+\)$/, '')
-        ?.trim() || 'Long Valley 2nd Ward'
-    : 'Long Valley 2nd Ward';
+  // Default ward name for Long Valley 2nd Ward. WARD_LINE_RE filters the PDF header in filterNoise.
+  const ward_name = 'Long Valley 2nd Ward';
 
   const districts = [];
   let totalCompanionships = 0;

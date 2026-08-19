@@ -2321,6 +2321,7 @@ app.post(
       let households_upserted = 0;
       let links_upserted = 0;
       const seenHouseholdIds = new Set();
+      const seenLinkKeys = new Set();
 
       for (const link of newLinks) {
         // Find or create the household. We key by (family_name, district_number)
@@ -2352,14 +2353,18 @@ app.post(
           householdId = created?.id;
           if (!householdId) continue;
         }
-        if (seenHouseholdIds.has(householdId)) {
-          // Household already linked this import round; skip the link insert
-          // to avoid (companionship_id, household_id) PK collisions if the
-          // same household was assigned twice.
+
+        if (!seenHouseholdIds.has(householdId)) {
+          seenHouseholdIds.add(householdId);
+          households_upserted += 1;
+        }
+
+        const linkKey = `${link.companionshipId}:${householdId}`;
+        if (seenLinkKeys.has(linkKey)) {
+          // Same household already linked to this companionship in this import; skip duplicate.
           continue;
         }
-        seenHouseholdIds.add(householdId);
-        households_upserted += 1;
+        seenLinkKeys.add(linkKey);
 
         const { error: linkErr } = await supabase
           .from('companionship_households')
