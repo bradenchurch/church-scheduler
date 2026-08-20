@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { authedFetch, downloadCsv } from '../lib/api';
+import { authedFetch, downloadCsv, deleteRoster } from '../lib/api';
 
 // Stable fallback so derived arrays don't churn a new reference each render.
 const EMPTY_ARRAY = [];
@@ -56,6 +56,29 @@ export default function AdminRoster() {
   const [pdfError, setPdfError] = useState('');
   const [pdfSaving, setPdfSaving] = useState(false);
   const [pdfResult, setPdfResult] = useState(null);
+
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetConfirm, setResetConfirm] = useState('');
+  const [resetSaving, setResetSaving] = useState(false);
+  const [resetError, setResetError] = useState('');
+  const [resetSuccess, setResetSuccess] = useState('');
+
+  const handleReset = async () => {
+    setResetSaving(true);
+    setResetError('');
+    setResetSuccess('');
+    try {
+      await deleteRoster();
+      setResetSuccess('Roster has been reset.');
+      setResetConfirm('');
+      await loadRoster();
+      setTimeout(() => setResetOpen(false), 2000);
+    } catch (err) {
+      setResetError(err.message);
+    } finally {
+      setResetSaving(false);
+    }
+  };
 
   const [leaders, setLeaders] = useState([]);
 
@@ -353,6 +376,16 @@ export default function AdminRoster() {
             Import CSV
           </button>
           <button
+            onClick={() => { setResetOpen(true); setResetConfirm(''); setResetError(''); setResetSuccess(''); }}
+            className="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-lg bg-rose-ghost border-[1.5px] border-rose/30 text-rose text-sm font-semibold hover:bg-rose/10 transition-colors"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 6h18" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+            </svg>
+            Reset Roster
+          </button>
+          <button
             onClick={() => setPdfImportOpen(true)}
             className="min-h-[44px] inline-flex items-center gap-2 px-4 rounded-lg bg-cream border-[1.5px] border-burgundy/30 text-burgundy text-sm font-semibold hover:bg-burgundy-ghost transition-colors"
             title="Drop the raw LCR Ministering Assignments.pdf export directly — no CSV conversion needed."
@@ -526,6 +559,39 @@ export default function AdminRoster() {
                 <button type="submit" disabled={addSaving} className="min-h-[44px] px-4 rounded-lg bg-burgundy text-white text-sm font-semibold hover:bg-burgundy-light disabled:opacity-40 transition-colors">{addSaving ? 'Adding…' : 'Add'}</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      
+      {/* Reset Roster modal */}
+      {resetOpen && (
+        <div className="fixed inset-0 z-30 flex items-center justify-center p-4 bg-black/40" onClick={() => !resetSaving && setResetOpen(false)}>
+          <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-warm-border p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-start justify-between mb-4">
+              <h2 className="text-xl font-serif font-bold text-rose">Reset Roster</h2>
+              <button onClick={() => !resetSaving && setResetOpen(false)} disabled={resetSaving} aria-label="Close" className="text-brown-light hover:text-rose transition-colors disabled:opacity-50">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
+              </button>
+            </div>
+            <p className="text-sm text-brown mb-4">
+              This will wipe all households and companionships from the database (and delete all associated bookings). 
+              Type <strong>RESET</strong> to confirm.
+            </p>
+            <input
+              type="text"
+              value={resetConfirm}
+              onChange={(e) => setResetConfirm(e.target.value)}
+              placeholder="RESET"
+              disabled={resetSaving || !!resetSuccess}
+              className="w-full min-h-[44px] px-3 py-2 border-[1.5px] border-warm-border rounded-md bg-warm-white text-brown text-sm focus:border-rose focus:ring focus:ring-rose/30 outline-none transition-all mb-4"
+            />
+            {resetError && <p className="text-sm text-rose mb-4">{resetError}</p>}
+            {resetSuccess && <p className="text-sm text-sage mb-4">{resetSuccess}</p>}
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setResetOpen(false)} disabled={resetSaving} className="min-h-[44px] px-4 rounded-lg border-[1.5px] border-warm-border text-brown text-sm font-semibold hover:bg-cream transition-colors">Cancel</button>
+              <button type="button" onClick={handleReset} disabled={resetConfirm !== 'RESET' || resetSaving || !!resetSuccess} className="min-h-[44px] px-4 rounded-lg bg-rose text-white text-sm font-semibold hover:bg-rose/80 disabled:opacity-40 transition-colors">{resetSaving ? 'Resetting…' : 'Reset Roster'}</button>
+            </div>
           </div>
         </div>
       )}

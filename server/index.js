@@ -17,7 +17,7 @@ import {
   GOOGLE_SCOPES,
 } from './google.js';
 import { handleBookingConfirmation } from './notifications.js';
-import { getRoster, formatAddress, splitCompanions, getUnlinkedCompanions } from './roster.js';
+import { getRoster, formatAddress, splitCompanions, getUnlinkedCompanions, writeEmptyRoster, writeRoster } from './roster.js';
 import { requireAuth as requireSession, requireRole, requireCompanionFor } from './middleware/auth.js';
 import { parseLcrPdf } from './lcr-parser.js';
 
@@ -824,6 +824,28 @@ app.post('/api/chapel/submit', requireSession, requireCompanionFor('companionshi
       presidency_member: presidency || { name: '', email: '', phone: '' },
     });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// DELETE /api/admin/roster — admin: reset the roster.
+// Wipes companionships + households tables (bookings cascade delete).
+// Calls writeEmptyRoster() to write skeletal JSON.
+app.delete('/api/admin/roster', requireSession, requireRole('admin'), async (req, res) => {
+  try {
+    // Delete all households and companionships
+    const { error: hErr } = await supabase.from('households').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (hErr) throw hErr;
+    
+    const { error: cErr } = await supabase.from('companionships').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    if (cErr) throw cErr;
+
+    writeEmptyRoster();
+
+    console.log(`[admin-reset] Roster reset by admin ${req.user.email}`);
+    res.json({ ok: true, deleted: { companionships: true, households: true } });
+  } catch (error) {
+    console.error('[admin-reset] reset error:', error.message);
     res.status(500).json({ error: error.message });
   }
 });
@@ -2375,6 +2397,8 @@ app.post(
         if (linkErr && linkErr.code !== '23505') throw linkErr; // tolerate race duplicates
         links_upserted += 1;
       }
+
+      writeRoster(body);
 
       res.json({
         ok: true,

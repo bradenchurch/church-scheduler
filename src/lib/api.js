@@ -44,3 +44,10 @@ export async function downloadCsv(url, filename = 'export.csv') {
   a.remove();
   URL.revokeObjectURL(objectUrl);
 }
+
+export async function deleteRoster() {
+  const res = await authedFetch('/api/admin/roster', { method: 'DELETE' });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.error || 'Failed to reset roster');
+  return data;
+}

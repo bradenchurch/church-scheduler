@@ -7,7 +7,8 @@
 // access is required for read-only roster views, so these routes are fully
 // deterministic and self-contained.
 
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync, renameSync } from 'fs';
+import crypto from 'crypto';
 
 const DATA_DIR = new URL('./data/', import.meta.url);
 
@@ -107,4 +108,144 @@ export function splitCompanions(companions = []) {
   const toCompanion = (c) =>
     c ? { name: c.name, phone: c.phone || '', email: c.email || '' } : null;
   return { companion_1: toCompanion(head), companion_2: toCompanion(other) };
+}
+
+
+export function writeEmptyRoster() {
+  const roster = getRoster();
+  
+  const emptyCompanionships = {
+    ward: roster.ward || 'long-valley-2nd-ward',
+    companionships: []
+  };
+  
+  const emptyHouseholds = {
+    ward: roster.ward || 'long-valley-2nd-ward',
+    districts: (roster.districts || []).map(d => ({
+      district: d.district,
+      president: d.president || {},
+      households: []
+    }))
+  };
+  
+  const companionshipsPath = new URL('roster-companionships.json', DATA_DIR);
+  const householdsPath = new URL('roster-households.json', DATA_DIR);
+  const compTmp = new URL('roster-companionships.json.tmp', DATA_DIR);
+  const hhTmp = new URL('roster-households.json.tmp', DATA_DIR);
+  
+  writeFileSync(compTmp, JSON.stringify(emptyCompanionships, null, 2), 'utf8');
+  writeFileSync(hhTmp, JSON.stringify(emptyHouseholds, null, 2), 'utf8');
+  
+  renameSync(compTmp, companionshipsPath);
+  renameSync(hhTmp, householdsPath);
+  
+  _roster = null;
+}
+
+export function writeRoster(parsedRoster) {
+  const oldRoster = getRoster();
+  
+  const companionships = [];
+  const districtsMap = new Map();
+  
+  for (const d of (oldRoster.districts || [])) {
+    districtsMap.set(d.district, {
+      district: d.district,
+      president: d.president || {},
+      households: []
+    });
+  }
+
+  for (const d of (parsedRoster.districts || [])) {
+    const districtNumber = Number(d.district);
+    let distObj = districtsMap.get(districtNumber);
+    if (!distObj) {
+      distObj = {
+        district: districtNumber,
+        president: { name: d.leader || '' },
+        households: []
+      };
+      districtsMap.set(districtNumber, distObj);
+    }
+    
+    for (const comp of (d.companionships || [])) {
+      const compId = crypto.randomUUID();
+      const compCompanions = [];
+      if (comp.companion_1 && comp.companion_1.name) {
+        compCompanions.push({
+          name: comp.companion_1.name,
+          phone: comp.companion_1.phone || '',
+          email: comp.companion_1.email || '',
+          head: true
+        });
+      }
+      if (comp.companion_2 && comp.companion_2.name) {
+        compCompanions.push({
+          name: comp.companion_2.name,
+          phone: comp.companion_2.phone || '',
+          email: comp.companion_2.email || '',
+          head: false,
+          notes: comp.companion_2.notes || ''
+        });
+      }
+      
+      const families_visited = [];
+      
+      for (const fam of (comp.families || [])) {
+        const famName = typeof fam === 'string' ? fam : (fam.family_name || fam.name || '');
+        const hhId = crypto.randomUUID();
+        
+        distObj.households.push({
+          id: hhId,
+          name: typeof fam === 'string' ? `${fam} Family` : (fam.name || `${famName} Family`),
+          family_name: famName,
+          head: typeof fam === 'string' ? {
+            first_name: '', last_name: famName, phone: '', email: '', address: '', city: '', state: '', zip: ''
+          } : (fam.head || {}),
+          members: typeof fam === 'string' ? [] : (fam.members || []),
+          category: 'family',
+          notes: ''
+        });
+        
+        families_visited.push({
+          household_id: hhId,
+          family_name: famName,
+          head_name: `${famName} Family`,
+          address: '',
+          category: 'family'
+        });
+      }
+      
+      companionships.push({
+        id: compId,
+        district: districtNumber,
+        presidency_member: distObj.president?.name || '',
+        companions: compCompanions,
+        families_visited
+      });
+    }
+  }
+
+  const newCompanionships = {
+    ward: oldRoster.ward || 'long-valley-2nd-ward',
+    companionships
+  };
+  
+  const newHouseholds = {
+    ward: oldRoster.ward || 'long-valley-2nd-ward',
+    districts: Array.from(districtsMap.values()).sort((a, b) => a.district - b.district)
+  };
+  
+  const companionshipsPath = new URL('roster-companionships.json', DATA_DIR);
+  const householdsPath = new URL('roster-households.json', DATA_DIR);
+  const compTmp = new URL('roster-companionships.json.tmp', DATA_DIR);
+  const hhTmp = new URL('roster-households.json.tmp', DATA_DIR);
+  
+  writeFileSync(compTmp, JSON.stringify(newCompanionships, null, 2), 'utf8');
+  writeFileSync(hhTmp, JSON.stringify(newHouseholds, null, 2), 'utf8');
+  
+  renameSync(compTmp, companionshipsPath);
+  renameSync(hhTmp, householdsPath);
+  
+  _roster = null;
 }
