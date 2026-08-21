@@ -7,7 +7,7 @@
 // access is required for read-only roster views, so these routes are fully
 // deterministic and self-contained.
 
-import { readFileSync, writeFileSync, renameSync } from 'fs';
+import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'fs';
 import crypto from 'crypto';
 
 const DATA_DIR = new URL('./data/', import.meta.url);
@@ -128,18 +128,27 @@ export function writeEmptyRoster() {
     }))
   };
   
+  _roster = null;
+
+  // Skip JSON file sync on Vercel — /var/task is read-only and /tmp/ is per-invocation.
+  // The DB is the source of truth.
+  if (process.env.VERCEL) return;
+
   const companionshipsPath = new URL('roster-companionships.json', DATA_DIR);
   const householdsPath = new URL('roster-households.json', DATA_DIR);
   const compTmp = new URL('roster-companionships.json.tmp', DATA_DIR);
   const hhTmp = new URL('roster-households.json.tmp', DATA_DIR);
   
-  writeFileSync(compTmp, JSON.stringify(emptyCompanionships, null, 2), 'utf8');
-  writeFileSync(hhTmp, JSON.stringify(emptyHouseholds, null, 2), 'utf8');
-  
-  renameSync(compTmp, companionshipsPath);
-  renameSync(hhTmp, householdsPath);
-  
-  _roster = null;
+  try {
+    mkdirSync(DATA_DIR, { recursive: true });
+    writeFileSync(compTmp, JSON.stringify(emptyCompanionships, null, 2), 'utf8');
+    writeFileSync(hhTmp, JSON.stringify(emptyHouseholds, null, 2), 'utf8');
+    
+    renameSync(compTmp, companionshipsPath);
+    renameSync(hhTmp, householdsPath);
+  } catch (err) {
+    console.warn(`[roster] JSON sync skipped:`, err);
+  }
 }
 
 export function writeRoster(parsedRoster) {
@@ -236,16 +245,25 @@ export function writeRoster(parsedRoster) {
     districts: Array.from(districtsMap.values()).sort((a, b) => a.district - b.district)
   };
   
+  _roster = null;
+
+  // Skip JSON file sync on Vercel — /var/task is read-only and /tmp/ is per-invocation.
+  // The DB is the source of truth.
+  if (process.env.VERCEL) return;
+
   const companionshipsPath = new URL('roster-companionships.json', DATA_DIR);
   const householdsPath = new URL('roster-households.json', DATA_DIR);
   const compTmp = new URL('roster-companionships.json.tmp', DATA_DIR);
   const hhTmp = new URL('roster-households.json.tmp', DATA_DIR);
   
-  writeFileSync(compTmp, JSON.stringify(newCompanionships, null, 2), 'utf8');
-  writeFileSync(hhTmp, JSON.stringify(newHouseholds, null, 2), 'utf8');
-  
-  renameSync(compTmp, companionshipsPath);
-  renameSync(hhTmp, householdsPath);
-  
-  _roster = null;
+  try {
+    mkdirSync(DATA_DIR, { recursive: true });
+    writeFileSync(compTmp, JSON.stringify(newCompanionships, null, 2), 'utf8');
+    writeFileSync(hhTmp, JSON.stringify(newHouseholds, null, 2), 'utf8');
+    
+    renameSync(compTmp, companionshipsPath);
+    renameSync(hhTmp, householdsPath);
+  } catch (err) {
+    console.warn(`[roster] JSON sync skipped:`, err);
+  }
 }
