@@ -855,38 +855,96 @@ app.delete('/api/admin/roster', requireSession, requireRole('admin'), async (req
 app.get('/api/admin/roster', requireAuth, requireAdmin, async (req, res) => {
   const { district, category, search } = req.query;
   try {
-    const { ward, companionships, householdsFlat, presidencyByDistrict, districts } = getRoster();
+    let comps = [];
+    let hhs = [];
+    let mems = [];
+    let leaders = [];
+    const ward = 'long-valley-2nd-ward';
 
-    const totals = {
-      households: householdsFlat.length,
-      members: householdsFlat.reduce((sum, hh) => sum + 1 + (hh.members || []).length, 0),
-      companionships: companionships.length,
-    };
+    try {
+      const [compsRes, hhsRes, memsRes, leadersRes] = await Promise.all([
+        supabase.from('companionships').select('id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email'),
+        supabase.from('households').select('*').eq('ward_slug', ward),
+        supabase.from('household_members').select('*'),
+        supabase.from('leaders').select('id, name, email, phone'),
+      ]);
 
-    const by_district = districts.map((d) => {
-      const comps = companionships.filter((c) => c.district === d.district);
-      const hhs = householdsFlat.filter((hh) => hh.district_number === d.district);
+      if (compsRes.error) throw compsRes.error;
+      if (hhsRes.error) throw hhsRes.error;
+      if (memsRes.error) throw memsRes.error;
+      if (leadersRes.error) throw leadersRes.error;
+
+      comps = compsRes.data || [];
+      hhs = hhsRes.data || [];
+      mems = memsRes.data || [];
+      leaders = leadersRes.data || [];
+    } catch (err) {
+      console.error('[roster] db fetch failed:', err.message);
+      // Fallback to empty arrays if DB is unreachable or unconfigured
+    }
+
+    const uniqueDistricts = new Set(Object.keys(LEADER_BY_DISTRICT).map(Number));
+    hhs.forEach((hh) => { if (hh.district_number) uniqueDistricts.add(hh.district_number); });
+    const districtNumbers = Array.from(uniqueDistricts).sort((a, b) => a - b);
+
+    let formattedHouseholds = hhs.map((hh) => {
+      const hhMems = mems.filter((m) => m.household_id === hh.id);
+      
+      const formatAddress = (h) => {
+        const street = h.address || '';
+        const cityLine = [h.city, h.state, h.zip].filter(Boolean).join(' ');
+        return [street, cityLine].filter(Boolean).join(', ');
+      };
+
       return {
-        district_number: d.district,
-        presidency_member:
-          presidencyByDistrict.get(d.district) || { name: '', email: '', phone: '' },
-        companionships_count: comps.length,
-        households_count: hhs.length,
-        members_count: hhs.reduce((sum, hh) => sum + 1 + (hh.members || []).length, 0),
+        household_id: hh.id,
+        head_name: `${hh.head_first_name || ''} ${hh.head_last_name || ''}`.trim(),
+        family_name: hh.family_name || '',
+        address: formatAddress(hh),
+        phone: hh.head_phone || '',
+        email: hh.head_email || '',
+        category: hh.category || '',
+        district_number: hh.district_number,
+        members: hhMems.map((m) => ({
+          first_name: m.first_name || '',
+          last_name: m.last_name || '',
+          gender: m.gender || '',
+          birthday_partial: m.birthday_partial || '',
+          role: m.role || ''
+        })),
       };
     });
 
-    let households = householdsFlat.map((hh) => ({
-      household_id: hh.id,
-      head_name: `${hh.head?.first_name || ''} ${hh.head?.last_name || ''}`.trim(),
-      family_name: hh.family_name || '',
-      address: formatAddress(hh.head),
-      phone: hh.head?.phone || '',
-      email: hh.head?.email || '',
-      category: hh.category || '',
-      district_number: hh.district_number,
-      members: hh.members || [],
-    }));
+    const totals = {
+      households: hhs.length,
+      members: formattedHouseholds.reduce((sum, hh) => sum + 1 + hh.members.length, 0),
+      companionships: comps.length,
+    };
+
+    const by_district = districtNumbers.map((dNum) => {
+      const leaderId = LEADER_BY_DISTRICT[dNum];
+      const leader = leaders.find((l) => l.id === leaderId) || { name: '', email: '', phone: '' };
+      const dComps = comps.filter((c) => c.leader_id === leaderId);
+      const dHhs = hhs.filter((hh) => hh.district_number === dNum);
+      const dMemsCount = dHhs.reduce((sum, hh) => {
+        const hhMems = mems.filter((m) => m.household_id === hh.id);
+        return sum + 1 + hhMems.length;
+      }, 0);
+
+      return {
+        district_number: dNum,
+        presidency_member: {
+          name: leader.name || '',
+          email: leader.email || '',
+          phone: leader.phone || ''
+        },
+        companionships_count: dComps.length,
+        households_count: dHhs.length,
+        members_count: dMemsCount,
+      };
+    });
+
+    let households = formattedHouseholds;
 
     if (district) {
       const dn = Number(district);
@@ -912,7 +970,10 @@ app.get('/api/admin/roster', requireAuth, requireAdmin, async (req, res) => {
       });
     }
 
-    res.json({ ward, totals, by_district, households, unlinked_companions: getUnlinkedCompanions() });
+    // TODO: rewrite unlinked_companions to query DB (needs schema support for companion notes to track UNLINKED_NOTES_MARKER)
+    const unlinked_companions = [];
+
+    res.json({ ward, totals, by_district, households, unlinked_companions });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
