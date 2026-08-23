@@ -14,3 +14,7 @@ The React Compiler is not enabled on this template because of its impact on dev 
 ## Expanding the Oxlint configuration
 
 If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+
+## Known Limitations
+- **LCR PDF Import**: Multi-companion cross-district dedup is a known limitation (one household may appear in two districts with different UUIDs). Tracked as a follow-up.
+- **Roster Export**: `unlinked_companions` requires a rewrite to query the database (needs schema support for companion notes to track UNLINKED_NOTES_MARKER).
