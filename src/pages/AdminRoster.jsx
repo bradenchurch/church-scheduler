@@ -650,12 +650,14 @@ export default function AdminRoster() {
 
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
               {!pdfPreview && !pdfResult && (
-                <label
-                  onDragOver={(e) => { e.preventDefault(); setPdfImportDrag(true); }}
-                  onDragLeave={() => setPdfImportDrag(false)}
-                  onDrop={onPdfDrop}
-                  className={`flex flex-col items-center justify-center gap-2 min-h-[200px] rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${pdfImportDrag ? 'border-burgundy bg-burgundy-ghost' : 'border-warm-border bg-cream'}`}
-                >
+                <>
+                  <p className="text-xs text-slate-500 mb-2">Export from LCR in English (Spanish/Portuguese exports not yet supported).</p>
+                  <label
+                    onDragOver={(e) => { e.preventDefault(); setPdfImportDrag(true); }}
+                    onDragLeave={() => setPdfImportDrag(false)}
+                    onDrop={onPdfDrop}
+                    className={`flex flex-col items-center justify-center gap-2 min-h-[200px] rounded-lg border-2 border-dashed p-8 text-center cursor-pointer transition-colors ${pdfImportDrag ? 'border-burgundy bg-burgundy-ghost' : 'border-warm-border bg-cream'}`}
+                  >
                   <input type="file" accept="application/pdf,.pdf" onChange={onPdfFileSelect} className="hidden" />
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-burgundy">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -664,6 +666,7 @@ export default function AdminRoster() {
                   <span className="text-sm font-semibold text-brown">Drop the LCR PDF here or click to browse</span>
                   <span className="text-xs text-brown-light max-w-md">The parser reconstructs stacked companion cells and bulleted family lists automatically.</span>
                 </label>
+                </>
               )}
 
               {pdfParsing && (

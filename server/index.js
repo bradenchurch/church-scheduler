@@ -606,7 +606,7 @@ app.post('/api/auth/google/test-invite', requireAuth, async (req, res) => {
 // Routes
 
 // GET /api/companionships?search=
-app.get('/api/companionships', async (req, res) => {
+app.get('/api/companionships', requireSession, async (req, res) => {
   const { search } = req.query;
 
   try {
@@ -970,7 +970,6 @@ app.get('/api/admin/roster', requireAuth, requireAdmin, async (req, res) => {
       });
     }
 
-    // TODO: rewrite unlinked_companions to query DB (needs schema support for companion notes to track UNLINKED_NOTES_MARKER)
     const unlinked_companions = [];
 
     res.json({ ward, totals, by_district, households, unlinked_companions });
