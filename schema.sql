@@ -240,3 +240,29 @@ CREATE TABLE IF NOT EXISTS companionship_households (
 CREATE INDEX IF NOT EXISTS idx_households_district ON households(district_number);
 CREATE INDEX IF NOT EXISTS idx_household_members_household ON household_members(household_id);
 CREATE INDEX IF NOT EXISTS idx_companionship_households_household ON companionship_households(household_id);
+
+-- =============================================================
+-- iCal feed subscriptions (RFC 5545) — ministering calendars
+-- (feat/ical-feed-subscriptions, Sep 2026)
+-- =============================================================
+
+-- Public feed identifier for leaders. UUIDs are unguessable, so they act as
+-- the feed's secret: GET /ical/leader/:uuid.ics is intentionally unauthenticated.
+-- Idempotent: safe on databases where leaders was created before this column.
+ALTER TABLE leaders ADD COLUMN IF NOT EXISTS uuid UUID DEFAULT gen_random_uuid();
+-- Backfill any rows that predate the column (e.g. a column added without a default).
+UPDATE leaders SET uuid = gen_random_uuid() WHERE uuid IS NULL;
+ALTER TABLE leaders ALTER COLUMN uuid SET DEFAULT gen_random_uuid();
+ALTER TABLE leaders ALTER COLUMN uuid SET NOT NULL;
+
+-- Exact wall-clock time (America/Denver, naive — matching the app's DATE/TIME
+-- convention) at which the booked appointment starts. Window bookings store
+-- the specific sub-slot the companionship tapped (e.g. 09:15 inside a 09:00
+-- window); recurring-slot bookings store the slot's start_time. Backfilled
+-- from the anchor window/slot for existing rows; NULL only when no anchor time
+-- can be derived.
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS slot_time TIME;
+UPDATE bookings b SET slot_time = w.start_time
+  FROM availability_windows w WHERE b.window_id = w.id AND b.slot_time IS NULL;
+UPDATE bookings b SET slot_time = s.start_time
+  FROM slots s WHERE b.slot_id = s.id AND b.slot_time IS NULL;

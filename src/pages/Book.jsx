@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { authedFetch } from '../lib/api';
+import SubscribePanel from '../components/SubscribePanel';
 
 function CheckIcon() {
   return (
@@ -266,6 +267,7 @@ export default function Book() {
         companionship_id: selectedComp.id,
         window_id: window.id,
         scheduled_date: window.window_date,
+        slot_time: time,
         notes,
       }),
     });
@@ -335,6 +337,9 @@ export default function Book() {
 
   if (bookedDetails) {
     const { googleLink, icsLink } = getCalendarLinks();
+    const compFeedUrl = selectedComp?.id
+      ? `webcal://${window.location.host}/ical/companionship/${selectedComp.id}.ics`
+      : '';
     return (
       <div className="max-w-md mx-auto">
         <div className="flex justify-end mb-4">
@@ -360,6 +365,15 @@ export default function Book() {
 
           <button onClick={() => window.location.reload()} className="text-burgundy hover:text-burgundy-light font-medium">{currentT.bookAnother} →</button>
         </div>
+
+        {compFeedUrl && (
+          <div className="mt-8">
+            <SubscribePanel
+              feedUrl={compFeedUrl}
+              description="Your companionship's ministering calendar — assigned leader's availability plus your booked visits — updates automatically."
+            />
+          </div>
+        )}
       </div>
     );
   }

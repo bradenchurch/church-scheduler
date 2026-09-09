@@ -20,6 +20,10 @@
       "destination": "/server/index.js"
     },
     {
+      "source": "/ical/(.*)",
+      "destination": "/server/index.js"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

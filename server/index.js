@@ -1480,7 +1480,7 @@ app.get('/api/bookings/:leaderId', requireSession, async (req, res) => {
 
 // POST /api/bookings
 app.post('/api/bookings', requireRole('companion'), requireCompanionFor('companionship_id'), async (req, res) => {
-  const { companionship_id, slot_id, window_id, scheduled_date, notes } = req.body;
+  const { companionship_id, slot_id, window_id, scheduled_date, notes, slot_time } = req.body;
 
   try {
     // 1-hour lead time check for today
@@ -1492,17 +1492,55 @@ app.post('/api/bookings', requireRole('companion'), requireCompanionFor('compani
     const [nowH, nowM] = timePart.split(':').map(Number);
     const currentMin = nowH * 60 + nowM;
 
-    let startTime = null;
+    // Resolve the exact wall-clock appointment start. A booking is anchored by
+    // either a recurring slot_id OR a date-specific window_id. For window
+    // bookings the caller may pass slot_time ("HH:MM") for the specific
+    // sub-slot they tapped; otherwise it defaults to the window's start_time.
+    // Stored in bookings.slot_time so the iCal feeds can render a precise
+    // DTSTART/DTEND (the companionship may have picked 09:15 inside a 09:00
+    // window, not the window start).
+    let chosenTime = null;
+    let durationMinutes = 30;
+
     if (window_id) {
-      const { data: w } = await supabase.from('availability_windows').select('start_time').eq('id', window_id).single();
-      if (w) startTime = w.start_time;
+      const { data: w } = await supabase
+        .from('availability_windows')
+        .select('start_time, end_time, slot_duration_minutes')
+        .eq('id', window_id)
+        .single();
+      if (!w) return res.status(400).json({ error: 'Window not found' });
+      durationMinutes = Number(w.slot_duration_minutes) || 30;
+      const windowStart = String(w.start_time).slice(0, 5);
+      if (slot_time !== undefined && slot_time !== null && String(slot_time).trim() !== '') {
+        const raw = String(slot_time).trim();
+        if (!TIME_RE.test(raw)) {
+          return res.status(400).json({ error: 'slot_time must be HH:MM or HH:MM:SS' });
+        }
+        const candidate = raw.slice(0, 5);
+        // The chosen slot must fit entirely inside the window.
+        if (
+          candidate < windowStart ||
+          timeToMinutes(candidate) + durationMinutes > timeToMinutes(w.end_time)
+        ) {
+          return res.status(400).json({ error: 'slot_time must fall inside the window' });
+        }
+        chosenTime = candidate;
+      } else {
+        chosenTime = windowStart;
+      }
     } else if (slot_id) {
-      const { data: s } = await supabase.from('slots').select('start_time').eq('id', slot_id).single();
-      if (s) startTime = s.start_time;
+      const { data: s } = await supabase
+        .from('slots')
+        .select('start_time, duration_minutes')
+        .eq('id', slot_id)
+        .single();
+      if (!s) return res.status(400).json({ error: 'Slot not found' });
+      durationMinutes = Number(s.duration_minutes) || 30;
+      chosenTime = String(s.start_time).slice(0, 5);
     }
 
-    if (startTime && scheduled_date === denverDate) {
-      const [sh, sm] = startTime.split(':').map(Number);
+    if (chosenTime && scheduled_date === denverDate) {
+      const [sh, sm] = chosenTime.split(':').map(Number);
       const startMin = sh * 60 + sm;
       if (startMin < currentMin + 60) {
         return res.status(400).json({ error: 'Bookings require at least 1 hour advance notice' });
@@ -1528,6 +1566,7 @@ app.post('/api/bookings', requireRole('companion'), requireCompanionFor('compani
       status: 'booked',
       slot_id: slot_id || null,
       window_id: window_id || null,
+      slot_time: chosenTime,
       notes: notes || null,
     };
 
@@ -2596,11 +2635,13 @@ app.post('/api/companionships', requireAuth, requireAdmin, async (req, res) => {
 // NOTE: ical_token is intentionally excluded — it is a secret and must never
 // be returned to unauthenticated callers. The current leader's own token is
 // available via GET /api/me/ical-token (auth-gated).
+// uuid IS included: it is the unguessable feed identifier shown to signed-in
+// leaders so they can build their /ical/leader/:uuid.ics subscription URL.
 app.get('/api/leaders', requireRole('leader'), async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('leaders')
-      .select('id, name, email, google_calendar_id, active, role, phone');
+      .select('id, name, email, google_calendar_id, active, role, phone, uuid');
     if (error) throw error;
     res.json(dedupeLeaders(data || []));
   } catch (error) {
@@ -2691,11 +2732,22 @@ function icalFold(line) {
     }
   }
   if (current) parts.push(current);
-  return parts.join('\n');
+  return parts.join('\r\n');
 }
 
 function pad2(n) {
   return String(n).padStart(2, '0');
+}
+
+// "HH:MM" / "HH:MM:SS" → minutes-of-day. Used for slot bounds checks.
+function timeToMinutes(t) {
+  const [h, m] = String(t ?? '').split(':').map(Number);
+  return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0);
+}
+
+// "HH:MM" from a DATE + TIME pair, floored to minute precision.
+function dateTimeToIcal(dateStr, timeStr) {
+  return `${dateToIcal(dateStr)}T${timeToIcal(timeStr)}`;
 }
 
 function icalUtcStamp(iso) {
@@ -2794,7 +2846,7 @@ function buildVEvent(s) {
   lines.push(icalFold(`LAST-MODIFIED:${stamp}`));
   lines.push(icalFold('STATUS:CONFIRMED'));
   lines.push(icalFold('END:VEVENT'));
-  return lines.join('\n');
+  return lines.join('\r\n');
 }
 
 function buildCalendar(leader, submissions) {
@@ -2817,7 +2869,7 @@ function buildCalendar(leader, submissions) {
   }
 
   lines.push(icalFold('END:VCALENDAR'));
-  return `${lines.join('\n')}\n`;
+  return `${lines.join('\r\n')}\r\n`;
 }
 
 // Constant-time token comparison. Hashing normalizes length so
@@ -2877,6 +2929,265 @@ app.get('/api/cal/:leader_id.ics', async (req, res) => {
     res.send(ical);
   } catch (error) {
     console.error('ical feed error:', error.message);
+    res.status(500).type('text/plain').send('Internal error');
+  }
+});
+
+// --- Ministering iCal feed subscriptions (RFC 5545) ---
+//
+// Two public, unauthenticated calendar feeds. Subscribers add the URL once in
+// Google Calendar / Apple Calendar / Outlook and it auto-syncs (5-min TTL).
+//   GET /ical/leader/:uuid.ics         — a presidency member's calendar
+//   GET /ical/companionship/:uuid.ics  — a companionship's calendar
+//
+// Auth model: the UUID *is* the secret (unguessable, one row per feed). No
+// auth required — the URL is shared only with the assigned leader/companion,
+// and even if leaked it only reveals that one schedule (no broader PII).
+//
+// Times are emitted as floating local times (no Z / TZID), matching the rest
+// of the app's America/Denver wall-clock convention and the existing chapel
+// interview feed. All subscribers live in the ward's timezone, so calendar
+// apps interpret floating times correctly.
+//
+// VEVENT shapes:
+//   availability windows → TRANSP:TRANSPARENT (shows FREE), STATUS:CONFIRMED
+//   bookings             → TRANSP:OPAQUE (shows BUSY),   STATUS:CONFIRMED
+
+const ICAL_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://church-scheduler-tawny.vercel.app').replace(/\/$/, '');
+const FEED_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+// Today's date (YYYY-MM-DD) in the ward's timezone. Windows in the past are
+// excluded from feeds — a subscription calendar should only advertise what can
+// still be booked.
+function denverToday() {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Denver',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+  return parts.replace(/-/g, '-'); // en-CA already yields YYYY-MM-DD
+}
+
+function compDisplayName(comp) {
+  if (!comp || typeof comp !== 'object') return 'Companionship';
+  const names = [comp.companion1_name, comp.companion2_name].filter(Boolean);
+  return names.length ? names.join(' & ') : 'Companionship';
+}
+
+function buildIcsPreamble(calName, calDesc) {
+  const lines = [];
+  lines.push(icalFold('BEGIN:VCALENDAR'));
+  lines.push(icalFold('VERSION:2.0'));
+  lines.push(icalFold('PRODID:-//Church Scheduler//EN'));
+  lines.push(icalFold('CALSCALE:GREGORIAN'));
+  lines.push(icalFold('METHOD:PUBLISH'));
+  lines.push(icalFold(`X-WR-CALNAME:${icalEscape(calName)}`));
+  lines.push(icalFold(`X-WR-CALDESC:${icalEscape(calDesc)}`));
+  return lines;
+}
+
+// Availability window → FREE VEVENT. The window is one contiguous span; the
+// companionship books a sub-slot inside it, so the whole window is transparent
+// (does not block the leader's calendar) while individual bookings are opaque.
+function buildWindowVEvent(w, leaderName) {
+  const stamp = icalUtcStamp(new Date().toISOString());
+  const lines = [];
+  lines.push(icalFold('BEGIN:VEVENT'));
+  lines.push(icalFold(`UID:win-${w.id}@church-scheduler`));
+  lines.push(icalFold(`DTSTAMP:${stamp}`));
+  lines.push(icalFold(`DTSTART:${dateTimeToIcal(w.window_date, w.start_time)}`));
+  lines.push(icalFold(`DTEND:${dateTimeToIcal(w.window_date, w.end_time)}`));
+  lines.push(icalFold(`SUMMARY:${icalEscape(leaderName)} — Available for ministering`));
+  const description = [
+    'Available for ministering visits. Tap to book a slot.',
+    `Presidency member: ${leaderName}`,
+  ].join('\n');
+  lines.push(icalFold(`DESCRIPTION:${icalEscape(description)}`));
+  lines.push(icalFold(`URL:${ICAL_BASE_URL}/book?leader=${encodeURIComponent(w.leader_id)}&window=${encodeURIComponent(w.id)}`));
+  lines.push(icalFold('STATUS:CONFIRMED'));
+  lines.push(icalFold('TRANSP:TRANSPARENT'));
+  lines.push(icalFold('END:VEVENT'));
+  return lines.join('\r\n');
+}
+
+// Booking → BUSY VEVENT. b.window / b.slot are the embedded anchor rows;
+// slot_time is the exact sub-slot start the companionship picked (bookings
+// made before bookings.slot_time existed fall back to the anchor start).
+function buildBookingVEvent(b) {
+  const windowRow = b.availability_windows && typeof b.availability_windows === 'object' ? b.availability_windows : null;
+  const slotRow = b.slots && typeof b.slots === 'object' ? b.slots : null;
+  const date = b.scheduled_date ? String(b.scheduled_date).slice(0, 10) : null;
+  if (!date) return null;
+
+  const startTime = b.slot_time || windowRow?.start_time || slotRow?.start_time || null;
+  if (!startTime) return null; // no anchor time — nothing to place on a calendar
+
+  const durationMinutes =
+    Number(windowRow?.slot_duration_minutes) ||
+    Number(slotRow?.duration_minutes) ||
+    30;
+
+  const stamp = icalUtcStamp(new Date().toISOString());
+  const comp = b.companionships && typeof b.companionships === 'object' ? b.companionships : null;
+  const names = compDisplayName(comp);
+  const notes = b.notes ? String(b.notes).trim() : '';
+
+  const lines = [];
+  lines.push(icalFold('BEGIN:VEVENT'));
+  lines.push(icalFold(`UID:bk-${b.id}@church-scheduler`));
+  lines.push(icalFold(`DTSTAMP:${stamp}`));
+  lines.push(icalFold(`DTSTART:${dateTimeToIcal(date, startTime)}`));
+  lines.push(icalFold(`DTEND:${dateTimePlusMinutes(date, startTime, durationMinutes)}`));
+  lines.push(icalFold(`SUMMARY:Visit with ${icalEscape(names)}`));
+  const description = [`Companionship: ${names}`];
+  if (notes) description.push(`Notes: ${notes}`);
+  lines.push(icalFold(`DESCRIPTION:${icalEscape(description.join('\n'))}`));
+  lines.push(icalFold('STATUS:CONFIRMED'));
+  lines.push(icalFold('TRANSP:OPAQUE'));
+  lines.push(icalFold('END:VEVENT'));
+  return lines.join('\r\n');
+}
+
+function buildMinisteringCalendar({ calName, calDesc, leaderName = '', windows = [], bookings = [] }) {
+  const lines = buildIcsPreamble(calName, calDesc);
+  for (const w of windows) {
+    const ev = buildWindowVEvent(w, leaderName || calName.split(' — ')[0] || calName);
+    if (ev) lines.push(ev);
+  }
+  for (const b of bookings) {
+    const ev = buildBookingVEvent(b);
+    if (ev) lines.push(ev);
+  }
+  lines.push(icalFold('END:VCALENDAR'));
+  return `${lines.join('\r\n')}\r\n`;
+}
+
+function sendIcs(res, ical, filename) {
+  res.set('Content-Type', 'text/calendar; charset=utf-8');
+  res.set('Content-Disposition', `inline; filename="${filename}"`);
+  res.set('Cache-Control', 'public, max-age=300'); // 5-min TTL — calendars re-poll
+  res.set('X-Robots-Tag', 'noindex');
+  res.send(ical);
+}
+
+// GET /ical/leader/:uuid.ics — one VEVENT per availability window owned by the
+// leader (TRANSPARENT) plus one VEVENT per non-cancelled booking against any of
+// the leader's windows / recurring slots (OPAQUE).
+app.get('/ical/leader/:uuid.ics', async (req, res) => {
+  const { uuid } = req.params;
+  if (!FEED_UUID_RE.test(String(uuid || ''))) {
+    return res.status(404).type('text/plain').send('Not found');
+  }
+
+  try {
+    const { data: leader, error: leaderErr } = await supabase
+      .from('leaders')
+      .select('id, name, uuid')
+      .eq('uuid', uuid)
+      .maybeSingle();
+    if (leaderErr) throw leaderErr;
+    if (!leader) return res.status(404).type('text/plain').send('Not found');
+
+    const today = denverToday();
+
+    const [windowsRes, winBookingsRes, slotBookingsRes] = await Promise.all([
+      supabase
+        .from('availability_windows')
+        .select('*')
+        .eq('leader_id', leader.id)
+        .gte('window_date', today)
+        .order('window_date', { ascending: true })
+        .order('start_time', { ascending: true }),
+      // Bookings inside this leader's date-specific windows.
+      supabase
+        .from('bookings')
+        .select('*, availability_windows(*), companionships(companion1_name, companion2_name)')
+        .eq('availability_windows.leader_id', leader.id)
+        .neq('status', 'cancelled'),
+      // Bookings on this leader's recurring slots.
+      supabase
+        .from('bookings')
+        .select('*, slots(*), companionships(companion1_name, companion2_name)')
+        .eq('slots.leader_id', leader.id)
+        .neq('status', 'cancelled'),
+    ]);
+
+    if (windowsRes.error) throw windowsRes.error;
+    if (winBookingsRes.error) throw winBookingsRes.error;
+    if (slotBookingsRes.error) throw slotBookingsRes.error;
+
+    // Merge + dedupe (a booking can never anchor to both, but guard anyway).
+    const bookingsById = new Map();
+    for (const b of [...(winBookingsRes.data || []), ...(slotBookingsRes.data || [])]) {
+      if (!bookingsById.has(b.id)) bookingsById.set(b.id, b);
+    }
+
+    const ical = buildMinisteringCalendar({
+      calName: `${leader.name} — Ministering Availability`,
+      calDesc: `Ministering availability and booked visits for ${leader.name}. Auto-updates — subscribe once and it refreshes itself.`,
+      leaderName: leader.name,
+      windows: windowsRes.data || [],
+      bookings: [...bookingsById.values()],
+    });
+
+    sendIcs(res, ical, `leader-${uuid}.ics`);
+  } catch (error) {
+    console.error('leader ical feed error:', error.message);
+    res.status(500).type('text/plain').send('Internal error');
+  }
+});
+
+// GET /ical/companionship/:uuid.ics — the companionship's assigned leader's
+// availability windows (TRANSPARENT) plus this companionship's own bookings
+// (OPAQUE). One subscription keeps the whole ministering calendar in sync.
+app.get('/ical/companionship/:uuid.ics', async (req, res) => {
+  const { uuid } = req.params;
+  if (!FEED_UUID_RE.test(String(uuid || ''))) {
+    return res.status(404).type('text/plain').send('Not found');
+  }
+
+  try {
+    const { data: comp, error: compErr } = await supabase
+      .from('companionships')
+      .select('id, leader_id, companion1_name, companion2_name, leaders(name)')
+      .eq('id', uuid)
+      .maybeSingle();
+    if (compErr) throw compErr;
+    if (!comp) return res.status(404).type('text/plain').send('Not found');
+
+    const today = denverToday();
+    const leaderName = comp.leaders?.name || 'Presidency member';
+
+    const [windowsRes, bookingsRes] = await Promise.all([
+      supabase
+        .from('availability_windows')
+        .select('*')
+        .eq('leader_id', comp.leader_id)
+        .gte('window_date', today)
+        .order('window_date', { ascending: true })
+        .order('start_time', { ascending: true }),
+      supabase
+        .from('bookings')
+        .select('*, availability_windows(*), slots(*)')
+        .eq('companionship_id', comp.id)
+        .neq('status', 'cancelled'),
+    ]);
+
+    if (windowsRes.error) throw windowsRes.error;
+    if (bookingsRes.error) throw bookingsRes.error;
+
+    const ical = buildMinisteringCalendar({
+      calName: `${leaderName} — Ministering Availability`,
+      calDesc: `Availability and visits for ${compDisplayName(comp)} (assigned to ${leaderName}). Auto-updates — subscribe once and it refreshes itself.`,
+      leaderName,
+      windows: windowsRes.data || [],
+      bookings: bookingsRes.data || [],
+    });
+
+    sendIcs(res, ical, `comp-${uuid}.ics`);
+  } catch (error) {
+    console.error('companionship ical feed error:', error.message);
     res.status(500).type('text/plain').send('Internal error');
   }
 });
