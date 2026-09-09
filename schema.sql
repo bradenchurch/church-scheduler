@@ -30,6 +30,28 @@ ALTER TABLE leaders ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'leader';
 UPDATE leaders SET role = 'admin' WHERE id = 'braden';
 UPDATE leaders SET role = 'leader' WHERE id IN ('cole', 'kawika', 'sean');
 
+-- Magic-link sign-in allowlist: only emails present here may request a
+-- sign-in link (checked by POST /api/auth/allowlist-check before Supabase's
+-- signInWithOtp is called). Emails are stored lowercase (normalized by the
+-- API before insert/check). Managed by admins via /api/admin/authorized-emails.
+CREATE TABLE IF NOT EXISTS authorized_emails (
+  email text PRIMARY KEY,
+  added_by text,
+  added_at timestamptz DEFAULT now(),
+  note text
+);
+
+-- Seed the four presidency/secretary emails (idempotent).
+INSERT INTO authorized_emails (email, added_by, note) VALUES
+  ('bradenchurch@gmail.com', 'system', 'admin/secretary'),
+  ('cole.chollet1@gmail.com', 'system', 'president'),
+  ('ktups90@gmail.com', 'system', 'second counselor'),
+  ('bry13006@gmail.com', 'system', 'first counselor')
+ON CONFLICT (email) DO NOTHING;
+
+-- Sensitive (enumerates who may sign in): deny anon access, service role only.
+ALTER TABLE authorized_emails ENABLE ROW LEVEL SECURITY;
+
 CREATE TABLE IF NOT EXISTS companionships (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   leader_id TEXT REFERENCES leaders(id) ON DELETE SET NULL,

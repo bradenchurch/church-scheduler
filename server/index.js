@@ -410,6 +410,36 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// POST /api/auth/allowlist-check — magic-link allowlist gate. The client calls
+// this BEFORE asking Supabase to email a sign-in link (see src/lib/auth.js
+// signInWithOtp). Public by design (the caller is not signed in yet): it only
+// answers yes/no for the submitted email and never lists the allowlist.
+// 200 { authorized: true }  → the email may request a link
+// 403                      → NOT authorized; signInWithOtp must NOT be called
+app.post('/api/auth/allowlist-check', async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'A valid email address is required' });
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('authorized_emails')
+      .select('email')
+      .eq('email', email)
+      .maybeSingle();
+    if (error) throw error;
+
+    if (!data) {
+      return res.status(403).json({ error: 'Email not authorized for sign-in' });
+    }
+    return res.json({ authorized: true });
+  } catch (err) {
+    console.error('[auth] allowlist check error:', err.message);
+    return res.status(500).json({ error: 'Could not verify email access. Please try again.' });
+  }
+});
+
 // --- Google OAuth helpers ---
 
 function parseCookies(req) {
@@ -2067,6 +2097,67 @@ app.post('/api/admin/add-admin', requireSession, requireRole('admin'), async (re
     if (insErr) throw insErr;
 
     res.status(201).json({ ok: true, leader: inserted, created: true });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- Magic-link sign-in allowlist management (admin only) ---
+// GET    /api/admin/authorized-emails        → list who may request a sign-in link
+// POST   /api/admin/authorized-emails        → { email, note? } add/update an entry
+// DELETE /api/admin/authorized-emails/:email → revoke an entry
+// The table is RLS-protected (service role only); these run through supabaseAdmin.
+app.get('/api/admin/authorized-emails', requireSession, requireRole('admin'), async (req, res) => {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('authorized_emails')
+      .select('email, added_by, added_at, note')
+      .order('email');
+    if (error) throw error;
+    res.json({ emails: data || [] });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/admin/authorized-emails', requireSession, requireRole('admin'), async (req, res) => {
+  const email = String(req.body?.email || '').trim().toLowerCase();
+  const note = String(req.body?.note || '').trim().slice(0, 200) || null;
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'A valid email address is required' });
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('authorized_emails')
+      .upsert({ email, added_by: req.user?.email || 'admin', note }, { onConflict: 'email' })
+      .select('email, added_by, added_at, note')
+      .maybeSingle();
+    if (error) throw error;
+    res.json({ ok: true, email: data });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete('/api/admin/authorized-emails/:email', requireSession, requireRole('admin'), async (req, res) => {
+  const email = String(req.params?.email || '').trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return res.status(400).json({ error: 'A valid email address is required' });
+  }
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('authorized_emails')
+      .delete()
+      .eq('email', email)
+      .select('email')
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) {
+      return res.status(404).json({ error: 'Email not found on the allowlist' });
+    }
+    res.json({ ok: true, removed: data.email });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

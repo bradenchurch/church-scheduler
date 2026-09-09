@@ -20,6 +20,14 @@ export default function Admin() {
   const [addAdminMessage, setAddAdminMessage] = useState('');
   const { token } = useAuth();
 
+  // Magic-link sign-in allowlist (authorized_emails table).
+  const [authEmails, setAuthEmails] = useState([]);
+  const [authEmailInput, setAuthEmailInput] = useState('');
+  const [authNoteInput, setAuthNoteInput] = useState('');
+  const [authSaving, setAuthSaving] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authMessage, setAuthMessage] = useState('');
+
   const uniqueLeaders = Array.from(new Map((leaders || []).map(l => [l.id, l])).values());
   const admins = uniqueLeaders.filter((l) => l.role === 'admin');
 
@@ -29,6 +37,7 @@ export default function Admin() {
     authedFetch('/api/leaders').then(r => r.json()).then(setLeaders).catch(() => []);
     fetch('/api/companionships', { headers }).then(r => r.json()).then(setCompanionships).catch(() => []);
     authedFetch('/api/admin/welcome-links').then(r => r.json()).then(d => setWelcomeLinks(d?.leaders || [])).catch(() => []);
+    authedFetch('/api/admin/authorized-emails').then(r => r.json()).then(d => setAuthEmails(d?.emails || [])).catch(() => []);
     // Resolve the canonical QR target from the server so the slug is never hardcoded client-side.
     fetch('/api/ward').then(r => r.json()).then(d => { if (d?.ok) setQrTarget(d.qrUrl); }).catch(() => {});
   }, [token]);
@@ -84,6 +93,55 @@ export default function Admin() {
       setAddAdminError('Network error adding co-admin.');
     } finally {
       setAddingAdmin(false);
+    }
+  };
+
+  const handleAddAuthEmail = async (e) => {
+    e.preventDefault();
+    setAuthSaving(true);
+    setAuthError('');
+    setAuthMessage('');
+    try {
+      const res = await authedFetch('/api/admin/authorized-emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: authEmailInput, note: authNoteInput }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAuthError(data?.error || 'Could not add email.');
+        return;
+      }
+      setAuthMessage(`${data?.email?.email || authEmailInput} may now request a sign-in link.`);
+      setAuthEmailInput('');
+      setAuthNoteInput('');
+      authedFetch('/api/admin/authorized-emails')
+        .then((r) => r.json())
+        .then((d) => setAuthEmails(d?.emails || []))
+        .catch(() => {});
+    } catch {
+      setAuthError('Network error adding email.');
+    } finally {
+      setAuthSaving(false);
+    }
+  };
+
+  const handleRemoveAuthEmail = async (email) => {
+    setAuthError('');
+    setAuthMessage('');
+    try {
+      const res = await authedFetch(`/api/admin/authorized-emails/${encodeURIComponent(email)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setAuthError(data?.error || 'Could not remove email.');
+        return;
+      }
+      setAuthMessage(`${data?.removed || email} can no longer request sign-in links.`);
+      setAuthEmails((prev) => prev.filter((x) => x.email !== email));
+    } catch {
+      setAuthError('Network error removing email.');
     }
   };
 
@@ -209,6 +267,65 @@ export default function Admin() {
 
         {addAdminError && <p className="text-sm rounded-lg px-3 py-2 bg-rose-light text-rose mt-3">{addAdminError}</p>}
         {addAdminMessage && <p className="text-sm rounded-lg px-3 py-2 bg-sage-light text-sage mt-3">{addAdminMessage}</p>}
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
+        <div className="mb-4">
+          <h3 className="text-xl font-serif font-bold text-burgundy">Sign-in Access</h3>
+          <p className="text-sm text-brown-light mt-1">
+            Only these emails can request a magic sign-in link. The presidency + secretary are pre-seeded.
+          </p>
+        </div>
+
+        <div className="space-y-2 mb-4">
+          {authEmails.map((a) => (
+            <div key={a.email} className="flex items-center gap-3 p-3 rounded-lg border border-warm-border bg-cream">
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-brown break-all">{a.email}</div>
+                <div className="text-sm text-brown-light">{a.note || '\u2014'}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleRemoveAuthEmail(a.email)}
+                className="min-h-[44px] inline-flex items-center justify-center px-3 rounded-lg border-[1.5px] border-warm-border text-rose text-sm font-semibold hover:border-rose-light transition-colors"
+                title="Revoke sign-in access"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+          {authEmails.length === 0 && (
+            <p className="text-sm text-brown-light italic">No emails on the allowlist.</p>
+          )}
+        </div>
+
+        <form onSubmit={handleAddAuthEmail} className="flex flex-col sm:flex-row gap-2">
+          <input
+            type="email"
+            required
+            value={authEmailInput}
+            onChange={(e) => setAuthEmailInput(e.target.value)}
+            placeholder="Email that may sign in"
+            className="min-h-[44px] flex-1 p-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
+          />
+          <input
+            type="text"
+            value={authNoteInput}
+            onChange={(e) => setAuthNoteInput(e.target.value)}
+            placeholder="Note (optional)"
+            className="min-h-[44px] flex-1 p-2 border-[1.5px] border-warm-border rounded-md w-full focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
+          />
+          <button
+            type="submit"
+            disabled={authSaving}
+            className="min-h-[44px] bg-burgundy text-white px-4 rounded-lg font-semibold hover:bg-burgundy-light disabled:opacity-40 transition-colors"
+          >
+            {authSaving ? 'Adding…' : '+ Allow'}
+          </button>
+        </form>
+
+        {authError && <p className="text-sm rounded-lg px-3 py-2 bg-rose-light text-rose mt-3">{authError}</p>}
+        {authMessage && <p className="text-sm rounded-lg px-3 py-2 bg-sage-light text-sage mt-3">{authMessage}</p>}
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
