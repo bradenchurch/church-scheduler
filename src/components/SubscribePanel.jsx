@@ -36,6 +36,10 @@ export default function SubscribePanel({ feedUrl, title = 'Subscribe to your cal
 
   if (!feedUrl) return null;
 
+  // Google's cid= flow fetches the URL server-side and does not resolve the
+  // webcal scheme — hand it an https URL instead. Apple stays on webcal://.
+  const httpsFeedUrl = feedUrl.replace(/^webcal:/, 'https:');
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(feedUrl);
@@ -46,7 +50,7 @@ export default function SubscribePanel({ feedUrl, title = 'Subscribe to your cal
     }
   };
 
-  const googleHref = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(feedUrl)}`;
+  const googleHref = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(httpsFeedUrl)}`;
 
   return (
     <div className={`bg-white rounded-xl border border-warm-border shadow-sm p-5 ${className}`}>

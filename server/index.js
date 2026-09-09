@@ -2732,7 +2732,7 @@ function icalFold(line) {
     }
   }
   if (current) parts.push(current);
-  return parts.join('\n');
+  return parts.join('\r\n');
 }
 
 function pad2(n) {
@@ -2846,7 +2846,7 @@ function buildVEvent(s) {
   lines.push(icalFold(`LAST-MODIFIED:${stamp}`));
   lines.push(icalFold('STATUS:CONFIRMED'));
   lines.push(icalFold('END:VEVENT'));
-  return lines.join('\n');
+  return lines.join('\r\n');
 }
 
 function buildCalendar(leader, submissions) {
@@ -2869,7 +2869,7 @@ function buildCalendar(leader, submissions) {
   }
 
   lines.push(icalFold('END:VCALENDAR'));
-  return `${lines.join('\n')}\n`;
+  return `${lines.join('\r\n')}\r\n`;
 }
 
 // Constant-time token comparison. Hashing normalizes length so
@@ -3008,7 +3008,7 @@ function buildWindowVEvent(w, leaderName) {
   lines.push(icalFold('STATUS:CONFIRMED'));
   lines.push(icalFold('TRANSP:TRANSPARENT'));
   lines.push(icalFold('END:VEVENT'));
-  return lines.join('\n');
+  return lines.join('\r\n');
 }
 
 // Booking → BUSY VEVENT. b.window / b.slot are the embedded anchor rows;
@@ -3046,7 +3046,7 @@ function buildBookingVEvent(b) {
   lines.push(icalFold('STATUS:CONFIRMED'));
   lines.push(icalFold('TRANSP:OPAQUE'));
   lines.push(icalFold('END:VEVENT'));
-  return lines.join('\n');
+  return lines.join('\r\n');
 }
 
 function buildMinisteringCalendar({ calName, calDesc, leaderName = '', windows = [], bookings = [] }) {
@@ -3060,7 +3060,7 @@ function buildMinisteringCalendar({ calName, calDesc, leaderName = '', windows =
     if (ev) lines.push(ev);
   }
   lines.push(icalFold('END:VCALENDAR'));
-  return `${lines.join('\n')}\n`;
+  return `${lines.join('\r\n')}\r\n`;
 }
 
 function sendIcs(res, ical, filename) {
