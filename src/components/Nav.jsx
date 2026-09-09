@@ -7,7 +7,7 @@ import { signOut } from '../lib/auth';
 // screens and public companion/chapel flows should never show app navigation.
 const PUBLIC_ROUTES = ['/login', '/auth/callback', '/chapel', '/book'];
 const isPublicRoute = (pathname) =>
-  PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/q/');
+  PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/q/') || pathname.startsWith('/visit/');
 
 // Main bar — every authenticated leader/admin sees these three items, so the
 // header reads like a utility bar (Calendly-style), not a sitemap.

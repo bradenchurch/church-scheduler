@@ -3043,6 +3043,8 @@ function buildBookingVEvent(b) {
   const description = [`Companionship: ${names}`];
   if (notes) description.push(`Notes: ${notes}`);
   lines.push(icalFold(`DESCRIPTION:${icalEscape(description.join('\n'))}`));
+  // Click-through target: the public visit-prep page (booking UUID is the token).
+  lines.push(icalFold(`URL:${ICAL_BASE_URL}/visit/${encodeURIComponent(b.id)}`));
   lines.push(icalFold('STATUS:CONFIRMED'));
   lines.push(icalFold('TRANSP:OPAQUE'));
   lines.push(icalFold('END:VEVENT'));
@@ -3189,5 +3191,95 @@ app.get('/ical/companionship/:uuid.ics', async (req, res) => {
   } catch (error) {
     console.error('companionship ical feed error:', error.message);
     res.status(500).type('text/plain').send('Internal error');
+  }
+});
+
+// GET /api/visit/:bookingId — public visit-prep page data (no auth). The
+// booking UUID is the access token (122 bits of entropy), same model as the
+// iCal feed subscriptions above: the URL is shared only with the people on the
+// appointment, and even if leaked it reveals one visit's schedule (no
+// addresses / phones / emails). Returns just enough for the click-through
+// page: when, which presidency member, the companionship, and the active
+// households assigned to that companionship. Unknown or cancelled bookings
+// 404 so a stale calendar link never renders a half-empty page.
+app.get('/api/visit/:bookingId', async (req, res) => {
+  try {
+    const bookingId = String(req.params.bookingId || '').trim();
+    if (!bookingId) return res.status(404).json({ error: 'not_found' });
+
+    const { data: booking, error: bookingErr } = await supabase
+      .from('bookings')
+      .select('id, companionship_id, scheduled_date, slot_time, notes, status, window_id, slot_id, availability_windows(slot_duration_minutes, start_time), slots(duration_minutes, start_time)')
+      .eq('id', bookingId)
+      .maybeSingle();
+    if (bookingErr) throw bookingErr;
+    if (!booking || booking.status === 'cancelled') {
+      return res.status(404).json({ error: 'not_found' });
+    }
+
+    const { data: comp, error: compErr } = await supabase
+      .from('companionships')
+      .select('id, leader_id, companion1_name, companion2_name, leaders(id, name)')
+      .eq('id', booking.companionship_id)
+      .maybeSingle();
+    if (compErr) throw compErr;
+    // Defensive: companionships.id cascades deletes from bookings, so a live
+    // booking always has a companionship — but never render a page without one.
+    if (!comp) return res.status(404).json({ error: 'not_found' });
+
+    const { data: links, error: linksErr } = await supabase
+      .from('companionship_households')
+      .select('households(family_name, active)')
+      .eq('companionship_id', comp.id);
+    if (linksErr) throw linksErr;
+
+    // Family last names only, distinct, sorted, NULLs + inactive dropped.
+    const households = [...new Set(
+      (links || [])
+        .map((l) => l.households)
+        .filter((h) => h && h.active === true && h.family_name)
+        .map((h) => String(h.family_name).trim())
+        .filter(Boolean)
+    )].sort((a, b) => a.localeCompare(b));
+
+    const windowRow =
+      booking.availability_windows && typeof booking.availability_windows === 'object'
+        ? booking.availability_windows
+        : null;
+    const slotRow =
+      booking.slots && typeof booking.slots === 'object' ? booking.slots : null;
+    const startTime = booking.slot_time || windowRow?.start_time || slotRow?.start_time || null;
+    const durationMinutes =
+      Number(windowRow?.slot_duration_minutes) ||
+      Number(slotRow?.duration_minutes) ||
+      30;
+
+    const leader =
+      comp.leaders && typeof comp.leaders === 'object' ? comp.leaders : null;
+    const leaderId = comp.leader_id || leader?.id || null;
+
+    res.json({
+      booking: {
+        id: booking.id,
+        date: booking.scheduled_date ? String(booking.scheduled_date).slice(0, 10) : null,
+        time: startTime ? String(startTime).slice(0, 5) : null,
+        duration_minutes: durationMinutes,
+        notes: booking.notes ? String(booking.notes).trim() : null,
+        status: booking.status,
+      },
+      companionship: {
+        id: comp.id,
+        companions: [comp.companion1_name, comp.companion2_name].filter(Boolean),
+        households,
+      },
+      leader: {
+        id: leaderId,
+        name: leader?.name || null,
+        calling: ICAL_ROLE_LABELS[leaderId] || 'Elders Quorum Presidency',
+      },
+    });
+  } catch (error) {
+    console.error('visit prep error:', error.message);
+    res.status(500).json({ error: 'internal_error' });
   }
 });
