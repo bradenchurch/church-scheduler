@@ -8,6 +8,7 @@ import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
 import QREntry from './pages/QREntry';
 import Chapel from './pages/Chapel';
+import VisitPrep from './pages/VisitPrep';
 import ProtectedRoute from './components/ProtectedRoute';
 import Settings from './pages/Settings';
 import Nav from './components/Nav';
@@ -57,6 +58,9 @@ function App() {
 
           {/* Public chapel-side companion visit flow (no auth, anonymous) */}
           <Route path="/chapel" element={<Chapel />} />
+
+          {/* Public visit-prep page (no auth) — booking UUID is the token; linked from the iCal booking VEVENT's URL line */}
+          <Route path="/visit/:bookingId" element={<VisitPrep />} />
 
           {/* Protected Routes */}
           <Route
