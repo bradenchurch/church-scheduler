@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { authedFetch } from '../lib/api';
 import SectionLabel from '../components/SectionLabel';
+import SubscribePanel from '../components/SubscribePanel';
 
 const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -137,6 +138,29 @@ export default function AdminAvailability() {
   const [repeatWeeks, setRepeatWeeks] = useState(4);
   const [formError, setFormError] = useState('');
   const [saving, setSaving] = useState(false);
+
+  // This leader's public feed UUID (leaders.uuid) for the subscription panel.
+  const [leaderUuid, setLeaderUuid] = useState(null);
+
+  useEffect(() => {
+    if (!leaderId) return;
+    let active = true;
+    authedFetch('/api/leaders')
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list) => {
+        if (!active || !Array.isArray(list)) return;
+        const me = list.find((l) => l.id === leaderId);
+        setLeaderUuid(me?.uuid || null);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [leaderId]);
+
+  const feedUrl = leaderUuid
+    ? `webcal://${window.location.host}/ical/leader/${leaderUuid}.ics`
+    : '';
 
   const loadWindows = useCallback(async () => {
     if (!leaderId) return;
@@ -338,6 +362,14 @@ export default function AdminAvailability() {
             Retry
           </button>
         </div>
+      )}
+
+      {/* Subscribe to your ministering calendar — the /ical/leader feed. */}
+      {feedUrl && (
+        <SubscribePanel
+          feedUrl={feedUrl}
+          description="Published availability and booked visits sync automatically — no Google account connection needed. Add it once and your calendar refreshes itself."
+        />
       )}
 
       {/* Calendar */}
