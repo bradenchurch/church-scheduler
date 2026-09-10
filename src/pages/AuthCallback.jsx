@@ -18,8 +18,21 @@ export default function AuthCallback() {
       if (error) {
         setError(error.message);
       } else if (session) {
-        // Redirect to home/dashboard on success
-        navigate('/');
+        // Look up the leader's role so we can route to the right landing page.
+        // Admins go to /admin, leaders to /leader, everyone else to Dashboard.
+        const { data: leaderData } = await supabase
+          .from('leaders')
+          .select('role')
+          .eq('email', session.user.email)
+          .single();
+        const role = leaderData?.role || 'leader';
+        if (role === 'admin') {
+          navigate('/admin', { replace: true });
+        } else if (role === 'leader') {
+          navigate('/leader', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       } else {
         setError("No session found. Please try logging in again.");
       }
