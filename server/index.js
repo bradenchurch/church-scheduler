@@ -2666,6 +2666,26 @@ app.get('/api/me/ical-token', requireAuth, async (req, res) => {
   }
 });
 
+// GET /api/me/leader — returns the signed-in leader's own record, including the
+// public feed UUID they need to build their /ical/leader/:uuid.ics subscription
+// URL. Kept separate from /api/me/ical-token (which owns the legacy token
+// secret) so the Leader dashboard can resolve its UUID without an admin lookup.
+// Auth-gated: the UUID is unguessable and doubles as the public feed identifier.
+app.get('/api/me/leader', requireSession, async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('leaders')
+      .select('id, name, email, uuid, role, calling, active')
+      .eq('id', req.user.leader_id)
+      .maybeSingle();
+    if (error) throw error;
+    res.json(data || {});
+  } catch (error) {
+    console.error('me/leader lookup error:', error.message);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
 // GET /api/leader/:leaderId/ical-token — returns a specific leader's iCal token.
 // Admins may fetch any leader's token (to build that leader's subscription URL);
 // non-admins may only fetch their own. Uses requireSession so MOCK_AUTH smoke
@@ -2679,11 +2699,11 @@ app.get('/api/leader/:leaderId/ical-token', requireSession, async (req, res) => 
   try {
     const { data, error } = await supabase
       .from('leaders')
-      .select('ical_token')
+      .select('ical_token, uuid')
       .eq('id', leaderId)
       .maybeSingle();
     if (error) throw error;
-    res.json({ ical_token: data?.ical_token || null });
+    res.json({ ical_token: data?.ical_token || null, uuid: data?.uuid || null });
   } catch (error) {
     console.error('ical-token lookup error:', error.message);
     res.status(500).json({ error: 'Internal error' });
@@ -3288,5 +3308,103 @@ app.get('/api/visit/:bookingId', async (req, res) => {
   } catch (error) {
     console.error('visit prep error:', error.message);
     res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// One-off single-booking calendar file (downloaded, not subscribed). Emits the
+// app's floating local wall-clock convention (no Z / TZID), matching the
+// subscription feeds. SUMMARY/DESCRIPTION/LOCATION are tuned for the presidency
+// member who adds a visit to a personal calendar by hand.
+function buildVisitIcs({ booking, names, date, startTime, durationMinutes, householdCount }) {
+  const stamp = icalUtcStamp(new Date().toISOString());
+  const lines = buildIcsPreamble('Ministering visit', 'Ministering visit — Elders Quorum');
+  lines.push(icalFold('BEGIN:VEVENT'));
+  lines.push(icalFold(`UID:bk-${booking.id}@church-scheduler`));
+  lines.push(icalFold(`DTSTAMP:${stamp}`));
+  lines.push(icalFold(`DTSTART:${dateTimeToIcal(date, startTime)}`));
+  lines.push(icalFold(`DTEND:${dateTimePlusMinutes(date, startTime, durationMinutes)}`));
+  lines.push(icalFold(`SUMMARY:${icalEscape(`Ministering visit — ${names}`)}`));
+  const description = [
+    `Companions: ${names}`,
+    `${householdCount} household${householdCount === 1 ? '' : 's'} to visit`,
+  ];
+  if (booking.notes && String(booking.notes).trim()) {
+    description.push(`Notes: ${String(booking.notes).trim()}`);
+  }
+  lines.push(icalFold(`DESCRIPTION:${icalEscape(description.join('\n'))}`));
+  lines.push(icalFold('LOCATION:TBD'));
+  // Click-through target: the public visit-prep page (booking UUID is the token).
+  lines.push(icalFold(`URL:${ICAL_BASE_URL}/visit/${encodeURIComponent(booking.id)}`));
+  lines.push(icalFold('STATUS:CONFIRMED'));
+  lines.push(icalFold('END:VEVENT'));
+  lines.push(icalFold('END:VCALENDAR'));
+  return `${lines.join('\r\n')}\r\n`;
+}
+
+// GET /api/visit/:bookingId/ics — a one-off .ics file for a single booking, used
+// by the "Add to my calendar" action on the public visit-prep page. Unlike the
+// subscription feeds this is downloaded and imported, so it carries a
+// self-describing SUMMARY/DESCRIPTION and a click-through URL back to
+// /visit/:bookingId. Public: the booking UUID is the access token (same model as
+// /api/visit/:bookingId). Never cached — the same CDN lesson as PR #44.
+app.get('/api/visit/:bookingId/ics', async (req, res) => {
+  try {
+    const bookingId = String(req.params.bookingId || '').trim();
+    if (!bookingId) return res.status(404).type('text/plain').send('Not found');
+
+    const { data: booking, error: bookingErr } = await supabase
+      .from('bookings')
+      .select('id, companionship_id, scheduled_date, slot_time, notes, status, availability_windows(slot_duration_minutes, start_time), slots(duration_minutes, start_time), companionships(companion1_name, companion2_name)')
+      .eq('id', bookingId)
+      .maybeSingle();
+    if (bookingErr) throw bookingErr;
+    if (!booking || booking.status === 'cancelled') {
+      return res.status(404).type('text/plain').send('Not found');
+    }
+
+    const windowRow =
+      booking.availability_windows && typeof booking.availability_windows === 'object'
+        ? booking.availability_windows
+        : null;
+    const slotRow = booking.slots && typeof booking.slots === 'object' ? booking.slots : null;
+    const date = booking.scheduled_date ? String(booking.scheduled_date).slice(0, 10) : null;
+    const startTime = booking.slot_time || windowRow?.start_time || slotRow?.start_time || null;
+    if (!date || !startTime) return res.status(404).type('text/plain').send('Not found');
+
+    const durationMinutes =
+      Number(windowRow?.slot_duration_minutes) ||
+      Number(slotRow?.duration_minutes) ||
+      30;
+
+    const comp =
+      booking.companionships && typeof booking.companionships === 'object'
+        ? booking.companionships
+        : null;
+    const names = compDisplayName(comp);
+
+    // Active household count — same filter as the visit-prep page.
+    const { data: links, error: linksErr } = await supabase
+      .from('companionship_households')
+      .select('households(family_name, active)')
+      .eq('companionship_id', booking.companionship_id);
+    if (linksErr) throw linksErr;
+    const householdCount = new Set(
+      (links || [])
+        .map((l) => l.households)
+        .filter((h) => h && h.active === true && h.family_name)
+        .map((h) => String(h.family_name).trim())
+    ).size;
+
+    const ical = buildVisitIcs({ booking, names, date, startTime, durationMinutes, householdCount });
+
+    res.set('Content-Type', 'text/calendar; charset=utf-8');
+    res.set('Content-Disposition', `attachment; filename="ministering-visit-${booking.id}.ics"`);
+    res.set('Cache-Control', 'no-store, no-cache, max-age=0, must-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('X-Robots-Tag', 'noindex');
+    res.send(ical);
+  } catch (error) {
+    console.error('visit ics error:', error.message);
+    res.status(500).type('text/plain').send('Internal error');
   }
 });
