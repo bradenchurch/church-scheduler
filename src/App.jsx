@@ -6,6 +6,7 @@ import Leader from './pages/Leader';
 import Admin from './pages/Admin';
 import Login from './pages/Login';
 import AuthCallback from './pages/AuthCallback';
+import CatchAll from './pages/CatchAll';
 import QREntry from './pages/QREntry';
 import Chapel from './pages/Chapel';
 import VisitPrep from './pages/VisitPrep';
@@ -143,6 +144,9 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* Safety net — catches wildcard/unmatched redirects (e.g. Supabase's /**) and routes by role */}
+          <Route path="*" element={<CatchAll />} />
         </Routes>
       </main>
     </div>
