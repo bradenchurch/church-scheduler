@@ -3068,7 +3068,14 @@ function buildMinisteringCalendar({ calName, calDesc, leaderName = '', windows =
 function sendIcs(res, ical, filename) {
   res.set('Content-Type', 'text/calendar; charset=utf-8');
   res.set('Content-Disposition', `inline; filename="${filename}"`);
-  res.set('Cache-Control', 'public, max-age=300'); // 5-min TTL — calendars re-poll
+  // The feed is dynamic (one row per availability window / booking) and the
+  // UUID is the only auth, so it must never be cached by a shared edge. A
+  // `public, max-age=300` here let Vercel's CDN pin an EMPTY render for up to
+  // 5 minutes: a leader who added availability, or a companionship who booked
+  // a visit, kept polling the stale 304-byte calendar and saw nothing. Always
+  // re-render from the DB instead.
+  res.set('Cache-Control', 'no-store, no-cache, max-age=0, must-revalidate');
+  res.set('Pragma', 'no-cache');
   res.set('X-Robots-Tag', 'noindex');
   res.send(ical);
 }
