@@ -7,6 +7,19 @@ export default function Leader() {
   const { leaderId, token, user, role } = useAuth();
   const isAdmin = role === 'admin';
 
+  // Presidency position labels (mirrors AdminRoster.jsx + AdminDashboard.jsx).
+  //   president | counselor | secretary | clerk
+  const POSITION_LABELS = {
+    president: 'President',
+    counselor: 'Counselor',
+    secretary: 'Secretary',
+    clerk: 'Clerk',
+  };
+  const positionLabelFor = (id) => {
+    const found = leaders.find((l) => l.id === id);
+    return POSITION_LABELS[found?.position] || 'Presidency';
+  };
+
   const [leaders, setLeaders] = useState([]);
   const [selectedLeaderId, setSelectedLeaderId] = useState(null);
   const [slots, setSlots] = useState([]);
@@ -160,6 +173,7 @@ export default function Leader() {
       <div>
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">
           <h2 className="text-2xl font-serif font-bold capitalize text-burgundy">{displayName}'s Dashboard</h2>
+          <p className="text-xs italic text-brown-light mt-0.5">{positionLabelFor(effectiveLeaderId)}</p>
 
           {isAdmin && (
             <label className="flex flex-col gap-1 text-sm text-brown-light w-full sm:w-auto">

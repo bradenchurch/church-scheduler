@@ -26,6 +26,16 @@ function tintFor(leaderId) {
   return DISTRICT_TINTS[String(leaderId).toLowerCase()] || FALLBACK_TINT;
 }
 
+// Presidency position labels (mirror AdminRoster.jsx POSITION_LABELS).
+//   president | counselor | secretary | clerk
+const POSITION_LABELS = {
+  president: 'President',
+  counselor: 'Counselor',
+  secretary: 'Secretary',
+  clerk: 'Clerk',
+};
+const positionLabel = (pos) => POSITION_LABELS[pos] || 'Presidency';
+
 // Normalize a phone number for an `sms:`/`tel:` URI (strip spaces/dashes/parens,
 // keep a leading +).
 function normalizePhone(value) {
@@ -84,7 +94,10 @@ function DistrictCard({ district }) {
   return (
     <div className="bg-white rounded-xl border border-warm-border shadow-sm p-6">
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-lg font-serif font-semibold text-brown">{district.leader_name}</h3>
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-lg font-serif font-semibold text-brown">{district.leader_name}</h3>
+          <span className="text-xs italic text-brown-light">{positionLabel(district.leader_position)}</span>
+        </div>
         <span className={`text-2xl font-serif font-bold ${tint.label}`}>
           {district.completion_rate}%
         </span>

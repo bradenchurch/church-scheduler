@@ -30,6 +30,24 @@ ALTER TABLE leaders ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'leader';
 UPDATE leaders SET role = 'admin' WHERE id = 'braden';
 UPDATE leaders SET role = 'leader' WHERE id IN ('cole', 'kawika', 'sean');
 
+-- Presidency position within the Elders Quorum presidency:
+--   'president'  — presidency lead (Cole)
+--   'counselor'  — assigned to a specific district for ministering (Sean, Kawika)
+--   'secretary'  — ward clerk who also manages the scheduling tool (Braden)
+--   'clerk'      — ward clerk, no scheduling responsibilities
+-- Distinct from `role` (app auth permissions): a president is still a `leader`,
+-- not an `admin`. The scheduler app surfaces this everywhere a leader's name
+-- appears so the presidency hierarchy reads at a glance.
+ALTER TABLE leaders ADD COLUMN IF NOT EXISTS position TEXT
+  CHECK (position IS NULL OR position IN ('president', 'counselor', 'secretary', 'clerk'));
+
+-- Seed the Long Valley 2nd Ward EQ presidency as of Sep 2026. Cole is the
+-- presidency president; Sean and Kawika are counselors; Braden is the ward
+-- secretary who also runs this tool. Hand-maintained for now; admin UI later.
+UPDATE leaders SET position = 'president'  WHERE id = 'cole';
+UPDATE leaders SET position = 'counselor'  WHERE id IN ('sean', 'kawika');
+UPDATE leaders SET position = 'secretary'  WHERE id = 'braden';
+
 -- Magic-link sign-in allowlist: only emails present here may request a
 -- sign-in link (checked by POST /api/auth/allowlist-check before Supabase's
 -- signInWithOtp is called). Emails are stored lowercase (normalized by the

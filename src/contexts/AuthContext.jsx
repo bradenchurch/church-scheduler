@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [role, setRole] = useState(null); // 'admin', 'leader', or null
   const [leaderId, setLeaderId] = useState(null);
+  const [position, setPosition] = useState(null); // 'president' | 'counselor' | 'secretary' | 'clerk' | null
   const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,6 +24,7 @@ export const AuthProvider = ({ children }) => {
           setUser(null);
           setRole(null);
           setLeaderId(null);
+          setPosition(null);
           setToken(null);
           setLoading(false);
         }
@@ -41,6 +43,7 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
         setRole(null);
         setLeaderId(null);
+        setPosition(null);
         setToken(null);
         setLoading(false);
       }
@@ -60,7 +63,7 @@ export const AuthProvider = ({ children }) => {
     try {
       const { data, error } = await supabase
         .from('leaders')
-        .select('id, role')
+        .select('id, role, position')
         .eq('email', session.user.email)
         .single();
 
@@ -71,9 +74,11 @@ export const AuthProvider = ({ children }) => {
       if (data) {
         setLeaderId(data.id);
         setRole(data.role || 'leader'); // Default to leader if found but no explicit role
+        setPosition(data.position || null); // 'president' | 'counselor' | 'secretary' | 'clerk' | null
       } else {
         setLeaderId(null);
         setRole(null);
+        setPosition(null);
       }
     } catch (err) {
       console.error("Failed to fetch role:", err);
