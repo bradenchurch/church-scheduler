@@ -132,6 +132,20 @@ export default function Nav() {
     .replace(/\b\w/g, (c) => c.toUpperCase())
     .trim();
 
+  // "Report an issue" — opens Braden's email with page context prefilled.
+  // Cheap, friction-free, works offline. Lands in the same inbox Braden
+  // already monitors daily.
+  const handleReportIssue = () => {
+    const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+    const subject = encodeURIComponent(`EQ Scheduler issue: ${pathname}`);
+    const body = encodeURIComponent(
+      `What happened?\n\n\nWhat were you trying to do?\n\n\n—\nAuto-captured:\nPage: ${pathname}\nUser: ${user.email || 'unknown'}\nRole: ${role || 'unknown'}\nTime: ${new Date().toISOString()}\nBrowser: ${ua.slice(0, 200)}\nWindow: ${typeof window !== 'undefined' ? `${window.innerWidth}x${window.innerHeight}` : 'n/a'}`
+    );
+    window.location.href = `mailto:bradenchurch@gmail.com?subject=${subject}&body=${body}`;
+    setUserMenuOpen(false);
+    setDrawerOpen(false);
+  };
+
   return (
     <>
       <nav aria-label="Main" className="flex items-center gap-1 flex-wrap">
@@ -224,6 +238,13 @@ export default function Nav() {
                 <Link to="/settings" className={dropdownLinkClass(isActive('/settings'))}>
                   Settings
                 </Link>
+                <button
+                  type="button"
+                  onClick={handleReportIssue}
+                  className="flex w-full items-center min-h-[40px] px-4 text-left text-sm font-medium text-brown-light transition-colors hover:bg-cream hover:text-burgundy"
+                >
+                  Report an issue
+                </button>
                 <button
                   type="button"
                   onClick={handleSignOut}
@@ -326,6 +347,13 @@ export default function Nav() {
                   <Link to="/settings" className={mobileLinkClass(isActive('/settings'))}>
                     Settings
                   </Link>
+                  <button
+                    type="button"
+                    onClick={handleReportIssue}
+                    className="flex w-full items-center min-h-[48px] px-4 rounded-xl text-left text-base font-medium text-brown-light transition-colors hover:bg-cream hover:text-burgundy"
+                  >
+                    Report an issue
+                  </button>
                   <button
                     type="button"
                     onClick={handleSignOut}
