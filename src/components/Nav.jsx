@@ -50,7 +50,7 @@ function SectionLabel({ children }) {
 }
 
 export default function Nav() {
-  const { user, role } = useAuth();
+  const { user, role, position } = useAuth();
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -219,6 +219,11 @@ export default function Nav() {
                     <p className="truncate text-sm font-semibold text-brown">{displayName}</p>
                   )}
                   <p className="truncate text-xs text-brown-light">{user.email}</p>
+                  {position && (
+                    <p className="truncate text-xs italic text-burgundy mt-0.5">
+                      {position.charAt(0).toUpperCase() + position.slice(1)}
+                    </p>
+                  )}
                 </div>
                 <div className="my-1 border-t border-warm-border" />
                 <Link to="/settings" className={dropdownLinkClass(isActive('/settings'))}>

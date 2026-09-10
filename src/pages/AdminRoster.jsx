@@ -16,15 +16,21 @@ const CATEGORY_BADGE = {
   cross_district: 'bg-burgundy-ghost text-burgundy',
 };
 
-// Presidency role titles by district (Long Valley 2nd Ward, see ARCHITECTURE.md):
-//   Cole Chollet   (District 1) — 1st Counselor
-//   Kawika Tupuola (District 2) — 2nd Counselor
-//   Sean Bryan     (District 3) — President
-const DISTRICT_ROLE = {
-  1: '1st Counselor',
-  2: '2nd Counselor',
-  3: 'President',
+// Presidency position labels. Source of truth: `leaders.position` column
+// (president | counselor | secretary | clerk). The DB row is populated by
+// schema.sql's seed and surfaced via /api/companions → presidency_member.position.
+// We capitalize here for display; the underlying value is lowercase enum.
+//   Cole Chollet   — President
+//   Sean Bryan     — Counselor
+//   Kawika Tupuola — Counselor
+//   Braden Church  — Secretary
+const POSITION_LABELS = {
+  president: 'President',
+  counselor: 'Counselor',
+  secretary: 'Secretary',
+  clerk: 'Clerk',
 };
+const positionLabel = (pos) => POSITION_LABELS[pos] || 'Presidency';
 
 export default function AdminRoster() {
   const [roster, setRoster] = useState(null);
@@ -434,7 +440,7 @@ export default function AdminRoster() {
             <option value="all">All districts</option>
             {districts.map((d) => (
               <option key={d.district_number} value={d.district_number}>
-                {d.presidency_member?.name || `District ${d.district_number}`} ({DISTRICT_ROLE[d.district_number] || 'Presidency'})
+                {d.presidency_member?.name || `District ${d.district_number}`} ({positionLabel(d.presidency_member?.position)})
               </option>
             ))}
           </select>
@@ -478,7 +484,7 @@ export default function AdminRoster() {
                       {district.presidency_member?.name || `District ${district.district_number}`}
                     </span>
                     <span className="text-xs italic text-brown-light">
-                      {DISTRICT_ROLE[district.district_number] || 'Presidency'}
+                      {positionLabel(district.presidency_member?.position)}
                     </span>
                   </div>
                   <div className="text-sm text-brown-light mt-0.5">

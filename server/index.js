@@ -309,7 +309,7 @@ function dedupeLeaders(leaders) {
 // availability_windows) so a missing migration degrades instead of 500-ing.
 async function computeRosterStatuses() {
   const [leadersRes, compsRes, slotsRes] = await Promise.all([
-    supabase.from('leaders').select('id, name').order('name'),
+    supabase.from('leaders').select('id, name, position').order('name'),
     supabase.from('companionships').select('id, leader_id, companion1_name, companion2_name'),
     supabase.from('slots').select('id, leader_id, start_time'),
   ]);
@@ -680,6 +680,21 @@ app.get('/api/companions', requireSession, async (req, res) => {
       leaderById = new Map((dbComps || []).map((c) => [c.id, c.leader_id]));
     }
 
+    // Also fetch the presidency position ('president' | 'counselor' | 'secretary')
+    // for each leader so the UI can label Cole as President, Sean/Kawika as
+    // Counselors, and Braden as Secretary instead of relying on a hardcoded
+    // district_number → role map. Position lives on the leaders row, not the
+    // companionship, so a separate query is unavoidable.
+    let positionByLeaderId = new Map();
+    const { data: dbLeaders, error: dbLErr } = await supabase
+      .from('leaders')
+      .select('id, position');
+    if (dbLErr) {
+      console.error('[companions] position lookup failed:', dbLErr.message);
+    } else {
+      positionByLeaderId = new Map((dbLeaders || []).map((l) => [l.id, l.position || null]));
+    }
+
     const byDistrict = new Map();
     for (const comp of companionships) {
       if (!byDistrict.has(comp.district)) byDistrict.set(comp.district, []);
@@ -695,8 +710,8 @@ app.get('/api/companions', requireSession, async (req, res) => {
         return {
           district_number: districtNumber,
           presidency_member: isAdmin
-            ? { ...presidency, id: presidencyLeaderId }
-            : { name: presidency.name, id: presidencyLeaderId },
+            ? { ...presidency, id: presidencyLeaderId, position: positionByLeaderId.get(presidencyLeaderId) || null }
+            : { name: presidency.name, id: presidencyLeaderId, position: positionByLeaderId.get(presidencyLeaderId) || null },
           companionships: comps.map((comp) => {
             const { companion_1, companion_2 } = splitCompanions(comp.companions);
             return {
@@ -1160,6 +1175,7 @@ app.get('/api/admin/analytics', requireSession, requireRole('leader'), async (re
       district_breakdown.push({
         leader_id: leader.id,
         leader_name: leader.name,
+        leader_position: leader.position || null,
         total,
         booked,
         completed,
@@ -2641,7 +2657,7 @@ app.get('/api/leaders', requireRole('leader'), async (req, res) => {
   try {
     const { data, error } = await supabase
       .from('leaders')
-      .select('id, name, email, google_calendar_id, active, role, phone, uuid');
+      .select('id, name, email, google_calendar_id, active, role, phone, uuid, position');
     if (error) throw error;
     res.json(dedupeLeaders(data || []));
   } catch (error) {
