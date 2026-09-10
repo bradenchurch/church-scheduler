@@ -3043,6 +3043,7 @@ function buildBookingVEvent(b) {
   const description = [`Companionship: ${names}`];
   if (notes) description.push(`Notes: ${notes}`);
   lines.push(icalFold(`DESCRIPTION:${icalEscape(description.join('\n'))}`));
+  lines.push(icalFold(`URL:${ICAL_BASE_URL}/visit/${b.id}`));
   lines.push(icalFold('STATUS:CONFIRMED'));
   lines.push(icalFold('TRANSP:OPAQUE'));
   lines.push(icalFold('END:VEVENT'));

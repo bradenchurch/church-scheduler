@@ -73,12 +73,14 @@ check(f.body.includes(`UID:win-${WINDOW_ID}@church-scheduler`) && f.body.include
 check(f.body.includes(`DTSTART:${dateStr.replace(/-/g, '')}T141500`), 'booking DTSTART = 14:15');
 check(f.body.includes(`DTEND:${dateStr.replace(/-/g, '')}T143000`), 'booking DTEND = 14:30 (15-min slot)');
 check(unfold(f.body).includes(`/book?leader=cole&window=${WINDOW_ID}`), 'window URL back to booking page');
+check(new RegExp(`URL:[^\r\n]*/visit/${BOOKING_ID}\\b`).test(unfold(f.body)), 'booking URL line points to /visit/<booking_id>');
 
 console.log('4) companionship feed');
 f = await fetchFeed(`/ical/companionship/${COMP_ID}.ics`);
 check(f.status === 200 && vevents(f.body) === 2, `status ${f.status}, ${vevents(f.body)} VEVENTs`);
 check(f.body.includes('TRANSP:TRANSPARENT') && f.body.includes('TRANSP:OPAQUE'), 'both event types present');
 check(f.body.includes('Companionship: '), 'booking DESCRIPTION names the companionship');
+check(new RegExp(`URL:[^\r\n]*/visit/${BOOKING_ID}\\b`).test(unfold(f.body)), 'companionship feed booking URL points to /visit/<booking_id>');
 
 fs.writeFileSync('/tmp/feed.ics', (await (await fetch(`${BASE}/ical/leader/${COLE_UUID}.ics`)).text()));
 
