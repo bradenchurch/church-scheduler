@@ -2974,6 +2974,12 @@ app.get('/api/cal/:leader_id.ics', async (req, res) => {
 //   bookings             → TRANSP:OPAQUE (shows BUSY),   STATUS:CONFIRMED
 
 const ICAL_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://church-scheduler-tawny.vercel.app').replace(/\/$/, '');
+// Feed identifiers come in two shapes: a UUID (companionships.id, used by
+// /ical/companionship/:uuid.ics) or a 32-hex-no-dash token (leaders.ical_token,
+// also reachable at /ical/leader/:token.ics). Accept either on the feed routes.
+const FEED_TOKEN_RE = /^(?:[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}|[0-9a-f]{32})$/i;
+// Strict UUID shape (with dashes). Distinguishes a companionship uuid from a
+// leader ical_token so the leader feed keys on the right column.
 const FEED_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Today's date (YYYY-MM-DD) in the ward's timezone. Windows in the past are
@@ -3100,20 +3106,25 @@ function sendIcs(res, ical, filename) {
   res.send(ical);
 }
 
-// GET /ical/leader/:uuid.ics — one VEVENT per availability window owned by the
+// GET /ical/leader/:token.ics — one VEVENT per availability window owned by the
 // leader (TRANSPARENT) plus one VEVENT per non-cancelled booking against any of
 // the leader's windows / recurring slots (OPAQUE).
-app.get('/ical/leader/:uuid.ics', async (req, res) => {
-  const { uuid } = req.params;
-  if (!FEED_UUID_RE.test(String(uuid || ''))) {
+// NOTE: :token is either a leaders.uuid (the public feed id the UI hands out) or
+// a leaders.ical_token (32-hex legacy secret). It is NOT a companionship uuid.
+app.get('/ical/leader/:token.ics', async (req, res) => {
+  const { token } = req.params;
+  if (!FEED_TOKEN_RE.test(String(token || ''))) {
     return res.status(404).type('text/plain').send('Not found');
   }
 
   try {
+    // Key on whichever column the identifier's shape matches: a dashed UUID →
+    // leaders.uuid, a 32-hex-no-dash token → leaders.ical_token.
+    const keyColumn = FEED_UUID_RE.test(token) ? 'uuid' : 'ical_token';
     const { data: leader, error: leaderErr } = await supabase
       .from('leaders')
       .select('id, name, uuid')
-      .eq('uuid', uuid)
+      .eq(keyColumn, token)
       .maybeSingle();
     if (leaderErr) throw leaderErr;
     if (!leader) return res.status(404).type('text/plain').send('Not found');
@@ -3160,7 +3171,7 @@ app.get('/ical/leader/:uuid.ics', async (req, res) => {
       bookings: [...bookingsById.values()],
     });
 
-    sendIcs(res, ical, `leader-${uuid}.ics`);
+    sendIcs(res, ical, `leader-${token}.ics`);
   } catch (error) {
     console.error('leader ical feed error:', error.message);
     res.status(500).type('text/plain').send('Internal error');
@@ -3172,7 +3183,7 @@ app.get('/ical/leader/:uuid.ics', async (req, res) => {
 // (OPAQUE). One subscription keeps the whole ministering calendar in sync.
 app.get('/ical/companionship/:uuid.ics', async (req, res) => {
   const { uuid } = req.params;
-  if (!FEED_UUID_RE.test(String(uuid || ''))) {
+  if (!FEED_TOKEN_RE.test(String(uuid || ''))) {
     return res.status(404).type('text/plain').send('Not found');
   }
 
