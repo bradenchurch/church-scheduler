@@ -49,7 +49,18 @@ const supabaseAdmin = createClient(
 );
 
 app.use(cors());
-app.use(express.json());
+
+// Default JSON limit is 100kb. That is fine for API JSON, but it must not run
+// on the LCR PDF upload: the admin client used to label that body
+// application/json, and a normal ~170KB ministering export then failed with
+// 413 Payload Too Large before the route's raw parser (25mb) ever saw it.
+const jsonParser = express.json();
+app.use((req, res, next) => {
+  if (req.method === 'POST' && req.path === '/api/admin/roster/parse-pdf') {
+    return next();
+  }
+  return jsonParser(req, res, next);
+});
 
 // Middleware to verify auth token
 const requireAuth = async (req, res, next) => {
@@ -2379,8 +2390,9 @@ app.post(
 // Two endpoints:
 //
 //   POST /api/admin/roster/parse-pdf  (admin) — accepts the raw LCR PDF
-//     (multipart/form-data field `file`, or raw application/pdf body). Parses
-//     it via server/lcr-parser.js and returns the structured preview JSON.
+//     bytes (Content-Type application/pdf, or a mislabeled application/json
+//     body). Parses it via server/lcr-parser.js and returns the structured
+//     preview JSON.
 //     Nothing is written to the database.
 //
 //   POST /api/admin/roster/import     (admin) — accepts the *confirmed*
@@ -2395,11 +2407,30 @@ app.post(
 // row-shifting from stacked LCR table cells).
 // ---------------------------------------------------------------------------
 
+// Read the upload as raw bytes regardless of Content-Type. The intended type
+// is application/pdf; application/json is accepted too because a forced JSON
+// content type used to be what produced the 413. 25mb covers multi-megabyte
+// LCR exports. Vercel still rejects function bodies above 4.5MB at the
+// platform, before this middleware runs.
+const LCR_PDF_BODY_LIMIT = '25mb';
+
+function readRawPdfBody(req, res, next) {
+  return express.raw({ type: () => true, limit: LCR_PDF_BODY_LIMIT })(req, res, (err) => {
+    if (!err) return next();
+    if (err.type === 'entity.too.large' || err.status === 413 || err.statusCode === 413) {
+      return res.status(413).json({
+        error: 'PDF is too large. Uploads must be 25 MB or smaller.',
+      });
+    }
+    return next(err);
+  });
+}
+
 app.post(
   '/api/admin/roster/parse-pdf',
   requireSession,
   requireRole('admin'),
-  express.raw({ type: 'application/pdf', limit: '25mb' }),
+  readRawPdfBody,
   async (req, res) => {
     try {
       let buffer = req.body;

@@ -5,13 +5,26 @@ import { supabase } from './supabase';
 // auth-gated endpoints (requireAuth / requireRole) receive the token.
 export async function authedFetch(url, options = {}) {
   const { data: { session } } = await supabase.auth.getSession();
+  const headers = { ...(options.headers || {}) };
+  const hasContentType = Object.keys(headers).some(
+    (key) => key.toLowerCase() === 'content-type',
+  );
+  const body = options.body;
+  // File/Blob/FormData/ArrayBuffer uploads must keep their own Content-Type.
+  // Forcing application/json made the LCR PDF import hit express.json()'s
+  // 100kb limit and return 413 before the PDF was parsed.
+  const isBinaryBody =
+    (typeof FormData !== 'undefined' && body instanceof FormData) ||
+    (typeof Blob !== 'undefined' && body instanceof Blob) ||
+    body instanceof ArrayBuffer ||
+    ArrayBuffer.isView(body);
+  if (!hasContentType && !isBinaryBody) {
+    headers['Content-Type'] = 'application/json';
+  }
+  headers.Authorization = `Bearer ${session?.access_token || ''}`;
   return fetch(url, {
     ...options,
-    headers: {
-      ...options.headers,
-      'Authorization': `Bearer ${session?.access_token || ''}`,
-      'Content-Type': 'application/json',
-    },
+    headers,
   });
 }
 
