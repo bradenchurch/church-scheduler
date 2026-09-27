@@ -26,14 +26,23 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Supabase config
+// Supabase config.
+// The SPA ships the anon/publishable key. RLS denies that key on ward tables.
+// Every /api query uses the service role, which bypasses RLS; Express route
+// guards remain the authorization boundary. Magic-link login still uses the
+// anon client in the browser (src/lib/supabase.js) plus a narrow SELECT policy
+// on the caller's own leaders row.
 const supabaseUrl = process.env.SUPABASE_URL || 'https://example.supabase.co';
-const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || 'public-anon-key';
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// Service-role client for sensitive tables (oauth_tokens / confirmation_log) that are RLS-protected.
-const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY || supabaseKey;
-const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY || '';
+if (!serviceKey) {
+  console.error(
+    '[supabase] SUPABASE_SERVICE_KEY is not set. API queries will use the anon key and fail once ward-table RLS is enabled.'
+  );
+}
+const supabaseKey = serviceKey || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || 'public-anon-key';
+const supabaseClientOptions = { auth: { persistSession: false, autoRefreshToken: false } };
+const supabase = createClient(supabaseUrl, supabaseKey, supabaseClientOptions);
+const supabaseAdmin = createClient(supabaseUrl, supabaseKey, supabaseClientOptions);
 
 app.use(cors());
 app.use(express.json());
