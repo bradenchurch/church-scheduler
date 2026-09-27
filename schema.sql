@@ -285,6 +285,6 @@ UPDATE bookings b SET slot_time = w.start_time
 UPDATE bookings b SET slot_time = s.start_time
   FROM slots s WHERE b.slot_id = s.id AND b.slot_time IS NULL;
 
--- Row Level Security for every public table is in
--- supabase/migrations/20260927170000_enable_rls_ward_data.sql.
+-- Row Level Security for the ward tables is in
+-- supabase/migrations/20260927170000_enable_rls.sql.
 -- Apply that migration after this file. The anon key must not read ward data.

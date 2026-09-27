@@ -26,23 +26,27 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Supabase config.
-// The SPA ships the anon/publishable key. RLS denies that key on ward tables.
-// Every /api query uses the service role, which bypasses RLS; Express route
-// guards remain the authorization boundary. Magic-link login still uses the
-// anon client in the browser (src/lib/supabase.js) plus a narrow SELECT policy
-// on the caller's own leaders row.
+// Two clients on purpose:
+// - `supabase` is the anon key, used only to verify magic-link JWTs
+//   (`auth.getUser`). It must not read ward tables once RLS is on.
+// - `supabaseAdmin` is the service role and bypasses RLS. Every table
+//   read/write goes through it. Express guards (requireAuth / requireRole /
+//   public-route checks) stay the authorization boundary.
 const supabaseUrl = process.env.SUPABASE_URL || 'https://example.supabase.co';
+const anonKey = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || 'public-anon-key';
 const serviceKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY || '';
 if (!serviceKey) {
   console.error(
-    '[supabase] SUPABASE_SERVICE_KEY is not set. API queries will use the anon key and fail once ward-table RLS is enabled.'
+    '[supabase] SUPABASE_SERVICE_KEY is not set. Table queries will fail once ward-table RLS is enabled.'
   );
 }
-const supabaseKey = serviceKey || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || 'public-anon-key';
 const supabaseClientOptions = { auth: { persistSession: false, autoRefreshToken: false } };
-const supabase = createClient(supabaseUrl, supabaseKey, supabaseClientOptions);
-const supabaseAdmin = createClient(supabaseUrl, supabaseKey, supabaseClientOptions);
+const supabase = createClient(supabaseUrl, anonKey, supabaseClientOptions);
+const supabaseAdmin = createClient(
+  supabaseUrl,
+  serviceKey || 'missing-service-role-key',
+  supabaseClientOptions,
+);
 
 app.use(cors());
 app.use(express.json());
@@ -64,7 +68,7 @@ const requireAuth = async (req, res, next) => {
     }
 
     // Fetch user role and leader details
-    const { data: leaderData, error: leaderError } = await supabase
+    const { data: leaderData, error: leaderError } = await supabaseAdmin
       .from('leaders')
       .select('id, role')
       .eq('email', user.email)
@@ -318,9 +322,9 @@ function dedupeLeaders(leaders) {
 // availability_windows) so a missing migration degrades instead of 500-ing.
 async function computeRosterStatuses() {
   const [leadersRes, compsRes, slotsRes] = await Promise.all([
-    supabase.from('leaders').select('id, name, position').order('name'),
-    supabase.from('companionships').select('id, leader_id, companion1_name, companion2_name'),
-    supabase.from('slots').select('id, leader_id, start_time'),
+    supabaseAdmin.from('leaders').select('id, name, position').order('name'),
+    supabaseAdmin.from('companionships').select('id, leader_id, companion1_name, companion2_name'),
+    supabaseAdmin.from('slots').select('id, leader_id, start_time'),
   ]);
 
   if (leadersRes.error) throw leadersRes.error;
@@ -333,7 +337,7 @@ async function computeRosterStatuses() {
 
   let bookings = [];
   try {
-    const bookingsRes = await supabase
+    const bookingsRes = await supabaseAdmin
       .from('bookings')
       .select('id, companionship_id, slot_id, window_id, scheduled_date, status, notes')
       .neq('status', 'cancelled')
@@ -341,7 +345,7 @@ async function computeRosterStatuses() {
     if (bookingsRes.error) throw bookingsRes.error;
     bookings = bookingsRes.data || [];
   } catch {
-    const fallbackRes = await supabase
+    const fallbackRes = await supabaseAdmin
       .from('bookings')
       .select('id, companionship_id, slot_id, scheduled_date, status, notes')
       .neq('status', 'cancelled')
@@ -352,7 +356,7 @@ async function computeRosterStatuses() {
 
   let windows = [];
   try {
-    const windowsRes = await supabase
+    const windowsRes = await supabaseAdmin
       .from('availability_windows')
       .select('id, leader_id, window_date, start_time');
     if (windowsRes.error) throw windowsRes.error;
@@ -649,7 +653,7 @@ app.get('/api/companionships', async (req, res) => {
   const { search } = req.query;
 
   try {
-    let query = supabase.from('companionships').select('*, leaders(name)');
+    let query = supabaseAdmin.from('companionships').select('*, leaders(name)');
     if (search) {
       query = query.or(`companion1_name.ilike.%${search}%,companion2_name.ilike.%${search}%`);
     }
@@ -680,7 +684,7 @@ app.get('/api/companions', requireSession, async (req, res) => {
     // roster only carries the presidency member's name; the companionships table
     // holds the authoritative leader_id used for routing submissions.
     let leaderById = new Map();
-    const { data: dbComps, error: dbErr } = await supabase
+    const { data: dbComps, error: dbErr } = await supabaseAdmin
       .from('companionships')
       .select('id, leader_id');
     if (dbErr) {
@@ -695,7 +699,7 @@ app.get('/api/companions', requireSession, async (req, res) => {
     // district_number → role map. Position lives on the leaders row, not the
     // companionship, so a separate query is unavoidable.
     let positionByLeaderId = new Map();
-    const { data: dbLeaders, error: dbLErr } = await supabase
+    const { data: dbLeaders, error: dbLErr } = await supabaseAdmin
       .from('leaders')
       .select('id, position');
     if (dbLErr) {
@@ -822,7 +826,7 @@ app.post('/api/chapel/submit', requireSession, requireCompanionFor('companionshi
 
   try {
     // Validate the companionship and resolve its assigned presidency member.
-    const { data: comp, error: compErr } = await supabase
+    const { data: comp, error: compErr } = await supabaseAdmin
       .from('companionships')
       .select('id, leader_id')
       .eq('id', companionship_id)
@@ -841,7 +845,7 @@ app.post('/api/chapel/submit', requireSession, requireCompanionFor('companionshi
 
     let presidency = null;
     if (leaderId) {
-      const { data: leader, error: leaderErr } = await supabase
+      const { data: leader, error: leaderErr } = await supabaseAdmin
         .from('leaders')
         .select('id, name, email, phone')
         .eq('id', leaderId)
@@ -863,7 +867,7 @@ app.post('/api/chapel/submit', requireSession, requireCompanionFor('companionshi
       preferred_slot_time: preferred_slot_time || null,
     };
 
-    const { data: inserted, error: insErr } = await supabase
+    const { data: inserted, error: insErr } = await supabaseAdmin
       .from('chapel_submissions')
       .insert([row])
       .select()
@@ -888,10 +892,10 @@ app.post('/api/chapel/submit', requireSession, requireCompanionFor('companionshi
 app.delete('/api/admin/roster', requireSession, requireRole('admin'), async (req, res) => {
   try {
     // Delete all households and companionships
-    const { error: hErr } = await supabase.from('households').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    const { error: hErr } = await supabaseAdmin.from('households').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     if (hErr) throw hErr;
     
-    const { error: cErr } = await supabase.from('companionships').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    const { error: cErr } = await supabaseAdmin.from('companionships').delete().neq('id', '00000000-0000-0000-0000-000000000000');
     if (cErr) throw cErr;
 
     writeEmptyRoster();
@@ -917,10 +921,10 @@ app.get('/api/admin/roster', requireAuth, requireAdmin, async (req, res) => {
 
     try {
       const [compsRes, hhsRes, memsRes, leadersRes] = await Promise.all([
-        supabase.from('companionships').select('id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email'),
-        supabase.from('households').select('*').eq('ward_slug', ward),
-        supabase.from('household_members').select('*'),
-        supabase.from('leaders').select('id, name, email, phone'),
+        supabaseAdmin.from('companionships').select('id, leader_id, companion1_name, companion2_name, companion1_email, companion2_email'),
+        supabaseAdmin.from('households').select('*').eq('ward_slug', ward),
+        supabaseAdmin.from('household_members').select('*'),
+        supabaseAdmin.from('leaders').select('id, name, email, phone'),
       ]);
 
       if (compsRes.error) throw compsRes.error;
@@ -1049,7 +1053,7 @@ app.get('/api/admin/queue', requireAuth, async (req, res) => {
   }
 
   try {
-    let query = supabase
+    let query = supabaseAdmin
       .from('chapel_submissions')
       .select('*, leaders(name, email, phone)')
       .order('submitted_at', { ascending: false });
@@ -1107,7 +1111,7 @@ app.post('/api/admin/queue/:id/complete', requireAuth, async (req, res) => {
   }
 
   try {
-    let query = supabase
+    let query = supabaseAdmin
       .from('chapel_submissions')
       .update({
         status: 'completed',
@@ -1217,7 +1221,7 @@ app.post('/api/bookings/:id/complete', requireSession, async (req, res) => {
   try {
     // Non-admins may only complete bookings under their own companionship.
     if (req.user.role !== 'admin') {
-      const { data: booking, error: fetchErr } = await supabase
+      const { data: booking, error: fetchErr } = await supabaseAdmin
         .from('bookings')
         .select('companionships(leader_id)')
         .eq('id', id)
@@ -1228,7 +1232,7 @@ app.post('/api/bookings/:id/complete', requireSession, async (req, res) => {
       }
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bookings')
       .update({ status: 'completed' })
       .eq('id', id)
@@ -1257,8 +1261,8 @@ app.get('/api/availability/:leaderId', async (req, res) => {
     const laterStr = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
     const [leaderRes, slotsRes] = await Promise.all([
-      supabase.from('leaders').select('id, name, email, phone').eq('id', leaderId).maybeSingle(),
-      supabase.from('slots').select('id, day_of_week, start_time, duration_minutes').eq('leader_id', leaderId).order('day_of_week').order('start_time'),
+      supabaseAdmin.from('leaders').select('id, name, email, phone').eq('id', leaderId).maybeSingle(),
+      supabaseAdmin.from('slots').select('id, day_of_week, start_time, duration_minutes').eq('leader_id', leaderId).order('day_of_week').order('start_time'),
     ]);
 
     if (leaderRes.error) throw leaderRes.error;
@@ -1272,7 +1276,7 @@ app.get('/api/availability/:leaderId', async (req, res) => {
     // degrade to an empty list rather than 500-ing the whole availability feed.
     let windows = [];
     try {
-      const windowsRes = await supabase
+      const windowsRes = await supabaseAdmin
         .from('availability_windows')
         .select('id, leader_id, window_date, start_time, end_time, slot_duration_minutes')
         .eq('leader_id', leaderId)
@@ -1307,7 +1311,7 @@ app.get('/api/availability/:leaderId/windows', async (req, res) => {
   const { leaderId } = req.params;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('availability_windows')
       .select('id, leader_id, window_date, start_time, end_time, slot_duration_minutes')
       .eq('leader_id', leaderId)
@@ -1386,7 +1390,7 @@ app.post('/api/availability/:leaderId/windows', requireSession, async (req, res)
   if (parsed.error) return res.status(400).json({ error: parsed.error });
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('availability_windows')
       .insert([{ leader_id: leaderId, ...parsed.value }])
       .select();
@@ -1421,7 +1425,7 @@ app.post('/api/availability/:leaderId/windows/batch', requireSession, async (req
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('availability_windows')
       .insert(rows)
       .select();
@@ -1437,7 +1441,7 @@ app.post('/api/availability/:leaderId/windows/batch', requireSession, async (req
 app.delete('/api/availability/windows/:id', requireSession, async (req, res) => {
   const { id } = req.params;
   if (req.user.role !== 'admin') {
-    const { data: win, error: fetchErr } = await supabase
+    const { data: win, error: fetchErr } = await supabaseAdmin
       .from('availability_windows')
       .select('leader_id')
       .eq('id', id)
@@ -1447,7 +1451,7 @@ app.delete('/api/availability/windows/:id', requireSession, async (req, res) => 
     }
   }
   try {
-    const { error } = await supabase.from('availability_windows').delete().eq('id', id);
+    const { error } = await supabaseAdmin.from('availability_windows').delete().eq('id', id);
     if (error) throw error;
     res.status(204).end();
   } catch (error) {
@@ -1469,7 +1473,7 @@ app.delete('/api/availability/windows/:id', requireSession, async (req, res) => 
 // `req.user.id`).
 app.get('/api/bookings/all', requireRole('leader'), async (req, res) => {
   try {
-    let query = supabase
+    let query = supabaseAdmin
       .from('bookings')
       .select('*, companionships!inner(*, leaders(id, name, email, phone)), slots(*)');
 
@@ -1491,7 +1495,7 @@ app.get('/api/bookings/:leaderId', requireSession, async (req, res) => {
   const { leaderId } = req.params;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bookings')
       .select('*, companionships!inner(*, leaders(id, name, email, phone)), slots(*)')
       .eq('companionships.leader_id', leaderId);
@@ -1528,7 +1532,7 @@ app.post('/api/bookings', requireRole('companion'), requireCompanionFor('compani
     let durationMinutes = 30;
 
     if (window_id) {
-      const { data: w } = await supabase
+      const { data: w } = await supabaseAdmin
         .from('availability_windows')
         .select('start_time, end_time, slot_duration_minutes')
         .eq('id', window_id)
@@ -1554,7 +1558,7 @@ app.post('/api/bookings', requireRole('companion'), requireCompanionFor('compani
         chosenTime = windowStart;
       }
     } else if (slot_id) {
-      const { data: s } = await supabase
+      const { data: s } = await supabaseAdmin
         .from('slots')
         .select('start_time, duration_minutes')
         .eq('id', slot_id)
@@ -1595,7 +1599,7 @@ app.post('/api/bookings', requireRole('companion'), requireCompanionFor('compani
       notes: notes || null,
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bookings')
       .insert([insert])
       .select();
@@ -1621,12 +1625,12 @@ app.put('/api/bookings/:id/cancel', requireAuth, async (req, res) => {
   const { id } = req.params;
   // Ideally we would fetch the booking first to check ownership, but let's just do it directly for simplicity or fetch it.
   if (req.user.role !== 'admin') {
-    const { data: booking } = await supabase.from('bookings').select('companionships(leader_id)').eq('id', id).single();
+    const { data: booking } = await supabaseAdmin.from('bookings').select('companionships(leader_id)').eq('id', id).single();
     if (!booking || booking.companionships?.leader_id !== req.user.leader_id) return res.status(403).json({ error: 'Forbidden' });
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bookings')
       .update({ status: 'cancelled' })
       .eq('id', id)
@@ -1642,13 +1646,13 @@ app.put('/api/bookings/:id/cancel', requireAuth, async (req, res) => {
 app.put('/api/bookings/:id/status', requireAuth, async (req, res) => {
   const { id } = req.params;
   if (req.user.role !== 'admin') {
-    const { data: booking } = await supabase.from('bookings').select('companionships(leader_id)').eq('id', id).single();
+    const { data: booking } = await supabaseAdmin.from('bookings').select('companionships(leader_id)').eq('id', id).single();
     if (!booking || booking.companionships?.leader_id !== req.user.leader_id) return res.status(403).json({ error: 'Forbidden' });
   }
   const { status } = req.body;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bookings')
       .update({ status })
       .eq('id', id)
@@ -1666,7 +1670,7 @@ app.put('/api/bookings/:id/status', requireAuth, async (req, res) => {
 // 'pending'), or null. Shared by the /book active-appointment banner, the
 // server-side double-booking guard, and the reschedule flow.
 async function findActiveBooking(companionshipId) {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('bookings')
     .select('id, companionship_id, slot_id, window_id, scheduled_date, status, notes')
     .eq('companionship_id', companionshipId)
@@ -1698,7 +1702,7 @@ app.get('/api/companionships/:id/active-booking', requireSession, async (req, re
     let durationMinutes = 30;
 
     if (booking.slot_id) {
-      const { data: slot } = await supabase
+      const { data: slot } = await supabaseAdmin
         .from('slots')
         .select('start_time, duration_minutes')
         .eq('id', booking.slot_id)
@@ -1708,7 +1712,7 @@ app.get('/api/companionships/:id/active-booking', requireSession, async (req, re
         durationMinutes = slot.duration_minutes || 30;
       }
     } else if (booking.window_id) {
-      const { data: win } = await supabase
+      const { data: win } = await supabaseAdmin
         .from('availability_windows')
         .select('window_date, start_time, slot_duration_minutes')
         .eq('id', booking.window_id)
@@ -1721,7 +1725,7 @@ app.get('/api/companionships/:id/active-booking', requireSession, async (req, re
     }
 
     let leaderName = '';
-    const { data: comp } = await supabase
+    const { data: comp } = await supabaseAdmin
       .from('companionships')
       .select('leader_id, leaders(name)')
       .eq('id', id)
@@ -1754,7 +1758,7 @@ app.post('/api/bookings/:id/reschedule', requireSession, async (req, res) => {
   const { id } = req.params;
 
   try {
-    const { data: booking, error: fetchErr } = await supabase
+    const { data: booking, error: fetchErr } = await supabaseAdmin
       .from('bookings')
       .select('id, companionship_id, status, companionships(leader_id, companion1_email, companion2_email)')
       .eq('id', id)
@@ -1775,7 +1779,7 @@ app.post('/api/bookings/:id/reschedule', requireSession, async (req, res) => {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
-    const { data: updated, error: updErr } = await supabase
+    const { data: updated, error: updErr } = await supabaseAdmin
       .from('bookings')
       .update({ status: 'cancelled' })
       .eq('id', id)
@@ -1816,7 +1820,7 @@ app.post('/api/admin/bookings', requireSession, requireRole('admin'), async (req
       window_id: window_id || null,
     };
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('bookings')
       .insert([insert])
       .select();
@@ -1840,7 +1844,7 @@ app.get('/api/slots/:leaderId', async (req, res) => {
   const { leaderId } = req.params;
 
   try {
-    const { data, error } = await supabase.from('slots').select('*').eq('leader_id', leaderId);
+    const { data, error } = await supabaseAdmin.from('slots').select('*').eq('leader_id', leaderId);
     if (error) throw error;
     res.json(data);
   } catch (error) {
@@ -1855,7 +1859,7 @@ app.post('/api/slots/:leaderId', requireSession, async (req, res) => {
   const { day_of_week, start_time, duration_minutes } = req.body;
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('slots')
       .insert([{ leader_id: leaderId, day_of_week, start_time, duration_minutes: duration_minutes || 30 }])
       .select();
@@ -1870,11 +1874,11 @@ app.post('/api/slots/:leaderId', requireSession, async (req, res) => {
 app.delete('/api/slots/:id', requireAuth, async (req, res) => {
   const { id } = req.params;
   if (req.user.role !== 'admin') {
-    const { data: slot } = await supabase.from('slots').select('leader_id').eq('id', id).single();
+    const { data: slot } = await supabaseAdmin.from('slots').select('leader_id').eq('id', id).single();
     if (!slot || slot.leader_id !== req.user.leader_id) return res.status(403).json({ error: 'Forbidden' });
   }
   try {
-    const { error } = await supabase.from('slots').delete().eq('id', id);
+    const { error } = await supabaseAdmin.from('slots').delete().eq('id', id);
     if (error) throw error;
     res.status(204).send();
   } catch (error) {
@@ -1900,7 +1904,7 @@ app.post('/api/qr/request', async (req, res) => {
   const { companionship_id, notes } = req.body || {};
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('qr_requests')
       .insert([{ companionship_id: companionship_id || null, notes: notes || null }])
       .select()
@@ -1910,7 +1914,7 @@ app.post('/api/qr/request', async (req, res) => {
     // Auto-assign the new request (non-fatal if routing fails).
     let assignment = null;
     try {
-      assignment = await assignNextPending(supabase);
+      assignment = await assignNextPending(supabaseAdmin);
     } catch (err) {
       console.error('[qr] auto-assign failed:', err.message);
     }
@@ -1925,7 +1929,7 @@ app.post('/api/qr/request', async (req, res) => {
 // presidency member with the fewest active assignments.
 app.post('/api/qr/assign-next', async (req, res) => {
   try {
-    const result = await assignNextPending(supabase);
+    const result = await assignNextPending(supabaseAdmin);
     if (result.ok === false && result.status === 409) {
       return res.status(409).json({ ok: false, error: result.error });
     }
@@ -1947,9 +1951,9 @@ app.get('/api/qr/queue', requireAuth, async (req, res) => {
 
   try {
     const [pendingRes, assignedRes, completedRes] = await Promise.all([
-      supabase.from('qr_requests').select(select).eq('status', 'pending').order('submitted_at', { ascending: true }),
-      supabase.from('qr_requests').select(select).eq('status', 'assigned').order('assigned_at', { ascending: true }),
-      supabase.from('qr_requests').select(select).eq('status', 'completed').gte('completed_at', startOfWeek.toISOString()).order('completed_at', { ascending: false }),
+      supabaseAdmin.from('qr_requests').select(select).eq('status', 'pending').order('submitted_at', { ascending: true }),
+      supabaseAdmin.from('qr_requests').select(select).eq('status', 'assigned').order('assigned_at', { ascending: true }),
+      supabaseAdmin.from('qr_requests').select(select).eq('status', 'completed').gte('completed_at', startOfWeek.toISOString()).order('completed_at', { ascending: false }),
     ]);
 
     if (pendingRes.error) throw pendingRes.error;
@@ -1975,7 +1979,7 @@ app.post('/api/qr/assign-now', requireAuth, requireAdmin, async (req, res) => {
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('qr_requests')
       .update({ status: 'assigned', assigned_to: leader_id, assigned_at: new Date().toISOString() })
       .eq('id', request_id)
@@ -2001,7 +2005,7 @@ app.put('/api/qr/request/:id/status', requireAuth, async (req, res) => {
   }
 
   try {
-    const { data: existing, error: fetchErr } = await supabase
+    const { data: existing, error: fetchErr } = await supabaseAdmin
       .from('qr_requests')
       .select('id, assigned_to')
       .eq('id', id)
@@ -2017,7 +2021,7 @@ app.put('/api/qr/request/:id/status', requireAuth, async (req, res) => {
     const patch = { status };
     if (status === 'completed') patch.completed_at = new Date().toISOString();
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('qr_requests')
       .update(patch)
       .eq('id', id)
@@ -2071,7 +2075,7 @@ app.get('/api/admin/welcome-links', requireSession, requireRole('admin'), async 
 
     let byId = new Map();
     try {
-      const { data: leaders, error } = await supabase
+      const { data: leaders, error } = await supabaseAdmin
         .from('leaders')
         .select('id, name, email')
         .in('id', WELCOME_LEADERS.map((w) => w.id));
@@ -2115,7 +2119,7 @@ app.post('/api/admin/add-admin', requireSession, requireRole('admin'), async (re
   }
 
   try {
-    const { data: existing, error: lookupErr } = await supabase
+    const { data: existing, error: lookupErr } = await supabaseAdmin
       .from('leaders')
       .select('id, name, email, role')
       .ilike('email', email)
@@ -2123,7 +2127,7 @@ app.post('/api/admin/add-admin', requireSession, requireRole('admin'), async (re
     if (lookupErr) throw lookupErr;
 
     if (existing) {
-      const { data: updated, error: updErr } = await supabase
+      const { data: updated, error: updErr } = await supabaseAdmin
         .from('leaders')
         .update({ role: 'admin', active: true })
         .eq('id', existing.id)
@@ -2142,7 +2146,7 @@ app.post('/api/admin/add-admin', requireSession, requireRole('admin'), async (re
     let id = local || `admin-${crypto.randomBytes(4).toString('hex')}`;
 
     // Avoid a primary-key collision if a different leader already uses this id.
-    const { data: idTaken } = await supabase.from('leaders').select('id').eq('id', id).maybeSingle();
+    const { data: idTaken } = await supabaseAdmin.from('leaders').select('id').eq('id', id).maybeSingle();
     if (idTaken) id = `${id}-${crypto.randomBytes(3).toString('hex')}`;
 
     const name =
@@ -2153,7 +2157,7 @@ app.post('/api/admin/add-admin', requireSession, requireRole('admin'), async (re
         .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
         .join(' ') || 'Secretary';
 
-    const { data: inserted, error: insErr } = await supabase
+    const { data: inserted, error: insErr } = await supabaseAdmin
       .from('leaders')
       .insert([{ id, name, email, role: 'admin', active: true }])
       .select('id, name, email, role')
@@ -2312,8 +2316,8 @@ app.post(
 
       // Load leaders + existing companionships once, then upsert row-by-row.
       const [leadersRes, compsRes] = await Promise.all([
-        supabase.from('leaders').select('id, name'),
-        supabase.from('companionships').select('id, companion1_name, companion2_name, companion1_email, companion2_email, leader_id'),
+        supabaseAdmin.from('leaders').select('id, name'),
+        supabaseAdmin.from('companionships').select('id, companion1_name, companion2_name, companion1_email, companion2_email, leader_id'),
       ]);
       if (leadersRes.error) throw leadersRes.error;
       if (compsRes.error) throw compsRes.error;
@@ -2345,7 +2349,7 @@ app.post(
           };
           if (row.companion1_email) patch.companion1_email = row.companion1_email;
           if (row.companion2_email) patch.companion2_email = row.companion2_email;
-          const { error } = await supabase.from('companionships').update(patch).eq('id', match.id);
+          const { error } = await supabaseAdmin.from('companionships').update(patch).eq('id', match.id);
           if (error) throw error;
           updated += 1;
         } else {
@@ -2356,7 +2360,7 @@ app.post(
             companion1_email: row.companion1_email || null,
             companion2_email: row.companion2_email || null,
           };
-          const { error } = await supabase.from('companionships').insert([insert]);
+          const { error } = await supabaseAdmin.from('companionships').insert([insert]);
           if (error) throw error;
           added += 1;
         }
@@ -2439,7 +2443,7 @@ async function resolveLeaderIdFromPreview(rawLeader, districtNumber) {
     const key = normName(trimmed);
     if (key && LEADER_ALIAS_TO_ID[key]) return LEADER_ALIAS_TO_ID[key];
 
-    const { data: leaders } = await supabase
+    const { data: leaders } = await supabaseAdmin
       .from('leaders')
       .select('id, name')
       .ilike('name', trimmed);
@@ -2467,12 +2471,12 @@ app.post(
       }
 
       // 1. Load leaders + existing companionships for the upsert index.
-      const { data: leaders, error: leadersErr } = await supabase
+      const { data: leaders, error: leadersErr } = await supabaseAdmin
         .from('leaders')
         .select('id, name');
       if (leadersErr) throw leadersErr;
       const byName = new Map((leaders || []).map((l) => [normName(l.name), l.id]));
-      const { data: existingComps, error: compsErr } = await supabase
+      const { data: existingComps, error: compsErr } = await supabaseAdmin
         .from('companionships')
         .select('id, companion1_name, companion2_name, companion1_email, companion2_email, leader_id');
       if (compsErr) throw compsErr;
@@ -2520,7 +2524,7 @@ app.post(
             };
             if (companion1_email) patch.companion1_email = companion1_email;
             if (companion2_email) patch.companion2_email = companion2_email;
-            const { error } = await supabase.from('companionships').update(patch).eq('id', match.id);
+            const { error } = await supabaseAdmin.from('companionships').update(patch).eq('id', match.id);
             if (error) throw error;
             updated += 1;
             companionshipId = match.id;
@@ -2529,7 +2533,7 @@ app.post(
               leader_id: leaderId ?? null,
               ...row,
             };
-            const { data: inserted, error } = await supabase
+            const { data: inserted, error } = await supabaseAdmin
               .from('companionships')
               .insert([insert])
               .select('id')
@@ -2564,7 +2568,7 @@ app.post(
       for (const link of newLinks) {
         // Find or create the household. We key by (family_name, district_number)
         // so two families with the same name across districts stay distinct.
-        let { data: hh, error: hhErr } = await supabase
+        let { data: hh, error: hhErr } = await supabaseAdmin
           .from('households')
           .select('id')
           .eq('family_name', link.familyName)
@@ -2574,7 +2578,7 @@ app.post(
 
         let householdId = hh?.id;
         if (!householdId) {
-          const { data: created, error: insErr } = await supabase
+          const { data: created, error: insErr } = await supabaseAdmin
             .from('households')
             .insert([
               {
@@ -2604,7 +2608,7 @@ app.post(
         }
         seenLinkKeys.add(linkKey);
 
-        const { error: linkErr } = await supabase
+        const { error: linkErr } = await supabaseAdmin
           .from('companionship_households')
           .upsert(
             { companionship_id: link.companionshipId, household_id: householdId },
@@ -2639,7 +2643,7 @@ export default app;
 app.post('/api/companionships', requireAuth, requireAdmin, async (req, res) => {
   const { leader_id, companion1_name, companion2_name, companion1_email, companion2_email } = req.body;
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('companionships')
       .insert([{
         leader_id: leader_id || null,
@@ -2664,7 +2668,7 @@ app.post('/api/companionships', requireAuth, requireAdmin, async (req, res) => {
 // leaders so they can build their /ical/leader/:uuid.ics subscription URL.
 app.get('/api/leaders', requireRole('leader'), async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('leaders')
       .select('id, name, email, google_calendar_id, active, role, phone, uuid, position');
     if (error) throw error;
@@ -2678,7 +2682,7 @@ app.get('/api/leaders', requireRole('leader'), async (req, res) => {
 // Auth-gated so tokens are never exposed via the public /api/leaders list.
 app.get('/api/me/ical-token', requireAuth, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('leaders')
       .select('ical_token')
       .eq('id', req.user.leader_id)
@@ -2698,7 +2702,7 @@ app.get('/api/me/ical-token', requireAuth, async (req, res) => {
 // Auth-gated: the UUID is unguessable and doubles as the public feed identifier.
 app.get('/api/me/leader', requireSession, async (req, res) => {
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('leaders')
       .select('id, name, email, uuid, role, calling, active')
       .eq('id', req.user.leader_id)
@@ -2722,7 +2726,7 @@ app.get('/api/leader/:leaderId/ical-token', requireSession, async (req, res) => 
   }
 
   try {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('leaders')
       .select('ical_token, uuid')
       .eq('id', leaderId)
@@ -2939,7 +2943,7 @@ app.get('/api/cal/:leader_id.ics', async (req, res) => {
   }
 
   try {
-    const { data: leader, error: leaderErr } = await supabase
+    const { data: leader, error: leaderErr } = await supabaseAdmin
       .from('leaders')
       .select('id, name, ical_token')
       .eq('id', leader_id)
@@ -2952,7 +2956,7 @@ app.get('/api/cal/:leader_id.ics', async (req, res) => {
       return res.status(401).type('text/plain').send('Unauthorized');
     }
 
-    let query = supabase
+    let query = supabaseAdmin
       .from('chapel_submissions')
       .select('*, companionships(companion1_name, companion2_name)')
       .neq('status', 'cancelled')
@@ -3146,7 +3150,7 @@ app.get('/ical/leader/:token.ics', async (req, res) => {
     // Key on whichever column the identifier's shape matches: a dashed UUID →
     // leaders.uuid, a 32-hex-no-dash token → leaders.ical_token.
     const keyColumn = FEED_UUID_RE.test(token) ? 'uuid' : 'ical_token';
-    const { data: leader, error: leaderErr } = await supabase
+    const { data: leader, error: leaderErr } = await supabaseAdmin
       .from('leaders')
       .select('id, name, uuid')
       .eq(keyColumn, token)
@@ -3157,7 +3161,7 @@ app.get('/ical/leader/:token.ics', async (req, res) => {
     const today = denverToday();
 
     const [windowsRes, winBookingsRes, slotBookingsRes] = await Promise.all([
-      supabase
+      supabaseAdmin
         .from('availability_windows')
         .select('*')
         .eq('leader_id', leader.id)
@@ -3165,13 +3169,13 @@ app.get('/ical/leader/:token.ics', async (req, res) => {
         .order('window_date', { ascending: true })
         .order('start_time', { ascending: true }),
       // Bookings inside this leader's date-specific windows.
-      supabase
+      supabaseAdmin
         .from('bookings')
         .select('*, availability_windows(*), companionships(companion1_name, companion2_name)')
         .eq('availability_windows.leader_id', leader.id)
         .neq('status', 'cancelled'),
       // Bookings on this leader's recurring slots.
-      supabase
+      supabaseAdmin
         .from('bookings')
         .select('*, slots(*), companionships(companion1_name, companion2_name)')
         .eq('slots.leader_id', leader.id)
@@ -3213,7 +3217,7 @@ app.get('/ical/companionship/:uuid.ics', async (req, res) => {
   }
 
   try {
-    const { data: comp, error: compErr } = await supabase
+    const { data: comp, error: compErr } = await supabaseAdmin
       .from('companionships')
       .select('id, leader_id, companion1_name, companion2_name, leaders(name)')
       .eq('id', uuid)
@@ -3225,14 +3229,14 @@ app.get('/ical/companionship/:uuid.ics', async (req, res) => {
     const leaderName = comp.leaders?.name || 'Presidency member';
 
     const [windowsRes, bookingsRes] = await Promise.all([
-      supabase
+      supabaseAdmin
         .from('availability_windows')
         .select('*')
         .eq('leader_id', comp.leader_id)
         .gte('window_date', today)
         .order('window_date', { ascending: true })
         .order('start_time', { ascending: true }),
-      supabase
+      supabaseAdmin
         .from('bookings')
         .select('*, availability_windows(*), slots(*)')
         .eq('companionship_id', comp.id)
@@ -3270,7 +3274,7 @@ app.get('/api/visit/:bookingId', async (req, res) => {
     const bookingId = String(req.params.bookingId || '').trim();
     if (!bookingId) return res.status(404).json({ error: 'not_found' });
 
-    const { data: booking, error: bookingErr } = await supabase
+    const { data: booking, error: bookingErr } = await supabaseAdmin
       .from('bookings')
       .select('id, companionship_id, scheduled_date, slot_time, notes, status, window_id, slot_id, availability_windows(slot_duration_minutes, start_time), slots(duration_minutes, start_time)')
       .eq('id', bookingId)
@@ -3280,7 +3284,7 @@ app.get('/api/visit/:bookingId', async (req, res) => {
       return res.status(404).json({ error: 'not_found' });
     }
 
-    const { data: comp, error: compErr } = await supabase
+    const { data: comp, error: compErr } = await supabaseAdmin
       .from('companionships')
       .select('id, leader_id, companion1_name, companion2_name, leaders(id, name)')
       .eq('id', booking.companionship_id)
@@ -3290,7 +3294,7 @@ app.get('/api/visit/:bookingId', async (req, res) => {
     // booking always has a companionship — but never render a page without one.
     if (!comp) return res.status(404).json({ error: 'not_found' });
 
-    const { data: links, error: linksErr } = await supabase
+    const { data: links, error: linksErr } = await supabaseAdmin
       .from('companionship_households')
       .select('households(family_name, active)')
       .eq('companionship_id', comp.id);
@@ -3388,7 +3392,7 @@ app.get('/api/visit/:bookingId/ics', async (req, res) => {
     const bookingId = String(req.params.bookingId || '').trim();
     if (!bookingId) return res.status(404).type('text/plain').send('Not found');
 
-    const { data: booking, error: bookingErr } = await supabase
+    const { data: booking, error: bookingErr } = await supabaseAdmin
       .from('bookings')
       .select('id, companionship_id, scheduled_date, slot_time, notes, status, availability_windows(slot_duration_minutes, start_time), slots(duration_minutes, start_time), companionships(companion1_name, companion2_name)')
       .eq('id', bookingId)
@@ -3419,7 +3423,7 @@ app.get('/api/visit/:bookingId/ics', async (req, res) => {
     const names = compDisplayName(comp);
 
     // Active household count — same filter as the visit-prep page.
-    const { data: links, error: linksErr } = await supabase
+    const { data: links, error: linksErr } = await supabaseAdmin
       .from('companionship_households')
       .select('households(family_name, active)')
       .eq('companionship_id', booking.companionship_id);
