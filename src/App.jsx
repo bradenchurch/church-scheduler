@@ -20,6 +20,7 @@ import AdminQueue from './pages/AdminQueue';
 import AdminAvailability from './pages/AdminAvailability';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminFlyer from './pages/AdminFlyer';
+import AdminNeedsAssignment from './pages/AdminNeedsAssignment';
 
 function App() {
   return (
@@ -133,6 +134,14 @@ function App() {
             element={
               <ProtectedRoute requireRole="admin">
                 <AdminFlyer />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/needs-assignment"
+            element={
+              <ProtectedRoute requireRole="admin">
+                <AdminNeedsAssignment />
               </ProtectedRoute>
             }
           />

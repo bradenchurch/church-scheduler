@@ -22,6 +22,7 @@ const ADMIN_NAV = [
   { path: '/admin/dashboard', label: 'Dashboard' },
   { path: '/admin/queue', label: 'Queue' },
   { path: '/admin/roster', label: 'Roster' },
+  { path: '/admin/needs-assignment', label: 'Needs assignment' },
   { path: '/admin/flyer', label: 'Flyer' },
   { path: '/admin/companion-override', label: 'Companion Override' },
 ];

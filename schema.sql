@@ -76,13 +76,19 @@ CREATE TABLE IF NOT EXISTS companionships (
   companion1_name TEXT NOT NULL,
   companion2_name TEXT,
   companion1_email TEXT,
-  companion2_email TEXT
+  companion2_email TEXT,
+  intentional_solo BOOLEAN NOT NULL DEFAULT false
 );
 
 -- Drop NOT NULL on companion2_name so solo companionships can be seeded.
 -- This is idempotent: the constraint was never strict in fresh DBs but the
 -- existing prod schema installed before this PR had it as NOT NULL.
 ALTER TABLE companionships ALTER COLUMN companion2_name DROP NOT NULL;
+
+-- Admin "Needs assignment" queue: a solo companionship (no companion2) with
+-- this flag set is intentional and leaves the queue. Existing rows default
+-- to false so current solos stay in the queue until an admin marks them.
+ALTER TABLE companionships ADD COLUMN IF NOT EXISTS intentional_solo BOOLEAN NOT NULL DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS slots (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
