@@ -87,7 +87,7 @@ ALTER TABLE companionships ALTER COLUMN companion2_name DROP NOT NULL;
 
 -- Presidency "Needs assignment" queue: a solo companionship (no companion2) with
 -- this flag set is intentional and leaves the queue. Existing rows default
--- to false so current solos stay in the queue until an admin marks them.
+-- to false so current solos stay in the queue until a presidency member marks them.
 ALTER TABLE companionships ADD COLUMN IF NOT EXISTS intentional_solo BOOLEAN NOT NULL DEFAULT false;
 
 CREATE TABLE IF NOT EXISTS slots (
