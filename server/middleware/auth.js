@@ -18,13 +18,14 @@ const supabaseUrl = process.env.SUPABASE_URL || 'https://example.supabase.co';
 // Token verification uses the SERVICE-ROLE key (not the anon key) so we can
 // introspect the leaders table to resolve the caller's role regardless of RLS.
 const serviceKey =
-  process.env.SUPABASE_SERVICE_KEY ||
-  process.env.SUPABASE_SECRET_KEY ||
-  process.env.SUPABASE_ANON_KEY ||
-  process.env.SUPABASE_KEY ||
-  'public-anon-key';
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY || '';
+if (!serviceKey && !MOCK_AUTH) {
+  console.error(
+    '[auth] SUPABASE_SERVICE_KEY is not set. Leader lookups will fail once ward-table RLS is enabled.'
+  );
+}
 
-const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+const supabaseAdmin = createClient(supabaseUrl, serviceKey || 'missing-service-role-key', {
   auth: { persistSession: false, autoRefreshToken: false },
 });
 

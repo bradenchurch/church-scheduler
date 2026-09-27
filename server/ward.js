@@ -32,7 +32,9 @@ export async function getWardSlug() {
 
   try {
     const url = process.env.SUPABASE_URL;
-    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY;
+    // Anon cannot read `config` once RLS is on. Missing service key falls
+    // through to DEFAULT_WARD_SLUG below.
+    const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SECRET_KEY;
     if (url && key) {
       const sb = createClient(url, key, { auth: { persistSession: false } });
       const { data, error } = await sb
