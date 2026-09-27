@@ -9,20 +9,21 @@ const PUBLIC_ROUTES = ['/login', '/auth/callback', '/chapel', '/book'];
 const isPublicRoute = (pathname) =>
   PUBLIC_ROUTES.includes(pathname) || pathname.startsWith('/q/') || pathname.startsWith('/visit/');
 
-// Main bar — every authenticated leader/admin sees these three items, so the
-// header reads like a utility bar (Calendly-style), not a sitemap.
+// Main bar — every presidency member (leader or admin) sees these items.
+// Needs assignment sits here because the Admin menu is admin-only, and Cole,
+// Sean, and Kawika need the queue without that gate.
 const MAIN_NAV = [
   { path: '/', label: 'Home' },
   { path: '/admin/availability', label: 'Availability' },
+  { path: '/admin/needs-assignment', label: 'Needs assignment' },
   { path: '/me', label: 'My Schedule' },
 ];
 
-// Admin tools live behind the "Admin" trigger to keep the main bar at 3 items.
+// Admin tools live behind the "Admin" trigger. That menu stays admin-only.
 const ADMIN_NAV = [
   { path: '/admin/dashboard', label: 'Dashboard' },
   { path: '/admin/queue', label: 'Queue' },
   { path: '/admin/roster', label: 'Roster' },
-  { path: '/admin/needs-assignment', label: 'Needs assignment' },
   { path: '/admin/flyer', label: 'Flyer' },
   { path: '/admin/companion-override', label: 'Companion Override' },
 ];
@@ -153,8 +154,8 @@ export default function Nav() {
         {/* Desktop bar */}
         <div className="hidden sm:flex items-center gap-1 flex-wrap">
           {MAIN_NAV.map((item) => {
-            // Home is for every signed-in user; Availability / My Schedule
-            // need a presidency role.
+            // Home is for every signed-in user. The other main-bar links need a
+            // presidency role (leader or admin).
             if (item.path !== '/' && !isLeader) return null;
             return (
               <Link key={item.path} to={item.path} className={desktopLinkClass(isActive(item.path))}>

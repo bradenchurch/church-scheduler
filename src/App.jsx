@@ -140,7 +140,7 @@ function App() {
           <Route
             path="/admin/needs-assignment"
             element={
-              <ProtectedRoute requireRole="admin">
+              <ProtectedRoute requireRole="leader">
                 <AdminNeedsAssignment />
               </ProtectedRoute>
             }

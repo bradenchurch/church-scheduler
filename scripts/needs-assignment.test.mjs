@@ -540,34 +540,46 @@ async function call(app, method, url, { user, body } = {}) {
   }
 }
 
-test('needs-assignment routes are admin-only and serve the live queue', async () => {
+test('the presidency can read and update the queue; companions cannot', async () => {
   const memory = createMemoryDb(prodState());
   const app = mount(memory);
   const admin = { role: 'admin', email: 'bradenchurch@gmail.com' };
   const leader = { role: 'leader', email: 'cole.chollet1@gmail.com' };
+  const companion = { role: 'companion', email: 'elder@example.com' };
+  const householdId = '3dd868f3-5d17-d02b-7e38-e90a3d7994d7';
 
   const anon = await call(app, 'GET', '/api/admin/needs-assignment');
   assert.equal(anon.status, 401);
 
-  const forbidden = await call(app, 'GET', '/api/admin/needs-assignment', { user: leader });
-  assert.equal(forbidden.status, 403);
+  const hidden = await call(app, 'GET', '/api/admin/needs-assignment', { user: companion });
+  assert.equal(hidden.status, 403);
 
-  const ok = await call(app, 'GET', '/api/admin/needs-assignment', { user: admin });
-  assert.equal(ok.status, 200);
-  assert.equal(ok.data.counts.needs_companion, 6);
-  assert.equal(ok.data.counts.needs_companionship, 19);
+  const leaderView = await call(app, 'GET', '/api/admin/needs-assignment', { user: leader });
+  assert.equal(leaderView.status, 200);
+  assert.equal(leaderView.data.counts.needs_companion, 6);
+  assert.equal(leaderView.data.counts.needs_companionship, 19);
 
-  const deniedWrite = await call(
+  const leaderWrite = await call(
     app,
     'POST',
-    '/api/admin/needs-assignment/households/3dd868f3-5d17-d02b-7e38-e90a3d7994d7/assign',
+    `/api/admin/needs-assignment/households/${householdId}/assign`,
     { user: leader, body: { companionship_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' } },
   );
-  assert.equal(deniedWrite.status, 403);
-  assert.equal(
-    memory.db.companionship_households.some((l) => l.household_id === '3dd868f3-5d17-d02b-7e38-e90a3d7994d7'),
-    false,
+  assert.equal(leaderWrite.status, 200);
+  assert.equal(leaderWrite.data.companionship_id, 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa');
+  assert.ok(
+    memory.db.companionship_households.some(
+      (link) => link.household_id === householdId && link.companionship_id === leaderWrite.data.companionship_id,
+    ),
   );
+
+  const companionWrite = await call(
+    app,
+    'POST',
+    '/api/admin/needs-assignment/companionships/10bbaba5-00ab-40d2-8fd4-b93b1f4bdabf/intentional-solo',
+    { user: companion, body: { intentional_solo: true } },
+  );
+  assert.equal(companionWrite.status, 403);
 
   const write = await call(
     app,
@@ -578,8 +590,10 @@ test('needs-assignment routes are admin-only and serve the live queue', async ()
   assert.equal(write.status, 200);
   assert.equal(write.data.intentional_solo, true);
 
-  const after = await call(app, 'GET', '/api/admin/needs-assignment', { user: admin });
+  const after = await call(app, 'GET', '/api/admin/needs-assignment', { user: leader });
+  assert.equal(after.status, 200);
   assert.equal(after.data.counts.needs_companion, 5);
+  assert.equal(after.data.counts.needs_companionship, 18);
   assert.equal(after.data.counts.intentional_solo, 2);
 });
 
@@ -588,16 +602,18 @@ export { createMemoryDb, prodState, LEADERS, WARD };
 test('the page and schema do not reset the roster', () => {
   const page = fs.readFileSync(new URL('../src/pages/AdminNeedsAssignment.jsx', import.meta.url), 'utf8');
   const nav = fs.readFileSync(new URL('../src/components/Nav.jsx', import.meta.url), 'utf8');
+  const appSrc = fs.readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
   const schema = fs.readFileSync(new URL('../schema.sql', import.meta.url), 'utf8');
   const server = fs.readFileSync(new URL('../server/index.js', import.meta.url), 'utf8');
+  const routes = fs.readFileSync(new URL('../server/needs-assignment.js', import.meta.url), 'utf8');
   assert.match(page, /\/api\/admin\/needs-assignment/);
   assert.doesNotMatch(page, /deleteRoster|\/api\/admin\/roster|Reset Roster/);
-  assert.match(nav, /Needs assignment/);
-  assert.match(nav, /\/admin\/needs-assignment/);
+  assert.match(nav, /const MAIN_NAV = \[[\s\S]*?Needs assignment/);
+  assert.doesNotMatch(nav, /const ADMIN_NAV = \[[\s\S]*?Needs assignment/);
+  assert.match(appSrc, /path="\/admin\/needs-assignment"[\s\S]*?requireRole="leader"/);
   assert.match(schema, /intentional_solo/);
   assert.match(server, /registerNeedsAssignmentRoutes\(/);
-  assert.doesNotMatch(
-    fs.readFileSync(new URL('../server/needs-assignment.js', import.meta.url), 'utf8'),
-    /writeEmptyRoster|\/api\/admin\/roster/,
-  );
+  assert.match(routes, /requireRole\('leader'\)/);
+  assert.doesNotMatch(routes, /requireRole\('admin'\)/);
+  assert.doesNotMatch(routes, /writeEmptyRoster|\/api\/admin\/roster/);
 });

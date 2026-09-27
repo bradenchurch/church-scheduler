@@ -1,4 +1,4 @@
-// Admin "Needs assignment" queue.
+// Presidency "Needs assignment" queue (leaders.role admin or leader).
 //
 // Lists two leftovers the LCR import does not surface well on Roster:
 //   1. Solo companionships — companion1 is set, companion2 is null/blank,
@@ -487,7 +487,9 @@ function sendError(res, err) {
 
 export function registerNeedsAssignmentRoutes(app, deps) {
   const { supabaseAdmin, requireSession, requireRole, leaderByDistrict, wardSlug } = deps;
-  const gate = [requireSession, requireRole('admin')];
+  // Same gate as availability and the rest of the presidency tools:
+  // requireRole('leader') allows leaders and admins. Companions are rejected.
+  const gate = [requireSession, requireRole('leader')];
   const queueOpts = { leaderByDistrict, wardSlug };
 
   app.get('/api/admin/needs-assignment', ...gate, async (req, res) => {

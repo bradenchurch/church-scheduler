@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS companionships (
 -- existing prod schema installed before this PR had it as NOT NULL.
 ALTER TABLE companionships ALTER COLUMN companion2_name DROP NOT NULL;
 
--- Admin "Needs assignment" queue: a solo companionship (no companion2) with
+-- Presidency "Needs assignment" queue: a solo companionship (no companion2) with
 -- this flag set is intentional and leaves the queue. Existing rows default
 -- to false so current solos stay in the queue until an admin marks them.
 ALTER TABLE companionships ADD COLUMN IF NOT EXISTS intentional_solo BOOLEAN NOT NULL DEFAULT false;

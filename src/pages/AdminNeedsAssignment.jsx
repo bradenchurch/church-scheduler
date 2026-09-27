@@ -210,7 +210,7 @@ export default function AdminNeedsAssignment() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs uppercase tracking-widest text-brown-light font-semibold mb-1">
-            Admin · Needs assignment
+            Presidency · Needs assignment
           </p>
           <h1 className="text-3xl font-serif font-bold text-burgundy">Needs assignment</h1>
           <p className="text-brown-light mt-1 max-w-xl">
