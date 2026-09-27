@@ -20,6 +20,7 @@ import { handleBookingConfirmation } from './notifications.js';
 import { getRoster, formatAddress, splitCompanions, getUnlinkedCompanions, writeEmptyRoster, writeRoster } from './roster.js';
 import { requireAuth as requireSession, requireRole, requireCompanionFor } from './middleware/auth.js';
 import { parseLcrPdf } from './lcr-parser.js';
+import { registerNeedsAssignmentRoutes } from './needs-assignment.js';
 
 dotenv.config();
 
@@ -2664,6 +2665,14 @@ app.post(
     }
   }
 );
+
+registerNeedsAssignmentRoutes(app, {
+  supabaseAdmin,
+  requireSession,
+  requireRole,
+  leaderByDistrict: LEADER_BY_DISTRICT,
+  wardSlug: process.env.WARD_SLUG || getDefaultWardSlug(),
+});
 
 app.listen(port, () => {
   console.log(`Backend server listening at http://localhost:${port}`);
