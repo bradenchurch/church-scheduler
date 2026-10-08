@@ -65,17 +65,50 @@ export function leaderContactBody(leader) {
   };
 }
 
+// PostgREST treats these as filter syntax inside an or()/ilike string, and
+// Postgres LIKE treats % _ \ as wildcards. They never become operators here:
+// a term made only of them is dropped, and any term that still has a name
+// character is matched as a literal substring.
+const FILTER_SYNTAX = /[.,():*"'\\%_]/g;
+export const COMPANIONSHIP_SEARCH_MAX = 100;
+
+export function companionshipSearchTerms(raw) {
+  const text = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof text !== 'string' || text === '') return [];
+  const terms = [];
+  for (const part of text.slice(0, COMPANIONSHIP_SEARCH_MAX).split(',')) {
+    const trimmed = part.trim();
+    if (!trimmed) continue;
+    FILTER_SYNTAX.lastIndex = 0;
+    if (!trimmed.replace(FILTER_SYNTAX, '').trim()) continue;
+    terms.push(trimmed.toLowerCase());
+  }
+  return terms;
+}
+
+export function companionshipMatchesTerms(row, terms) {
+  if (!terms || terms.length === 0) return true;
+  const haystack = [row?.companion1_name, row?.companion2_name]
+    .map((name) => String(name || '').toLowerCase())
+    .join('\n');
+  return terms.every((term) => haystack.includes(term));
+}
+
 export function registerPublicReadRoutes(app, { supabaseAdmin, requireSession }) {
   app.get('/api/companionships', async (req, res) => {
-    const { search } = req.query;
+    // Name match runs in process. User text is never concatenated into a
+    // PostgREST .or()/.ilike filter, so commas and operator syntax cannot
+    // add a condition on email. Leader name is not part of this search.
+    const terms = companionshipSearchTerms(req.query.search);
     try {
-      let query = supabaseAdmin.from('companionships').select(PUBLIC_COMPANIONSHIP_COLUMNS);
-      if (search) {
-        query = query.or(`companion1_name.ilike.%${search}%,companion2_name.ilike.%${search}%`);
-      }
-      const { data, error } = await query;
+      const { data, error } = await supabaseAdmin
+        .from('companionships')
+        .select(PUBLIC_COMPANIONSHIP_COLUMNS);
       if (error) throw error;
-      res.json((data || []).map(publicCompanionship));
+      const rows = terms.length
+        ? (data || []).filter((row) => companionshipMatchesTerms(row, terms))
+        : (data || []);
+      res.json(rows.map(publicCompanionship));
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
