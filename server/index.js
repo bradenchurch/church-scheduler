@@ -770,6 +770,7 @@ app.post('/api/auth/google/test-invite', requireAuth, async (req, res) => {
 
 // Public reads: companionship names, availability slots/windows, and slot rows.
 // No emails or phones. Companion emails stay on GET /api/admin/roster.
+// ?search= matches companion names in process; it is not a PostgREST filter.
 // A signed-in companion loads their presidency member from
 // GET /api/availability/:leaderId/contact.
 registerPublicReadRoutes(app, { supabaseAdmin, requireSession });
