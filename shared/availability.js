@@ -289,6 +289,106 @@ export function classify(rows, existing) {
   return { create, exact, overlap, internalOverlap };
 }
 
+/**
+ * Join overlap proposals that touch the same existing window.
+ * 6:00–7:30 and 8:30–10:00 over an existing 7:00–9:00 become 6:00–10:00.
+ * Ranges that only touch, such as 7–8 and 8–9, stay separate.
+ */
+export function collapseMerges(items) {
+  const byDate = new Map();
+  for (const item of items || []) {
+    const row = normalizeRow(item.row);
+    if (!byDate.has(row.window_date)) byDate.set(row.window_date, []);
+    byDate.get(row.window_date).push({
+      row,
+      existing: (item.existing || []).map((ex) => normalizeRow(ex)),
+    });
+  }
+  const groups = [];
+  for (const [date, list] of byDate) groups.push(...collapseOneDate(date, list));
+  return groups;
+}
+
+function collapseOneDate(date, list) {
+  const existing = [];
+  const existingIndex = new Map();
+  for (const item of list) {
+    for (const ex of item.existing) {
+      const id = ex.id || `${date}|${ex.start_time}|${ex.end_time}`;
+      if (existingIndex.has(id)) continue;
+      existingIndex.set(id, existing.length);
+      existing.push({ ...ex, id });
+    }
+  }
+
+  const count = list.length + existing.length;
+  const parent = Array.from({ length: count }, (_, index) => index);
+  const find = (index) => {
+    let root = index;
+    while (parent[root] !== root) root = parent[root];
+    let cursor = index;
+    while (parent[cursor] !== root) {
+      const next = parent[cursor];
+      parent[cursor] = root;
+      cursor = next;
+    }
+    return root;
+  };
+  const union = (a, b) => {
+    const ra = find(a);
+    const rb = find(b);
+    if (ra !== rb) parent[rb] = ra;
+  };
+
+  list.forEach((item, index) => {
+    for (const ex of item.existing) {
+      const id = ex.id || `${date}|${ex.start_time}|${ex.end_time}`;
+      const stored = existing[existingIndex.get(id)];
+      if (rangesOverlap(item.row.start_time, item.row.end_time, stored.start_time, stored.end_time)) {
+        union(index, list.length + existingIndex.get(id));
+      }
+    }
+    for (let other = index + 1; other < list.length; other += 1) {
+      if (rangesOverlap(item.row.start_time, item.row.end_time, list[other].row.start_time, list[other].row.end_time)) {
+        union(index, other);
+      }
+    }
+  });
+
+  const buckets = new Map();
+  for (let index = 0; index < count; index += 1) {
+    const root = find(index);
+    if (!buckets.has(root)) buckets.set(root, { rows: [], existing: [] });
+    if (index < list.length) buckets.get(root).rows.push(list[index].row);
+    else buckets.get(root).existing.push(existing[index - list.length]);
+  }
+
+  return [...buckets.values()]
+    .filter((bucket) => bucket.rows.length)
+    .map((bucket) => {
+      const spans = [...bucket.rows, ...bucket.existing];
+      const starts = spans.map((row) => row.start_time).sort();
+      const ends = spans.map((row) => row.end_time).sort();
+      return {
+        window_date: date,
+        start_time: starts[0],
+        end_time: ends[ends.length - 1],
+        slot_duration_minutes: bucket.rows[0].slot_duration_minutes,
+        buffer_minutes: bucket.rows[0].buffer_minutes,
+        rows: bucket.rows,
+        existing: bucket.existing,
+      };
+    });
+}
+
+export function undoFailureMessage(kind, httpOk, body) {
+  const changed = kind === 'delete'
+    ? (body?.created || []).length > 0
+    : (body?.deleted || []).length > 0;
+  if (httpOk && changed) return '';
+  return "Couldn't undo";
+}
+
 export function patternProblems({ ranges, slot, buffer, from, to }) {
   const problems = [];
   if (!ranges?.length || ranges.every((r) => !(r.weekdays || []).length)) {

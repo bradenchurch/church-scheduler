@@ -1,5 +1,6 @@
 import {
   classify,
+  collapseMerges,
   dedupeExact,
   formatTime12,
   isUuid,
@@ -13,10 +14,8 @@ const FULL_COLUMNS = 'id, leader_id, window_date, start_time, end_time, slot_dur
 const NO_SERIES_COLUMNS = 'id, leader_id, window_date, start_time, end_time, slot_duration_minutes, buffer_minutes, created_at';
 
 const replayMemory = new Map();
-const deletedLog = new Map();
 const leaderChains = new Map();
 const REPLAY_TTL_MS = 30 * 60 * 1000;
-const DELETE_TTL_MS = 2 * 60 * 1000;
 
 function isMissingColumn(error, column) {
   if (!error) return false;
@@ -38,6 +37,12 @@ function isUniqueViolation(error) {
   return error?.code === '23505' || /23505|duplicate key/i.test(error?.message || '');
 }
 
+function isMissingFunction(error) {
+  if (!error) return false;
+  const message = `${error.message || ''} ${error.details || ''}`;
+  return error.code === 'PGRST202' || error.code === '42883' || /could not find the function/i.test(message);
+}
+
 function withLeaderLock(leaderId, fn) {
   const prev = leaderChains.get(leaderId) || Promise.resolve();
   const run = prev.catch(() => {}).then(fn);
@@ -49,7 +54,6 @@ function withLeaderLock(leaderId, fn) {
 
 export function resetAvailabilityMemory() {
   replayMemory.clear();
-  deletedLog.clear();
   leaderChains.clear();
 }
 
@@ -67,24 +71,6 @@ function recallReplay(leaderId, seriesId) {
     return null;
   }
   return hit.body;
-}
-
-function rememberDeleted(leaderId, rows) {
-  const now = Date.now();
-  for (const row of rows || []) {
-    if (!row?.id) continue;
-    deletedLog.set(row.id, { leaderId, row, at: now });
-  }
-}
-
-function recentlyDeleted(leaderId, id) {
-  const hit = deletedLog.get(id);
-  if (!hit || hit.leaderId !== leaderId) return null;
-  if (Date.now() - hit.at > DELETE_TTL_MS) {
-    deletedLog.delete(id);
-    return null;
-  }
-  return hit.row;
 }
 
 function plainCount(n, noun) {
@@ -177,6 +163,37 @@ export function createAvailabilityService(supabaseAdmin) {
     return attempt;
   }
 
+  async function replaceWindows({ leaderId, deleteIds, rows }) {
+    if (deleteIds.length && typeof supabaseAdmin.rpc === 'function') {
+      const rpc = await supabaseAdmin.rpc('availability_replace_windows', {
+        p_leader_id: leaderId,
+        p_delete_ids: deleteIds,
+        p_rows: rows.map((row) => ({
+          window_date: row.window_date,
+          start_time: row.start_time,
+          end_time: row.end_time,
+          slot_duration_minutes: row.slot_duration_minutes,
+          buffer_minutes: row.buffer_minutes,
+          series_id: row.series_id || null,
+        })),
+      });
+      if (!rpc.error) return { data: Array.isArray(rpc.data) ? rpc.data : [], error: null };
+      if (!isMissingFunction(rpc.error)) return { data: null, error: rpc.error };
+    }
+
+    const inserted = rows.length ? await insertWindows(rows) : { data: [], error: null };
+    if (inserted.error) return inserted;
+    if (deleteIds.length) {
+      const { error } = await supabaseAdmin
+        .from('availability_windows')
+        .delete()
+        .in('id', deleteIds)
+        .eq('leader_id', leaderId);
+      if (error) return { data: null, error };
+    }
+    return { data: inserted.data || [], error: null };
+  }
+
   async function findSeriesRows(leaderId, seriesId) {
     const current = await getCaps();
     if (!current.seriesId || !seriesId) return [];
@@ -196,8 +213,11 @@ export function createAvailabilityService(supabaseAdmin) {
   }
 
   async function saveBatch({ leaderId, body }) {
-    if (body?.undo) return restoreDeleted({ leaderId, windows: body.windows });
-    return withLeaderLock(leaderId, () => saveBatchLocked({ leaderId, body }));
+    return withLeaderLock(leaderId, () => (
+      body?.undo
+        ? restoreDeleted({ leaderId, windows: body.windows })
+        : saveBatchLocked({ leaderId, body })
+    ));
   }
 
   async function saveBatchLocked({ leaderId, body }) {
@@ -259,6 +279,7 @@ export function createAvailabilityService(supabaseAdmin) {
     const toInsert = plan.create.map((row) => ({ ...row, leader_id: leaderId, series_id: seriesId }));
     const conflicts = [];
 
+    const mergeItems = [];
     for (const item of plan.overlap) {
       const bookings = item.existing.flatMap((row) => bookingMap.get(row.id) || []);
       if (onOverlap === 'skip') {
@@ -280,44 +301,55 @@ export function createAvailabilityService(supabaseAdmin) {
         continue;
       }
       if (onOverlap === 'merge') {
-        const slot = item.row.slot_duration_minutes;
-        const buffer = item.row.buffer_minutes;
-        const mismatch = item.existing.some(
-          (row) => Number(row.slot_duration_minutes) !== slot || Number(row.buffer_minutes || 0) !== buffer,
-        );
-        if (mismatch) {
-          conflicts.push({
-            window: item.row,
-            reason: 'merge_mismatch',
-            message: 'Merge is only available when the visit length and buffer match.',
-            existing: item.existing,
-          });
-          continue;
-        }
-        const starts = [item.row.start_time, ...item.existing.map((row) => timeKey(row.start_time))].sort();
-        const ends = [item.row.end_time, ...item.existing.map((row) => timeKey(row.end_time))].sort();
-        for (const row of item.existing) toDelete.add(row.id);
-        toInsert.push({
-          ...item.row,
-          start_time: starts[0],
-          end_time: ends[ends.length - 1],
-          leader_id: leaderId,
-          series_id: seriesId,
-        });
+        mergeItems.push(item);
         continue;
       }
       for (const row of item.existing) toDelete.add(row.id);
       toInsert.push({ ...item.row, leader_id: leaderId, series_id: seriesId });
     }
 
-    if (toDelete.size) {
-      const { error } = await supabaseAdmin.from('availability_windows').delete().in('id', [...toDelete]);
-      if (error) throw error;
+    for (const group of collapseMerges(mergeItems)) {
+      const bookings = group.existing.flatMap((row) => bookingMap.get(row.id) || []);
+      if (bookings.length) {
+        conflicts.push({
+          window: { window_date: group.window_date, start_time: group.start_time, end_time: group.end_time },
+          reason: 'booked',
+          message: `${bookings.length} visit${bookings.length === 1 ? ' is' : 's are'} booked in that window`,
+          existing: group.existing,
+        });
+        continue;
+      }
+      const slot = group.slot_duration_minutes;
+      const buffer = group.buffer_minutes;
+      const mismatch = [...group.rows, ...group.existing].some(
+        (row) => Number(row.slot_duration_minutes) !== slot || Number(row.buffer_minutes || 0) !== buffer,
+      );
+      if (mismatch) {
+        conflicts.push({
+          window: { window_date: group.window_date, start_time: group.start_time, end_time: group.end_time },
+          reason: 'merge_mismatch',
+          message: 'Merge is only available when the visit length and buffer match.',
+          existing: group.existing,
+        });
+        continue;
+      }
+      for (const row of group.existing) if (row.id) toDelete.add(row.id);
+      toInsert.push({
+        window_date: group.window_date,
+        start_time: group.start_time,
+        end_time: group.end_time,
+        slot_duration_minutes: slot,
+        buffer_minutes: buffer,
+        leader_id: leaderId,
+        series_id: seriesId,
+      });
     }
 
     let created = [];
-    if (toInsert.length) {
-      const inserted = await insertWindows(toInsert);
+    if (toInsert.length || toDelete.size) {
+      const inserted = toDelete.size
+        ? await replaceWindows({ leaderId, deleteIds: [...toDelete], rows: toInsert })
+        : await insertWindows(toInsert);
       if (inserted.error && (isExclusionViolation(inserted.error) || isUniqueViolation(inserted.error))) {
         if (!allowRetry) {
           return {
@@ -432,58 +464,67 @@ export function createAvailabilityService(supabaseAdmin) {
     if (user.role !== 'admin' && current.leader_id !== user.leader_id) {
       return { status: 403, body: { error: 'Forbidden' } };
     }
-    const bookings = await activeBookings([id]);
-    const visits = bookings.get(id) || [];
-    if (visits.length) {
-      return {
-        status: 409,
-        body: {
-          error: 'booked',
-          message: `${plainCount(visits.length, 'visit')} ${visits.length === 1 ? 'is' : 'are'} booked in that window. Cancel the visit before deleting this window.`,
-        },
-      };
-    }
-    const { error } = await supabaseAdmin.from('availability_windows').delete().eq('id', id);
+    return withLeaderLock(current.leader_id, async () => {
+      const held = await activeBookings([id]);
+      const stillBooked = held.get(id) || [];
+      if (stillBooked.length) {
+        return {
+          status: 409,
+          body: {
+            error: 'booked',
+            message: `${plainCount(stillBooked.length, 'visit')} ${stillBooked.length === 1 ? 'is' : 'are'} booked in that window. Cancel the visit before deleting this window.`,
+          },
+        };
+      }
+      const { error } = await supabaseAdmin.from('availability_windows').delete().eq('id', id).eq('leader_id', current.leader_id);
+      if (error) throw error;
+      return { status: 200, body: { deleted: [current] } };
+    });
+  }
+
+  async function loadOwnedRows(leaderId, ids) {
+    const clean = [...new Set((ids || []).filter((id) => isUuid(id)))];
+    if (!clean.length) return [];
+    const { data, error } = await supabaseAdmin
+      .from('availability_windows')
+      .select(columnsFor(await getCaps()))
+      .in('id', clean)
+      .eq('leader_id', leaderId);
     if (error) throw error;
-    rememberDeleted(current.leader_id, [current]);
-    return { status: 200, body: { deleted: [current] } };
+    return data || [];
   }
 
   async function deleteMany({ leaderId, user, seriesId, from, to, ids }) {
     if (user.role !== 'admin' && user.leader_id !== leaderId) {
       return { status: 403, body: { error: 'Forbidden' } };
     }
-    let rows = [];
-    if (seriesId) {
-      rows = await findSeriesRows(leaderId, seriesId);
-      if (!rows.length && isUuid(seriesId)) {
-        const remembered = recallReplay(leaderId, seriesId);
-        const rememberedIds = (remembered?.created || []).map((row) => row.id).filter(Boolean);
-        if (rememberedIds.length) {
-          const { data, error } = await supabaseAdmin
-            .from('availability_windows')
-            .select(columnsFor(await getCaps()))
-            .in('id', rememberedIds)
-            .eq('leader_id', leaderId);
-          if (error) throw error;
-          rows = data || [];
-        }
-      }
-    } else if (from && to) {
-      rows = await listWindows(leaderId, { from, to });
-    } else if (Array.isArray(ids) && ids.length) {
-      const clean = ids.filter((id) => isUuid(id));
-      if (!clean.length) return { status: 400, body: { error: 'ids must be uuids' } };
-      const { data, error } = await supabaseAdmin
-        .from('availability_windows')
-        .select(columnsFor(await getCaps()))
-        .in('id', clean)
-        .eq('leader_id', leaderId);
-      if (error) throw error;
-      rows = data || [];
-    } else {
+    return withLeaderLock(leaderId, () => deleteManyLocked({ leaderId, seriesId, from, to, ids }));
+  }
+
+  async function deleteManyLocked({ leaderId, seriesId, from, to, ids }) {
+    const collected = new Map();
+    const hasIds = Array.isArray(ids) && ids.length > 0;
+    if (!seriesId && !hasIds && !(from && to)) {
       return { status: 400, body: { error: 'series_id, from and to, or ids required' } };
     }
+    if (hasIds && !ids.some((id) => isUuid(id)) && !seriesId && !(from && to)) {
+      return { status: 400, body: { error: 'ids must be uuids' } };
+    }
+    if (seriesId) {
+      for (const row of await findSeriesRows(leaderId, seriesId)) collected.set(row.id, row);
+      if (!collected.size && isUuid(seriesId)) {
+        const remembered = recallReplay(leaderId, seriesId);
+        const rememberedIds = (remembered?.created || []).map((row) => row.id).filter(Boolean);
+        for (const row of await loadOwnedRows(leaderId, rememberedIds)) collected.set(row.id, row);
+      }
+    }
+    if (hasIds) {
+      for (const row of await loadOwnedRows(leaderId, ids)) collected.set(row.id, row);
+    }
+    if (!collected.size && !seriesId && !hasIds && from && to) {
+      for (const row of await listWindows(leaderId, { from, to })) collected.set(row.id, row);
+    }
+    const rows = [...collected.values()];
 
     const bookings = await activeBookings(rows.map((row) => row.id));
     const kept = [];
@@ -502,9 +543,8 @@ export function createAvailabilityService(supabaseAdmin) {
       }
     }
     if (deletable.length) {
-      const { error } = await supabaseAdmin.from('availability_windows').delete().in('id', deletable.map((row) => row.id));
+      const { error } = await supabaseAdmin.from('availability_windows').delete().in('id', deletable.map((row) => row.id)).eq('leader_id', leaderId);
       if (error) throw error;
-      rememberDeleted(leaderId, deletable);
     }
     return { status: 200, body: { deleted: deletable, kept } };
   }
@@ -514,39 +554,44 @@ export function createAvailabilityService(supabaseAdmin) {
       return { status: 400, body: { error: 'windows required' } };
     }
     const restored = [];
+    const current = await getCaps();
     for (const input of windows) {
       if (!isUuid(input?.id)) {
         return { status: 400, body: { error: 'undo ids must be uuids' } };
       }
-      const logged = recentlyDeleted(leaderId, input.id);
-      if (!logged) {
-        return {
-          status: 409,
-          body: { error: 'undo_expired', message: 'Undo expired. Nothing was restored.' },
-        };
+      if (input.leader_id && input.leader_id !== leaderId) {
+        return { status: 403, body: { error: 'Forbidden' } };
       }
-      const parsed = validateWindowInput(logged);
+      const parsed = validateWindowInput(input);
       if (parsed.error) return { status: 400, body: { error: parsed.error } };
-      const { data: existing } = await supabaseAdmin
+      const { data: existing, error: existingError } = await supabaseAdmin
         .from('availability_windows')
-        .select('id')
+        .select('id, leader_id')
         .eq('id', input.id)
         .maybeSingle();
-      if (existing) continue;
-      const current = await getCaps();
+      if (existingError) throw existingError;
+      if (existing && existing.leader_id !== leaderId) {
+        return { status: 403, body: { error: 'Forbidden' } };
+      }
+      if (existing) {
+        restored.push(existing);
+        continue;
+      }
       const row = {
         id: input.id,
         leader_id: leaderId,
         ...parsed.value,
       };
-      if (current.seriesId && logged.series_id) row.series_id = logged.series_id;
+      if (current.seriesId && isUuid(input.series_id)) row.series_id = input.series_id;
       const inserted = await insertWindows([row]);
-      if (inserted.error && isExclusionViolation(inserted.error)) {
+      if (inserted.error && (isExclusionViolation(inserted.error) || isUniqueViolation(inserted.error))) {
         return { status: 409, body: { error: 'conflict', message: 'That time now overlaps another window, so it was not restored.' } };
       }
       if (inserted.error) throw inserted.error;
       restored.push((inserted.data || [])[0] || row);
-      deletedLog.delete(input.id);
+    }
+    if (!restored.length) {
+      return { status: 409, body: { error: 'undo_expired', message: 'Undo expired. Nothing was restored.' } };
     }
     return { status: 201, body: { created: restored, restored: true } };
   }

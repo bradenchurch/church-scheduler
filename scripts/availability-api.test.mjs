@@ -4,7 +4,8 @@ import { randomUUID } from 'node:crypto';
 import { expandPattern } from '../shared/availability.js';
 import { createAvailabilityService, resetAvailabilityMemory } from '../server/availability.js';
 
-function createFakeDb({ seriesColumn = false, unique = false, exclusion = false } = {}) {
+function createFakeDb(options = {}) {
+  const { seriesColumn = false, unique = false, exclusion = false } = options;
   const tables = { availability_windows: [], bookings: [] };
 
   function from(table) {
@@ -89,7 +90,55 @@ function createFakeDb({ seriesColumn = false, unique = false, exclusion = false 
     return api;
   }
 
-  return { from, tables };
+  async function rpc(name, args) {
+    if (name !== 'availability_replace_windows') {
+      return { data: null, error: { code: 'PGRST202', message: 'Could not find the function' } };
+    }
+    const snapshot = tables.availability_windows.map((row) => ({ ...row }));
+    const deleteIds = new Set(args.p_delete_ids || []);
+    tables.availability_windows = tables.availability_windows.filter(
+      (row) => !(row.leader_id === args.p_leader_id && deleteIds.has(row.id)),
+    );
+    const stored = [];
+    try {
+      for (const raw of args.p_rows || []) {
+        const row = {
+          id: randomUUID(),
+          leader_id: args.p_leader_id,
+          window_date: raw.window_date,
+          start_time: String(raw.start_time).slice(0, 5),
+          end_time: String(raw.end_time).slice(0, 5),
+          slot_duration_minutes: raw.slot_duration_minutes,
+          buffer_minutes: raw.buffer_minutes ?? 0,
+          series_id: raw.series_id || null,
+        };
+        if (![0, 5, 10].includes(Number(row.buffer_minutes))) {
+          const error = new Error('check');
+          error.code = '23514';
+          throw error;
+        }
+        if (!seriesColumn) delete row.series_id;
+        const overlap = tables.availability_windows.find((existing) =>
+          existing.leader_id === row.leader_id
+          && String(existing.window_date).slice(0, 10) === row.window_date
+          && row.start_time < String(existing.end_time).slice(0, 5)
+          && String(existing.start_time).slice(0, 5) < row.end_time);
+        if (overlap && exclusion) {
+          const error = new Error('exclusion');
+          error.code = '23P01';
+          throw error;
+        }
+        tables.availability_windows.push(row);
+        stored.push(row);
+      }
+    } catch (error) {
+      tables.availability_windows = snapshot;
+      return { data: null, error: { code: error.code, message: error.message } };
+    }
+    return { data: stored, error: null };
+  }
+
+  return options.rpc ? { from, tables, rpc } : { from, tables };
 }
 
 function serviceFor(options) {
@@ -260,4 +309,115 @@ test('a request that overlaps itself is rejected before insert', async () => {
   assert.equal(result.status, 400);
   assert.match(result.body.message, /Sunday times overlap/);
   assert.equal(db.tables.availability_windows.length, 0);
+});
+
+test('undo restores a deleted window on a second instance with empty memory', async () => {
+  resetAvailabilityMemory();
+  const db = createFakeDb({ seriesColumn: false, unique: false });
+  const first = createAvailabilityService(db);
+  const saved = await first.saveBatch({
+    leaderId: 'kawika',
+    body: {
+      series_id: randomUUID(),
+      windows: [{ window_date: '2026-10-11', start_time: '13:00', end_time: '15:00', slot_duration_minutes: 30, buffer_minutes: 0 }],
+    },
+  });
+  const deleted = await first.deleteOne({
+    id: saved.body.created[0].id,
+    user: { role: 'leader', leader_id: 'kawika' },
+  });
+  assert.equal(db.tables.availability_windows.length, 0);
+  resetAvailabilityMemory();
+  const second = createAvailabilityService(db);
+  const restored = await second.saveBatch({
+    leaderId: 'kawika',
+    body: { undo: true, windows: deleted.body.deleted },
+  });
+  assert.equal(restored.status, 201);
+  assert.equal(restored.body.created.length, 1);
+  assert.equal(db.tables.availability_windows.length, 1);
+  assert.equal(db.tables.availability_windows[0].id, saved.body.created[0].id);
+  assert.equal(String(db.tables.availability_windows[0].start_time).slice(0, 5), '13:00');
+  assert.equal(String(db.tables.availability_windows[0].end_time).slice(0, 5), '15:00');
+});
+
+test('undo after save deletes by id on another instance before series_id exists', async () => {
+  resetAvailabilityMemory();
+  const db = createFakeDb({ seriesColumn: false, unique: false });
+  const first = createAvailabilityService(db);
+  const seriesId = randomUUID();
+  const saved = await first.saveBatch({
+    leaderId: 'cole',
+    body: { series_id: seriesId, windows: coleRows().slice(0, 2) },
+  });
+  assert.equal(saved.body.created.length, 2);
+  resetAvailabilityMemory();
+  const second = createAvailabilityService(db);
+  const undone = await second.deleteMany({
+    leaderId: 'cole',
+    user: { role: 'leader', leader_id: 'cole' },
+    seriesId,
+    ids: saved.body.created.map((row) => row.id),
+  });
+  assert.equal(undone.status, 200);
+  assert.equal(undone.body.deleted.length, 2);
+  assert.equal(db.tables.availability_windows.length, 0);
+});
+
+const kawikaWednesday = [
+  { window_date: '2026-10-14', start_time: '18:00', end_time: '19:30', slot_duration_minutes: 30, buffer_minutes: 0 },
+  { window_date: '2026-10-14', start_time: '20:30', end_time: '22:00', slot_duration_minutes: 30, buffer_minutes: 0 },
+];
+
+async function seedKawikaWednesday(service) {
+  return service.saveBatch({
+    leaderId: 'kawika',
+    body: {
+      series_id: randomUUID(),
+      windows: [{ window_date: '2026-10-14', start_time: '19:00', end_time: '21:00', slot_duration_minutes: 30, buffer_minutes: 0 }],
+    },
+  });
+}
+
+test('merging two windows that both overlap one existing window keeps 6:00–10:00', async () => {
+  const { db, service } = serviceFor({ seriesColumn: false, unique: false });
+  await seedKawikaWednesday(service);
+  const merged = await service.saveBatch({
+    leaderId: 'kawika',
+    body: { series_id: randomUUID(), on_overlap: 'merge', windows: kawikaWednesday },
+  });
+  assert.equal(merged.status, 201);
+  assert.equal(merged.body.created.length, 1);
+  assert.equal(merged.body.created[0].start_time, '18:00');
+  assert.equal(merged.body.created[0].end_time, '22:00');
+  assert.equal(db.tables.availability_windows.length, 1);
+  assert.equal(String(db.tables.availability_windows[0].start_time).slice(0, 5), '18:00');
+  assert.equal(String(db.tables.availability_windows[0].end_time).slice(0, 5), '22:00');
+});
+
+test('a failed merge leaves the existing window in place', async () => {
+  const { db, service } = serviceFor({ seriesColumn: true, unique: true, exclusion: true });
+  await seedKawikaWednesday(service);
+  const merged = await service.saveBatch({
+    leaderId: 'kawika',
+    body: { series_id: randomUUID(), on_overlap: 'merge', windows: kawikaWednesday },
+  });
+  assert.equal(merged.status, 409);
+  assert.equal(db.tables.availability_windows.length, 1);
+  assert.equal(String(db.tables.availability_windows[0].start_time).slice(0, 5), '19:00');
+  assert.equal(String(db.tables.availability_windows[0].end_time).slice(0, 5), '21:00');
+});
+
+test('merge after the migration replaces the whole chain in one call', async () => {
+  const { db, service } = serviceFor({ seriesColumn: true, unique: true, exclusion: true, rpc: true });
+  await seedKawikaWednesday(service);
+  const merged = await service.saveBatch({
+    leaderId: 'kawika',
+    body: { series_id: randomUUID(), on_overlap: 'merge', windows: kawikaWednesday },
+  });
+  assert.equal(merged.status, 201);
+  assert.equal(merged.body.created.length, 1);
+  assert.equal(db.tables.availability_windows.length, 1);
+  assert.equal(db.tables.availability_windows[0].start_time, '18:00');
+  assert.equal(db.tables.availability_windows[0].end_time, '22:00');
 });

@@ -5,10 +5,6 @@ import { expandPattern } from '../../shared/availability.js';
 
 const STATES = ['empty', 'loading', 'list', 'editor', 'overlap', 'saved', 'error'];
 
-if (typeof localStorage !== 'undefined') {
-  localStorage.removeItem('eq-confirmations-banner-until');
-}
-
 function withIds(rows, prefix) {
   return rows.map((row, index) => ({
     ...row,

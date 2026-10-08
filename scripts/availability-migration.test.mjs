@@ -131,6 +131,34 @@ test('migration rejects copies and overlaps, allows touching windows, and makes 
       bufferCode = `${error.stderr || error.message}`;
     }
     assert.match(bufferCode, /23514/);
+
+    let rolledBack = '';
+    try {
+      psql(database, `
+        select public.availability_replace_windows(
+          'cole',
+          (select coalesce(array_agg(id), '{}') from public.availability_windows where window_date = '2026-10-08'),
+          '[{"window_date":"2026-10-08","start_time":"18:00","end_time":"22:00","slot_duration_minutes":30,"buffer_minutes":7}]'::jsonb
+        );
+      `);
+    } catch (error) {
+      rolledBack = `${error.stderr || error.message}`;
+    }
+    assert.match(rolledBack, /23514/);
+    assert.equal(psql(database, "select count(*) from public.availability_windows where window_date = '2026-10-08'"), '2');
+
+    psql(database, `
+      select public.availability_replace_windows(
+        'cole',
+        (select coalesce(array_agg(id), '{}') from public.availability_windows where window_date = '2026-10-08'),
+        '[{"window_date":"2026-10-08","start_time":"18:00","end_time":"22:00","slot_duration_minutes":30,"buffer_minutes":0}]'::jsonb
+      );
+    `);
+    assert.equal(psql(database, "select count(*) from public.availability_windows where window_date = '2026-10-08'"), '1');
+    assert.equal(
+      psql(database, "select to_char(start_time, 'HH24:MI') || ' ' || to_char(end_time, 'HH24:MI') from public.availability_windows where window_date = '2026-10-08'"),
+      '18:00 22:00',
+    );
   } finally {
     psql('postgres', `DROP DATABASE IF EXISTS ${database}`, { tuples: false });
   }

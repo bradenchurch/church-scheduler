@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   addDaysISO,
   classify,
+  collapseMerges,
   expandPattern,
   mondayOf,
   todayInTimeZone,
+  undoFailureMessage,
   visitCount,
   weekdayIndex,
 } from '../shared/availability.js';
@@ -116,4 +119,38 @@ test('DST fall-back does not shift Nov 1', () => {
 test('Mountain today is a calendar date, not a UTC slice', () => {
   const justAfterMidnightUtc = new Date('2026-10-09T00:30:00Z');
   assert.equal(todayInTimeZone('America/Denver', justAfterMidnightUtc), '2026-10-08');
+});
+
+test('overlap chains merge into one span', () => {
+  const groups = collapseMerges([
+    {
+      row: { window_date: '2026-10-14', start_time: '18:00', end_time: '19:30', slot_duration_minutes: 30, buffer_minutes: 0 },
+      existing: [{ id: 'wed', window_date: '2026-10-14', start_time: '19:00', end_time: '21:00', slot_duration_minutes: 30, buffer_minutes: 0 }],
+    },
+    {
+      row: { window_date: '2026-10-14', start_time: '20:30', end_time: '22:00', slot_duration_minutes: 30, buffer_minutes: 0 },
+      existing: [{ id: 'wed', window_date: '2026-10-14', start_time: '19:00', end_time: '21:00', slot_duration_minutes: 30, buffer_minutes: 0 }],
+    },
+  ]);
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].start_time, '18:00');
+  assert.equal(groups[0].end_time, '22:00');
+  assert.equal(groups[0].existing.length, 1);
+});
+
+test('undo reports a plain failure when the server rejects it or changes nothing', () => {
+  assert.equal(undoFailureMessage('delete', false, { error: 'undo_expired' }), "Couldn't undo");
+  assert.equal(undoFailureMessage('delete', true, { created: [] }), "Couldn't undo");
+  assert.equal(undoFailureMessage('delete', true, { created: [{ id: 'restored' }] }), '');
+  assert.equal(undoFailureMessage('save', true, { deleted: [] }), "Couldn't undo");
+  assert.equal(undoFailureMessage('save', true, { deleted: [{ id: 'gone' }] }), '');
+});
+
+test('the availability preview is not imported by the production app', () => {
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  const preview = readFileSync(new URL('../src/dev/AvailabilityPreview.jsx', import.meta.url), 'utf8');
+  assert.match(app, /import\.meta\.env\.DEV/);
+  assert.match(app, /lazy\(\(\) => import\('\.\/dev\/AvailabilityPreview'\)\)/);
+  assert.doesNotMatch(app, /import AvailabilityPreview from/);
+  assert.doesNotMatch(preview, /localStorage\.removeItem/);
 });

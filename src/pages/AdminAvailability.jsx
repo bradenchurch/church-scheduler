@@ -17,6 +17,7 @@ import {
   legacyPatternFromSlots,
   mondayOf,
   todayInTimeZone,
+  undoFailureMessage,
   visitCount,
 } from '../../shared/availability.js';
 
@@ -273,8 +274,9 @@ export default function AdminAvailability({ fixture = null }) {
       setToast(null);
       return;
     }
+    let res;
     if (toast.kind === 'delete') {
-      await authedFetch(`/api/availability/${effectiveId}/windows/batch`, {
+      res = await authedFetch(`/api/availability/${effectiveId}/windows/batch`, {
         method: 'POST',
         body: JSON.stringify({ undo: true, windows: toast.rows }),
       });
@@ -282,7 +284,14 @@ export default function AdminAvailability({ fixture = null }) {
       const params = new URLSearchParams();
       if (toast.seriesId) params.set('series_id', toast.seriesId);
       if (toast.ids?.length) params.set('ids', toast.ids.join(','));
-      await authedFetch(`/api/availability/${effectiveId}/windows?${params.toString()}`, { method: 'DELETE' });
+      res = await authedFetch(`/api/availability/${effectiveId}/windows?${params.toString()}`, { method: 'DELETE' });
+    }
+    const data = res ? await res.json().catch(() => ({})) : {};
+    const failure = undoFailureMessage(toast.kind || 'save', Boolean(res?.ok), data);
+    if (failure) {
+      setToast({ text: failure, undo: false });
+      await loadWindows();
+      return;
     }
     setToast(null);
     await loadWindows();
