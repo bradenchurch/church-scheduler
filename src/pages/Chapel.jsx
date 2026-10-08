@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import CompanionPicker from '../components/CompanionPicker';
 import SlotPicker from '../components/SlotPicker';
-import { submitChapelForm, getAvailability } from '../api/chapel';
+import { submitChapelForm, getAvailability, getLeaderContact } from '../api/chapel';
 import { useAuth } from '../contexts/AuthContext';
 import { authedFetch } from '../lib/api';
 import { signInWithOtp } from '../lib/auth';
@@ -157,11 +157,19 @@ export default function Chapel() {
       })
       .catch(() => setFamilies([]));
 
-    // Load the assigned presidency member's availability (contact + slots).
+    // Slots stay on the public availability feed. Email and phone come from the
+    // signed-in companion's own assigned leader, and stay blank if that fails.
     if (c.assigned_to) {
-      getAvailability(c.assigned_to)
-        .then(setAvailability)
-        .catch(() => setAvailability(null));
+      Promise.all([
+        getAvailability(c.assigned_to).catch(() => null),
+        getLeaderContact(c.assigned_to).catch(() => null),
+      ]).then(([avail, contact]) => {
+        if (!avail && !contact) {
+          setAvailability(null);
+          return;
+        }
+        setAvailability({ ...(avail || {}), ...(contact || {}) });
+      });
     } else {
       setAvailability(null);
     }

@@ -21,12 +21,13 @@ import { getRoster, formatAddress, splitCompanions, getUnlinkedCompanions, write
 import { requireAuth as requireSession, requireRole, requireCompanionFor } from './middleware/auth.js';
 import { parseLcrPdf } from './lcr-parser.js';
 import { registerNeedsAssignmentRoutes } from './needs-assignment.js';
-import { addDaysISO, todayInTimeZone } from '../shared/availability.js';
+import { todayInTimeZone } from '../shared/availability.js';
 import {
   hiddenLegacyLeaderIds,
   registerAvailabilityRoutes,
   setLegacyLeaderHidden,
 } from './availability.js';
+import { registerPublicReadRoutes } from './publicReads.js';
 
 dotenv.config();
 
@@ -767,22 +768,11 @@ app.post('/api/auth/google/test-invite', requireAuth, async (req, res) => {
 
 // Routes
 
-// GET /api/companionships?search=
-app.get('/api/companionships', async (req, res) => {
-  const { search } = req.query;
-
-  try {
-    let query = supabaseAdmin.from('companionships').select('*, leaders(name)');
-    if (search) {
-      query = query.or(`companion1_name.ilike.%${search}%,companion2_name.ilike.%${search}%`);
-    }
-    const { data, error } = await query;
-    if (error) throw error;
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Public reads: companionship names, availability slots/windows, and slot rows.
+// No emails or phones. Companion emails stay on GET /api/admin/roster.
+// A signed-in companion loads their presidency member from
+// GET /api/availability/:leaderId/contact.
+registerPublicReadRoutes(app, { supabaseAdmin, requireSession });
 
 // GET /api/companions?ward=long-valley-2nd-ward — auth-gated companion roster
 // grouped by district, with companionship pair info.
@@ -792,7 +782,8 @@ app.get('/api/companionships', async (req, res) => {
 // other authenticated callers (leaders + companions) get name + district +
 // assigned presidency member id, with phone/email stripped. The Chapel
 // companion picker only needs names for self-identification; a companion's own
-// presidency member contact comes from GET /api/availability/:leaderId.
+// presidency member contact comes from GET /api/availability/:leaderId/contact,
+// which is limited to the signed-in companion assigned to that leader.
 app.get('/api/companions', requireSession, async (req, res) => {
   const ward = String(req.query.ward || 'long-valley-2nd-ward').trim();
   const isAdmin = req.user?.role === 'admin';
@@ -1156,9 +1147,6 @@ app.get('/api/admin/roster', requireAuth, requireAdmin, async (req, res) => {
   }
 });
 
-// GET /api/availability/:leaderId — returns the leader's contact info plus their
-// recurring weekly slots. Used by the chapel companion flow (SlotPicker) to offer
-// preferred meeting times, and by the booking page.
 // GET /api/admin/queue?status=pending|reviewed|completed|cancelled|all
 // Presidency queue: chapel submissions routed to the current leader (or all
 // submissions for admins). Counselors (role=leader) only see their own
@@ -1363,62 +1351,6 @@ app.post('/api/bookings/:id/complete', requireSession, async (req, res) => {
     }
 
     res.json({ ok: true, booking: data });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/availability/:leaderId', async (req, res) => {
-  const { leaderId } = req.params;
-
-  try {
-    // Date-specific windows for the next 90 days (Chapel-side SlotPicker shows
-    // a rolling 30-day strip, so 90 days gives ample headroom). Stored as plain
-    // TIME (no timezone) to match the existing `slots` convention.
-    const todayStr = todayInTimeZone('America/Denver');
-    const laterStr = addDaysISO(todayStr, 90);
-
-    const [leaderRes, slotsRes] = await Promise.all([
-      supabaseAdmin.from('leaders').select('id, name, email, phone').eq('id', leaderId).maybeSingle(),
-      supabaseAdmin.from('slots').select('id, day_of_week, start_time, duration_minutes').eq('leader_id', leaderId).order('day_of_week').order('start_time'),
-    ]);
-
-    if (leaderRes.error) throw leaderRes.error;
-    if (slotsRes.error) throw slotsRes.error;
-    if (!leaderRes.data) {
-      return res.status(404).json({ error: 'leader_not_found' });
-    }
-
-    const hiddenLeaders = await hiddenLegacyLeaderIds(supabaseAdmin);
-    const visibleSlots = hiddenLeaders.includes(leaderId) ? [] : (slotsRes.data || []);
-
-    // Date-specific windows are best-effort: if the availability_windows table
-    // hasn't been migrated yet (schema.sql applied via Supabase dashboard),
-    // degrade to an empty list rather than 500-ing the whole availability feed.
-    let windows = [];
-    try {
-      const windowsRes = await supabaseAdmin
-        .from('availability_windows')
-        .select('id, leader_id, window_date, start_time, end_time, slot_duration_minutes')
-        .eq('leader_id', leaderId)
-        .gte('window_date', todayStr)
-        .lte('window_date', laterStr)
-        .order('window_date')
-        .order('start_time');
-      if (windowsRes.error) throw windowsRes.error;
-      windows = windowsRes.data || [];
-    } catch {
-      windows = [];
-    }
-
-    res.json({
-      leader_id: leaderRes.data.id,
-      name: leaderRes.data.name,
-      email: leaderRes.data.email,
-      phone: leaderRes.data.phone || '',
-      slots: visibleSlots,
-      windows,
-    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -1811,19 +1743,7 @@ app.post('/api/admin/bookings', requireSession, requireRole('admin'), async (req
   }
 });
 
-// GET /api/slots/:leaderId
-app.get('/api/slots/:leaderId', async (req, res) => {
-  const { leaderId } = req.params;
-
-  try {
-    const { data, error } = await supabaseAdmin.from('slots').select('*').eq('leader_id', leaderId);
-    if (error) throw error;
-    res.json(data);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
+// GET /api/slots/:leaderId is registered with the other public reads.
 // POST /api/slots/:leaderId
 app.post('/api/slots/:leaderId', requireSession, async (req, res) => {
   if (req.user.role !== 'admin' && req.user.leader_id !== req.params.leaderId) return res.status(403).json({ error: 'Forbidden' });

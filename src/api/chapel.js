@@ -26,3 +26,14 @@ export async function getAvailability(leaderId) {
   }
   return data;
 }
+
+export async function getLeaderContact(leaderId) {
+  const res = await authedFetch(`/api/availability/${encodeURIComponent(leaderId)}/contact`);
+  const data = await res.json().catch(() => null);
+  if (!res.ok) {
+    const err = new Error(data?.error || 'Failed to load contact');
+    err.status = res.status;
+    throw err;
+  }
+  return data;
+}
