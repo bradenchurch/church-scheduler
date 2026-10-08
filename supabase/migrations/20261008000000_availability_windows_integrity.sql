@@ -52,27 +52,31 @@ create or replace function public.availability_replace_windows(
   p_rows jsonb
 ) returns jsonb
 language plpgsql
+set search_path = ''
 as $$
 declare
   inserted jsonb;
 begin
-  if p_leader_id is null or length(p_leader_id) = 0 then
+  if p_leader_id is null or pg_catalog.length(p_leader_id) = 0 then
     raise exception 'leader required' using errcode = '22023';
   end if;
 
   delete from public.availability_windows
   where leader_id = p_leader_id
-    and id = any(coalesce(p_delete_ids, '{}'::uuid[]));
+    and p_delete_ids is not null
+    and id = any(p_delete_ids);
 
   with incoming as (
     select *
-    from jsonb_to_recordset(coalesce(p_rows, '[]'::jsonb)) as r(
-      window_date date,
-      start_time time,
-      end_time time,
-      slot_duration_minutes int,
-      buffer_minutes int,
-      series_id uuid
+    from pg_catalog.jsonb_to_recordset(
+      case when p_rows is null then '[]'::pg_catalog.jsonb else p_rows end
+    ) as r(
+      window_date pg_catalog.date,
+      start_time pg_catalog.time,
+      end_time pg_catalog.time,
+      slot_duration_minutes pg_catalog.int4,
+      buffer_minutes pg_catalog.int4,
+      series_id pg_catalog.uuid
     )
   ),
   written as (
@@ -85,18 +89,23 @@ begin
       start_time,
       end_time,
       slot_duration_minutes,
-      coalesce(buffer_minutes, 0),
+      case when buffer_minutes is null then 0 else buffer_minutes end,
       series_id
     from incoming
     returning id, leader_id, window_date, start_time, end_time, slot_duration_minutes, buffer_minutes, series_id, created_at
   )
-  select coalesce(jsonb_agg(to_jsonb(written)), '[]'::jsonb) into inserted from written;
+  select case
+    when pg_catalog.jsonb_agg(pg_catalog.to_jsonb(written)) is null then '[]'::pg_catalog.jsonb
+    else pg_catalog.jsonb_agg(pg_catalog.to_jsonb(written))
+  end into inserted
+  from written;
 
   return inserted;
 end;
 $$;
 
 revoke all on function public.availability_replace_windows(text, uuid[], jsonb) from public;
+revoke execute on function public.availability_replace_windows(text, uuid[], jsonb) from anon, authenticated;
 
 do $$
 begin

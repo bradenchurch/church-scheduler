@@ -40,6 +40,10 @@ function createFakeDb(options = {}) {
       if (state.op === 'upsert' && !unique) {
         return { data: null, error: { code: '42P10', message: 'there is no unique or exclusion constraint matching the ON CONFLICT specification' } };
       }
+      if (state.op === 'insert' && options.throwOnInsert > 0) {
+        options.throwOnInsert -= 1;
+        throw new Error('forced lock failure');
+      }
       if (state.op === 'insert' || state.op === 'upsert') {
         const stored = [];
         for (const raw of state.payload) {
@@ -406,6 +410,43 @@ test('a failed merge leaves the existing window in place', async () => {
   assert.equal(db.tables.availability_windows.length, 1);
   assert.equal(String(db.tables.availability_windows[0].start_time).slice(0, 5), '19:00');
   assert.equal(String(db.tables.availability_windows[0].end_time).slice(0, 5), '21:00');
+});
+
+test('a failure inside the leader lock does not crash, and the next save works', async () => {
+  const unhandled = [];
+  const onUnhandled = (reason) => { unhandled.push(reason); };
+  process.on('unhandledRejection', onUnhandled);
+  try {
+    resetAvailabilityMemory();
+    const options = { seriesColumn: false, unique: false, throwOnInsert: 1 };
+    const db = createFakeDb(options);
+    const service = createAvailabilityService(db);
+    const window = { slot_duration_minutes: 15, buffer_minutes: 0 };
+    await assert.rejects(
+      () => service.saveBatch({
+        leaderId: 'cole',
+        body: {
+          series_id: randomUUID(),
+          windows: [{ ...window, window_date: '2026-10-08', start_time: '19:00', end_time: '21:00' }],
+        },
+      }),
+      /forced lock failure/,
+    );
+    await new Promise((resolve) => { setImmediate(resolve); });
+    assert.equal(unhandled.length, 0);
+    const next = await service.saveBatch({
+      leaderId: 'cole',
+      body: {
+        series_id: randomUUID(),
+        windows: [{ ...window, window_date: '2026-10-09', start_time: '19:00', end_time: '21:00' }],
+      },
+    });
+    assert.equal(next.status, 201);
+    assert.equal(next.body.created.length, 1);
+    assert.equal(db.tables.availability_windows.length, 1);
+  } finally {
+    process.off('unhandledRejection', onUnhandled);
+  }
 });
 
 test('merge after the migration replaces the whole chain in one call', async () => {

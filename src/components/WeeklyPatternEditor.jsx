@@ -6,6 +6,7 @@ import {
   WEEKDAY_SHORT,
   addDaysISO,
   classify,
+  collapseMerges,
   endOfMonth,
   endOfQuarter,
   expandPattern,
@@ -198,7 +199,11 @@ export default function WeeklyPatternEditor({
     setExcluded((prev) => (prev.includes(date) ? prev.filter((d) => d !== date) : [...prev, date]));
   };
 
-  const actionable = createCount + (onOverlap === 'skip' ? 0 : overlapCount);
+  const actionable = createCount + (
+    onOverlap === 'merge' ? collapseMerges(plan.overlap).length
+      : onOverlap === 'skip' ? 0
+        : overlapCount
+  );
   const saveDisabledReason = !windowsReady
     ? 'Loading your windows...'
     : formError
@@ -439,7 +444,9 @@ export default function WeeklyPatternEditor({
             disabled={Boolean(saveDisabledReason) || saving}
             className="w-full min-h-[52px] rounded-lg bg-burgundy text-white font-semibold disabled:opacity-40"
           >
-            {saving ? `Saving ${actionable} windows...` : saveDisabledReason || `Save ${actionable} window${actionable === 1 ? '' : 's'}`}
+            {saving
+              ? `Saving ${actionable} window${actionable === 1 ? '' : 's'}...`
+              : saveDisabledReason || `Save ${actionable} window${actionable === 1 ? '' : 's'}`}
           </button>
         </div>
       </form>

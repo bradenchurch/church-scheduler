@@ -46,9 +46,12 @@ function isMissingFunction(error) {
 function withLeaderLock(leaderId, fn) {
   const prev = leaderChains.get(leaderId) || Promise.resolve();
   const run = prev.catch(() => {}).then(fn);
-  leaderChains.set(leaderId, run.finally(() => {
-    if (leaderChains.get(leaderId) === run) leaderChains.delete(leaderId);
-  }));
+  // `run` still rejects so the request can return its error. The chain is a
+  // separate promise, and an uncaught rejection there crashes Node after the 500.
+  const settled = run.finally(() => {
+    if (leaderChains.get(leaderId) === settled) leaderChains.delete(leaderId);
+  }).catch(() => {});
+  leaderChains.set(leaderId, settled);
   return run;
 }
 

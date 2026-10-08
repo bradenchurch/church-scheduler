@@ -84,6 +84,13 @@ test('migration rejects copies and overlaps, allows touching windows, and makes 
     `);
     assert.equal(psql(database, 'select count(*) from public.availability_windows'), '1');
 
+    psql('postgres', `
+      do $$ begin
+        if not exists (select 1 from pg_roles where rolname = 'anon') then create role anon nologin; end if;
+        if not exists (select 1 from pg_roles where rolname = 'authenticated') then create role authenticated nologin; end if;
+      end $$;
+    `, { tuples: false });
+
     psqlFile(database, MIGRATION.pathname);
 
     let copyCode = '';
@@ -158,6 +165,18 @@ test('migration rejects copies and overlaps, allows touching windows, and makes 
     assert.equal(
       psql(database, "select to_char(start_time, 'HH24:MI') || ' ' || to_char(end_time, 'HH24:MI') from public.availability_windows where window_date = '2026-10-08'"),
       '18:00 22:00',
+    );
+    assert.match(
+      psql(database, "select proconfig::text from pg_proc where proname = 'availability_replace_windows'"),
+      /search_path=/,
+    );
+    assert.equal(
+      psql(database, "select has_function_privilege('anon', 'public.availability_replace_windows(text, uuid[], jsonb)', 'execute')"),
+      'f',
+    );
+    assert.equal(
+      psql(database, "select has_function_privilege('authenticated', 'public.availability_replace_windows(text, uuid[], jsonb)', 'execute')"),
+      'f',
     );
   } finally {
     psql('postgres', `DROP DATABASE IF EXISTS ${database}`, { tuples: false });
