@@ -47,7 +47,8 @@ export default function Settings() {
     setBusy(true);
     setBanner(null);
     try {
-      const res = await fetch('/api/auth/google/start', {
+      const returnTo = `${window.location.pathname}${window.location.search}`;
+      const res = await fetch(`/api/auth/google/start?return_to=${encodeURIComponent(returnTo)}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -141,6 +142,15 @@ export default function Settings() {
           <p className="text-brown-light">Checking connection…</p>
         ) : (
           <>
+            {!connected && (
+              <div className="mb-4 rounded-lg border border-gold/40 bg-gold-light p-4">
+                <h4 className="font-serif font-bold text-brown">Confirmations are off</h4>
+                <p className="text-sm text-brown mt-1">
+                  Elders who book with you won't get a calendar invite or confirmation email until you connect your Google account. Your calendar feed works either way.
+                </p>
+              </div>
+            )}
+
             <div className="flex items-center gap-3 mb-6">
               <span
                 className={`inline-block h-3 w-3 rounded-full ${

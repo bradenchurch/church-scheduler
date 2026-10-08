@@ -98,8 +98,15 @@ function DistrictCard({ district }) {
           <h3 className="text-lg font-serif font-semibold text-brown">{district.leader_name}</h3>
           <span className="text-xs italic text-brown-light">{positionLabel(district.leader_position)}</span>
         </div>
-        <span className={`text-2xl font-serif font-bold ${tint.label}`}>
-          {district.completion_rate}%
+        <span className="flex flex-col items-end gap-1">
+          <span className={`text-2xl font-serif font-bold ${tint.label}`}>
+            {district.completion_rate}%
+          </span>
+          {district.googleConnected != null && (
+            <span className={`text-xs font-semibold rounded-full px-2 py-1 ${district.googleConnected ? 'bg-sage-light text-sage' : 'bg-gold-light text-amber'}`}>
+              Google: {district.googleConnected ? 'connected' : 'not connected'}
+            </span>
+          )}
         </span>
       </div>
 
@@ -135,6 +142,7 @@ function CallBookDrawer({ comp, data, loading, error, message, bookingSlot, onCl
     day_of_week: s.day_of_week,
   }));
 
+  const seenWindowTimes = new Set();
   const windowSlots = (data?.windows || []).flatMap((w) =>
     expandWindowTimes(w.start_time, w.end_time, w.slot_duration_minutes).map((time) => ({
       id: w.id,
@@ -142,7 +150,12 @@ function CallBookDrawer({ comp, data, loading, error, message, bookingSlot, onCl
       time,
       window_date: w.window_date,
     }))
-  );
+  ).filter((slot) => {
+    const key = `${slot.window_date}|${slot.time}`;
+    if (seenWindowTimes.has(key)) return false;
+    seenWindowTimes.add(key);
+    return true;
+  });
 
   const slots = [...recurring, ...windowSlots];
 
@@ -228,6 +241,7 @@ function CallBookDrawer({ comp, data, loading, error, message, bookingSlot, onCl
 export default function AdminDashboard() {
   const { user, role, token, loading } = useAuth();
   const [data, setData] = useState(null);
+  const [googleByLeader, setGoogleByLeader] = useState({});
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState('');
   const [filter, setFilter] = useState('pending');
@@ -249,12 +263,21 @@ export default function AdminDashboard() {
       const body = await res.json();
       if (!res.ok) throw new Error(body?.error || 'Failed to load analytics');
       setData(body);
+      if (role === 'admin') {
+        const googleRes = await authedFetch('/api/admin/google-connections');
+        const googleBody = await googleRes.json().catch(() => ({}));
+        if (googleRes.ok) {
+          const map = {};
+          for (const leader of googleBody.leaders || []) map[leader.leader_id] = !!leader.connected;
+          setGoogleByLeader(map);
+        }
+      }
     } catch (err) {
       setError(err.message);
     } finally {
       setLoadingData(false);
     }
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     if (token) fetchAnalytics();
@@ -466,7 +489,15 @@ export default function AdminDashboard() {
             <SectionLabel>District Breakdown</SectionLabel>
             <div className="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-4">
               {(data?.district_breakdown || []).map((d) => (
-                <DistrictCard key={d.leader_id} district={d} />
+                <DistrictCard
+                  key={d.leader_id}
+                  district={{
+                    ...d,
+                    googleConnected: Object.prototype.hasOwnProperty.call(googleByLeader, d.leader_id)
+                      ? googleByLeader[d.leader_id]
+                      : null,
+                  }}
+                />
               ))}
             </div>
           </div>

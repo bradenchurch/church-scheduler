@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { landingForRole, safeNextPath, upcomingWindowCount } from '../lib/postAuth';
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -22,17 +23,19 @@ export default function AuthCallback() {
         // Admins go to /admin, leaders to /leader, everyone else to Dashboard.
         const { data: leaderData } = await supabase
           .from('leaders')
-          .select('role')
+          .select('id, role')
           .eq('email', session.user.email)
           .single();
         const role = leaderData?.role || 'leader';
-        if (role === 'admin') {
-          navigate('/admin', { replace: true });
-        } else if (role === 'leader') {
-          navigate('/leader', { replace: true });
-        } else {
-          navigate('/', { replace: true });
+        const next = safeNextPath(new URLSearchParams(window.location.search).get('next'));
+        if (next) {
+          navigate(next, { replace: true });
+          return;
         }
+        const upcomingCount = role === 'leader'
+          ? await upcomingWindowCount(session.access_token, leaderData?.id)
+          : 0;
+        navigate(landingForRole({ role, upcomingCount }), { replace: true });
       } else {
         setError("No session found. Please try logging in again.");
       }

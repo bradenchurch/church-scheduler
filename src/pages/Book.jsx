@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { authedFetch } from '../lib/api';
 import SubscribePanel from '../components/SubscribePanel';
+import { clockInTimeZone, todayInTimeZone } from '../../shared/availability.js';
 
 function CheckIcon() {
   return (
@@ -314,18 +315,19 @@ export default function Book() {
   };
 
 
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  const todayDateStr = `${y}-${m}-${d}`;
-  const currentMin = now.getHours() * 60 + now.getMinutes();
+  const todayDateStr = todayInTimeZone();
+  const currentMin = clockInTimeZone();
+  const seenTimes = new Set();
 
   const availableWindowsList = windows.flatMap((w) =>
     expandWindowTimes(w.start_time, w.end_time, w.slot_duration_minutes, w.buffer_minutes)
       .map((time) => ({ window: w, time }))
   ).filter(({ window, time }) => {
-    if (String(window.window_date).slice(0, 10) === todayDateStr) {
+    const date = String(window.window_date).slice(0, 10);
+    const key = `${date}|${time}`;
+    if (seenTimes.has(key)) return false;
+    seenTimes.add(key);
+    if (date === todayDateStr) {
       const [th, tm] = time.split(':').map(Number);
       const timeMin = th * 60 + tm;
       if (timeMin < currentMin + 60) {

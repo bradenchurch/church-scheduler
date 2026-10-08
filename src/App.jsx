@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Book from './pages/Book';
 import Leader from './pages/Leader';
@@ -21,6 +21,7 @@ import AdminAvailability from './pages/AdminAvailability';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminFlyer from './pages/AdminFlyer';
 import AdminNeedsAssignment from './pages/AdminNeedsAssignment';
+import AvailabilityPreview from './dev/AvailabilityPreview';
 
 function App() {
   return (
@@ -113,14 +114,18 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/admin/availability" element={<Navigate to="/availability" replace />} />
           <Route
-            path="/admin/availability"
+            path="/availability"
             element={
               <ProtectedRoute requireRole="leader">
                 <AdminAvailability />
               </ProtectedRoute>
             }
           />
+          {import.meta.env.DEV && (
+            <Route path="/dev/availability" element={<AvailabilityPreview />} />
+          )}
           <Route
             path="/admin/dashboard"
             element={

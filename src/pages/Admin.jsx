@@ -354,7 +354,7 @@ export default function Admin() {
             </p>
           </div>
           <Link
-            to="/admin/availability"
+            to="/availability"
             className="min-h-[44px] inline-flex items-center px-4 rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors"
           >
             Open calendar

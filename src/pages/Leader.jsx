@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Badge from '../components/Badge';
 import SubscribePanel from '../components/SubscribePanel';
+import { formatMonthDay, todayInTimeZone } from '../../shared/availability.js';
 
 export default function Leader() {
   const { leaderId, token, user, role } = useAuth();
@@ -22,10 +24,10 @@ export default function Leader() {
 
   const [leaders, setLeaders] = useState([]);
   const [selectedLeaderId, setSelectedLeaderId] = useState(null);
-  const [slots, setSlots] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [leaderUuid, setLeaderUuid] = useState(null);
+  const [upcomingWindows, setUpcomingWindows] = useState([]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -50,7 +52,7 @@ export default function Leader() {
     return found ? found.name : id;
   };
 
-  // Load slots + bookings for the effective leader.
+  // Load bookings and upcoming dated windows for the effective leader.
   useEffect(() => {
     if (!effectiveLeaderId) {
       if (!isAdmin) setLoading(false);
@@ -58,13 +60,15 @@ export default function Leader() {
     }
     setLoading(true);
     const headers = { Authorization: `Bearer ${token}` };
+    const today = todayInTimeZone();
 
     Promise.all([
-      fetch(`/api/slots/${effectiveLeaderId}`, { headers }).then((res) => res.json()).catch(() => []),
       fetch(`/api/bookings/${effectiveLeaderId}`, { headers }).then((res) => res.json()).catch(() => []),
-    ]).then(([sData, bData]) => {
-      if (Array.isArray(sData)) setSlots(sData);
+      fetch(`/api/availability/${effectiveLeaderId}/windows`, { headers }).then((res) => (res.ok ? res.json() : { windows: [] })).catch(() => ({ windows: [] })),
+    ]).then(([bData, wData]) => {
       if (Array.isArray(bData)) setBookings(bData);
+      const rows = Array.isArray(wData?.windows) ? wData.windows : [];
+      setUpcomingWindows(rows.filter((row) => String(row.window_date).slice(0, 10) >= today));
       setLoading(false);
     });
   }, [effectiveLeaderId, token, isAdmin]);
@@ -88,10 +92,6 @@ export default function Leader() {
       active = false;
     };
   }, [effectiveLeaderId, token, isAdmin]);
-
-  const [newSlotDay, setNewSlotDay] = useState(0);
-  const [newSlotTime, setNewSlotTime] = useState('19:00');
-  const [addingSlot, setAddingSlot] = useState(false);
 
   const handleBulkComplete = async () => {
     const headers = {
@@ -128,32 +128,6 @@ export default function Leader() {
     navigator.clipboard.writeText(text).then(() => {
       alert('Weekly digest copied to clipboard!');
     });
-  };
-
-  const handleAddSlot = async (e) => {
-    e.preventDefault();
-    const headers = {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    };
-    const res = await fetch(`/api/slots/${effectiveLeaderId}`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ day_of_week: newSlotDay, start_time: newSlotTime, duration_minutes: 30 }),
-    });
-    if (res.ok) {
-      const addedSlot = await res.json();
-      setSlots([...slots, addedSlot]);
-      setAddingSlot(false);
-    }
-  };
-
-  const handleRemoveSlot = async (slotId) => {
-    const headers = { Authorization: `Bearer ${token}` };
-    const res = await fetch(`/api/slots/${slotId}`, { method: 'DELETE', headers });
-    if (res.ok) {
-      setSlots(slots.filter((s) => s.id !== slotId));
-    }
   };
 
   // The ministering feed is a subscription URL (webcal://) so the leader's
@@ -197,7 +171,7 @@ export default function Leader() {
         {feedUrl && (
           <SubscribePanel
             feedUrl={feedUrl}
-            description="Your published availability and booked visits sync automatically — no Google account connection needed. Add it once and your calendar refreshes itself."
+            description="Add your schedule to your phone's calendar. This is separate from confirmation emails."
             className="mb-8"
           />
         )}
@@ -242,56 +216,18 @@ export default function Leader() {
         </div>
 
         <div className="bg-white p-6 rounded-xl shadow-sm border border-warm-border">
-          <h3 className="text-xl font-serif font-bold mb-4 text-burgundy">Manage Availability</h3>
-          <p className="text-brown-light mb-4 text-sm">Add 30-min slots for your interviews.</p>
-          <div className="space-y-2 mb-4">
-            {slots.map((s) => {
-              const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-              return (
-                <div key={s.id} className="p-3 border border-warm-border rounded-lg flex justify-between items-center">
-                  <span>{days[s.day_of_week]} at {s.start_time.slice(0, 5)}</span>
-                  <button onClick={() => handleRemoveSlot(s.id)} className="text-rose text-sm hover:underline">Remove</button>
-                </div>
-              );
-            })}
-          </div>
-
-          {!addingSlot ? (
-            <button
-              onClick={() => setAddingSlot(true)}
-              className="min-h-[48px] w-full py-2 border-2 border-dashed border-warm-border text-burgundy rounded-lg hover:border-burgundy-light hover:bg-burgundy-ghost transition-colors font-semibold"
-            >
-              + Add New Slot
-            </button>
-          ) : (
-            <form onSubmit={handleAddSlot} className="p-4 border border-warm-border rounded-xl bg-cream space-y-3">
-              <div className="flex gap-4">
-                <select
-                  value={newSlotDay}
-                  onChange={(e) => setNewSlotDay(parseInt(e.target.value))}
-                  className="min-h-[48px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all flex-1"
-                >
-                  <option value={0}>Sunday</option>
-                  <option value={1}>Monday</option>
-                  <option value={2}>Tuesday</option>
-                  <option value={3}>Wednesday</option>
-                  <option value={4}>Thursday</option>
-                  <option value={5}>Friday</option>
-                  <option value={6}>Saturday</option>
-                </select>
-                <input
-                  type="time"
-                  value={newSlotTime}
-                  onChange={(e) => setNewSlotTime(e.target.value)}
-                  className="min-h-[48px] p-2 border-[1.5px] border-warm-border rounded-md bg-white focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all flex-1"
-                />
-              </div>
-              <div className="flex gap-2 justify-end">
-                <button type="button" onClick={() => setAddingSlot(false)} className="min-h-[48px] px-4 py-2 text-brown-light font-semibold hover:underline">Cancel</button>
-                <button type="submit" className="min-h-[48px] px-4 py-2 bg-burgundy text-white rounded-md hover:bg-burgundy-light transition-colors font-semibold">Save Slot</button>
-              </div>
-            </form>
-          )}
+          <h3 className="text-xl font-serif font-bold mb-2 text-burgundy">Your availability</h3>
+          <p className="text-brown mb-4">
+            {upcomingWindows.length === 0
+              ? 'You have no upcoming windows.'
+              : `You have ${upcomingWindows.length} upcoming window${upcomingWindows.length === 1 ? '' : 's'} through ${formatMonthDay(String([...upcomingWindows].sort((a, b) => String(a.window_date).localeCompare(String(b.window_date))).at(-1).window_date).slice(0, 10))}.`}
+          </p>
+          <Link
+            to="/availability"
+            className="min-h-[48px] inline-flex items-center px-4 rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light transition-colors"
+          >
+            Manage availability
+          </Link>
         </div>
       </div>
     </div>

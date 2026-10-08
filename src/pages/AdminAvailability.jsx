@@ -1,721 +1,709 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authedFetch } from '../lib/api';
 import SectionLabel from '../components/SectionLabel';
 import SubscribePanel from '../components/SubscribePanel';
+import WeeklyPatternEditor from '../components/WeeklyPatternEditor';
+import {
+  UI_SLOT_LENGTHS,
+  WEEKDAY_SHORT,
+  addDaysISO,
+  formatLongDate,
+  formatMonthDay,
+  formatTime12,
+  formatWeekdayMonthDay,
+  groupRowsByWeek,
+  legacyPatternFromSlots,
+  mondayOf,
+  todayInTimeZone,
+  visitCount,
+} from '../../shared/availability.js';
 
-const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DISMISS_KEY = 'eq-confirmations-banner-until';
+const FEED_COPY = "Add your schedule to your phone's calendar. This is separate from confirmation emails.";
 
-const TIME_PRESETS = [
-  { label: 'Sunday Afternoon', start: '13:00', end: '15:00' },
-  { label: 'Sunday Evening', start: '18:00', end: '20:00' },
-  { label: 'Weeknight Evening', start: '19:00', end: '21:00' },
-  { label: 'Saturday Morning', start: '08:00', end: '10:00' },
-];
-
-const SLOT_DURATIONS = [15, 20, 30, 45, 60];
-
-function toISODate(d) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+function bannerDismissed() {
+  const until = Number(localStorage.getItem(DISMISS_KEY) || 0);
+  return until > Date.now();
 }
 
-function isSameDay(a, b) {
+function Toast({ toast, onUndo, onDismiss }) {
+  const ref = useRef(null);
+  const dismissRef = useRef(onDismiss);
+  dismissRef.current = onDismiss;
+  useEffect(() => {
+    ref.current?.focus();
+    if (toast.persist) return undefined;
+    const timer = setTimeout(() => dismissRef.current(), toast.undo ? 8000 : 6000);
+    return () => clearTimeout(timer);
+  }, [toast]);
   return (
-    a.getFullYear() === b.getFullYear() &&
-    a.getMonth() === b.getMonth() &&
-    a.getDate() === b.getDate()
+    <div
+      ref={ref}
+      tabIndex={-1}
+      role="status"
+      className="fixed bottom-4 left-4 right-4 z-50 mx-auto max-w-lg rounded-xl border border-warm-border bg-white p-4 shadow-lg outline-none"
+    >
+      <p className="text-sm font-semibold text-brown">{toast.text}</p>
+      <div className="mt-2 flex gap-2">
+        {toast.undo && (
+          <button type="button" onClick={onUndo} className="min-h-[44px] px-4 rounded-lg bg-burgundy text-white text-sm font-semibold">
+            Undo
+          </button>
+        )}
+        <button type="button" onClick={onDismiss} className="min-h-[44px] px-4 rounded-lg border border-warm-border text-sm font-semibold text-brown">
+          Dismiss
+        </button>
+      </div>
+    </div>
   );
 }
 
-function formatTime12(t) {
-  if (!t) return '';
-  const parts = String(t).split(':');
-  const h = Number(parts[0]);
-  const m = Number(parts[1]) || 0;
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  const hh = h % 12 || 12;
-  return `${hh}:${String(m).padStart(2, '0')} ${ampm}`;
+function WeekSkeleton() {
+  return (
+    <div className="space-y-3" aria-hidden="true">
+      {[0, 1, 2].map((n) => (
+        <div key={n} className="h-24 rounded-xl border border-warm-border bg-white animate-pulse" />
+      ))}
+    </div>
+  );
 }
 
-function formatFullDate(dateStr) {
-  const d = new Date(`${dateStr}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
-}
+export default function AdminAvailability({ fixture = null }) {
+  const auth = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const leaderId = fixture?.leaderId || auth.leaderId;
+  const role = fixture?.role || auth.role;
+  const isAdmin = role === 'admin';
+  const [targetId, setTargetId] = useState(fixture?.leaderId || null);
+  const effectiveId = targetId || leaderId;
 
-function formatShortDate(dateStr) {
-  const d = new Date(`${dateStr}T12:00:00`);
-  if (Number.isNaN(d.getTime())) return dateStr;
-  return d.toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    timeZone: 'UTC',
-  });
-}
+  const [windows, setWindows] = useState(fixture?.windows || []);
+  const [loading, setLoading] = useState(fixture ? !!fixture.loading : true);
+  const [loadError, setLoadError] = useState(fixture?.loadError || '');
+  const [googleConnected, setGoogleConnected] = useState(fixture ? fixture.googleConnected !== false : true);
+  const [bannerHidden, setBannerHidden] = useState(() => (typeof localStorage === 'undefined' ? false : bannerDismissed()));
+  const [editor, setEditor] = useState(fixture?.editor || null);
+  const [prefill, setPrefill] = useState(fixture?.prefill || null);
+  const [toast, setToast] = useState(fixture?.toast || null);
+  const [freshIds, setFreshIds] = useState(() => new Set(fixture?.freshIds || []));
+  const [showPast, setShowPast] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [selecting, setSelecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [rangeFrom, setRangeFrom] = useState('');
+  const [rangeTo, setRangeTo] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [editError, setEditError] = useState('');
+  const [rowNote, setRowNote] = useState('');
+  const [leaderUuid, setLeaderUuid] = useState(fixture?.leaderUuid || null);
+  const [legacy, setLegacy] = useState(fixture?.legacy || []);
+  const [menuFor, setMenuFor] = useState(null);
+  const patternButtonRef = useRef(null);
+  const closeEditor = useCallback(() => setEditor(null), []);
+  const today = todayInTimeZone();
 
-// Add `weeks` whole weeks to an ISO date string (e.g. 2026-08-23 + 1 => 2026-08-30).
-function addWeeksISO(dateStr, weeks) {
-  const d = new Date(`${dateStr}T12:00:00`);
-  d.setDate(d.getDate() + weeks * 7);
-  return toISODate(d);
-}
-
-// Build the 42-cell (6x7) calendar grid for a given year/month.
-function buildMonthCells(year, month) {
-  const first = new Date(year, month, 1);
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const offset = first.getDay(); // 0 = Sunday
-  const cells = [];
-
-  for (let i = 0; i < offset; i++) {
-    cells.push(null); // leading blank cells
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    cells.push(new Date(year, month, d));
-  }
-  while (cells.length % 7 !== 0) {
-    cells.push(null);
-  }
-  return cells;
-}
-
-// All Sunday Date objects within a given year/month.
-function sundaysInMonth(year, month) {
-  const days = [];
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dt = new Date(year, month, d);
-    if (dt.getDay() === 0) days.push(dt);
-  }
-  return days;
-}
-
-// Expand selected dates when "Repeat weekly" is enabled. `repeatWeeks` is the
-// TOTAL number of occurrences (selected date + N-1 following weeks). So 4 weeks
-// for Aug 23 => Aug 23, Aug 30, Sep 6, Sep 13.
-function expandDates(selectedDates, repeatWeekly, repeatWeeks) {
-  if (!repeatWeekly) return selectedDates;
-  const weeks = Math.max(2, Math.floor(Number(repeatWeeks) || 2));
-  const result = [];
-  for (const d of selectedDates) {
-    result.push(d);
-    for (let w = 1; w < weeks; w++) {
-      result.push(addWeeksISO(d, w));
+  const loadWindows = useCallback(async () => {
+    if (fixture) return;
+    if (!effectiveId) return;
+    setLoading(true);
+    setLoadError('');
+    try {
+      const res = await authedFetch(`/api/availability/${effectiveId}/windows`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error('load');
+      setWindows(data.windows || []);
+    } catch {
+      setLoadError("Couldn't load your availability.");
+      setWindows([]);
+    } finally {
+      setLoading(false);
     }
-  }
-  return [...new Set(result)].sort();
-}
-
-export default function AdminAvailability() {
-  const { role, leaderId } = useAuth();
-  const isAllowed = role === 'leader' || role === 'admin';
-
-  const [windows, setWindows] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  const [displayedMonth, setDisplayedMonth] = useState(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1);
-  });
-  const [selectedDates, setSelectedDates] = useState([]);
-
-  // Add-window form state.
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [slotDuration, setSlotDuration] = useState(30);
-  const [bufferMinutes, setBufferMinutes] = useState(0);
-  const [repeatWeekly, setRepeatWeekly] = useState(false);
-  const [repeatWeeks, setRepeatWeeks] = useState(4);
-  const [formError, setFormError] = useState('');
-  const [saving, setSaving] = useState(false);
-
-  // This leader's public feed UUID (leaders.uuid) for the subscription panel.
-  const [leaderUuid, setLeaderUuid] = useState(null);
+  }, [effectiveId, fixture]);
 
   useEffect(() => {
-    if (!leaderId) return;
+    if (!fixture) loadWindows();
+  }, [loadWindows, fixture]);
+
+  useEffect(() => {
+    if (fixture || !leaderId) return undefined;
     let active = true;
-    authedFetch('/api/leaders')
-      .then((r) => (r.ok ? r.json() : []))
-      .then((list) => {
-        if (!active || !Array.isArray(list)) return;
-        const me = list.find((l) => l.id === leaderId);
-        setLeaderUuid(me?.uuid || null);
+    authedFetch('/api/me/leader')
+      .then((res) => (res.ok ? res.json() : {}))
+      .then((data) => {
+        if (active) setLeaderUuid(data?.uuid || null);
+      })
+      .catch(() => {});
+    authedFetch('/api/auth/google/status')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data) setGoogleConnected(!!data.connected);
       })
       .catch(() => {});
     return () => {
       active = false;
     };
-  }, [leaderId]);
-
-  const feedUrl = leaderUuid
-    ? `webcal://${window.location.host}/ical/leader/${leaderUuid}.ics`
-    : '';
-
-  const loadWindows = useCallback(async () => {
-    if (!leaderId) return;
-    setLoading(true);
-    setError('');
-    try {
-      const res = await authedFetch(`/api/availability/${leaderId}/windows`);
-      let data = null;
-      try {
-        data = await res.json();
-      } catch {
-        data = null;
-      }
-      if (!res.ok) {
-        throw new Error(data?.error || `Request failed (${res.status})`);
-      }
-      setWindows(data?.windows || []);
-    } catch (err) {
-      setError(err.message || 'Failed to load windows');
-      setWindows([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [leaderId]);
+  }, [leaderId, fixture]);
 
   useEffect(() => {
-    if (isAllowed) loadWindows();
-  }, [isAllowed, loadWindows]);
+    if (!isAdmin || fixture) return undefined;
+    let active = true;
+    authedFetch('/api/admin/legacy-slots')
+      .then((res) => (res.ok ? res.json() : { leaders: [] }))
+      .then((data) => {
+        if (active) setLegacy(data.leaders || []);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [isAdmin, fixture]);
 
-  const windowsByDate = useMemo(() => {
+  useEffect(() => {
+    if (searchParams.get('connected') === 'true') {
+      setToast({ text: 'Google account connected. Confirmation emails can be sent.', undo: false });
+      setGoogleConnected(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete('connected');
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
+  useEffect(() => {
+    if (!freshIds.size) return undefined;
+    const timer = setTimeout(() => setFreshIds(new Set()), 8000);
+    return () => clearTimeout(timer);
+  }, [freshIds]);
+
+  const upcoming = useMemo(
+    () => windows.filter((row) => String(row.window_date).slice(0, 10) >= today),
+    [windows, today],
+  );
+  const visible = showPast ? windows : upcoming;
+  const weeks = useMemo(() => groupRowsByWeek(visible.map((row) => ({
+    ...row,
+    window_date: String(row.window_date).slice(0, 10),
+  }))), [visible]);
+
+  const feedUrl = leaderUuid ? `webcal://${window.location.host}/ical/leader/${leaderUuid}.ics` : '';
+  const through = upcoming.length
+    ? formatMonthDay([...upcoming].sort((a, b) => String(a.window_date).localeCompare(String(b.window_date))).at(-1).window_date.slice(0, 10))
+    : '';
+
+  const dismissBanner = () => {
+    localStorage.setItem(DISMISS_KEY, String(Date.now() + 7 * 86400000));
+    setBannerHidden(true);
+  };
+
+  const connectGoogle = async () => {
+    const res = await authedFetch(`/api/auth/google/start?return_to=${encodeURIComponent('/availability')}`);
+    const data = await res.json().catch(() => ({}));
+    if (res.ok && data.url) window.location.href = data.url;
+    else setToast({ text: "Couldn't start Google sign-in. Try again from Settings.", undo: false });
+  };
+
+  const applyCreated = (created) => {
+    setWindows((prev) => {
+      const ids = new Set(created.map((row) => row.id));
+      return [...prev.filter((row) => !ids.has(row.id)), ...created];
+    });
+  };
+
+  const handleSave = async (payload) => {
+    let data;
+    if (fixture?.onSave) {
+      data = await fixture.onSave(payload);
+    } else {
+      const res = await authedFetch(`/api/availability/${effectiveId}/windows/batch`, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+      data = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        await loadWindows();
+        const err = new Error('conflict');
+        err.publicMessage = 'Your windows changed. Preview updated.';
+        throw err;
+      }
+      if (!res.ok) {
+        const err = new Error('save');
+        err.publicMessage = data.message && data.error === 'internal_overlap'
+          ? data.message
+          : "Couldn't save. Nothing was added. Check your connection and try again.";
+        throw err;
+      }
+    }
+    const created = data?.created || [];
+    const skipped = (data?.skipped_existing || []).length;
+    const overlapSkipped = (data?.conflicts || []).filter((item) => item.reason === 'skipped').length;
+    const parts = [`Saved ${created.length} window${created.length === 1 ? '' : 's'}.`];
+    if (skipped) parts.push(`${skipped} already existed and were skipped.`);
+    if (overlapSkipped) parts.push(`${overlapSkipped} overlapping date${overlapSkipped === 1 ? '' : 's'} skipped.`);
+    setToast({
+      text: parts.join(' '),
+      undo: created.length > 0,
+      seriesId: data?.series_id,
+      ids: created.map((row) => row.id).filter(Boolean),
+    });
+    setEditor(null);
+    setPrefill(null);
+    setFreshIds(new Set(created.map((row) => row.id)));
+    if (fixture) applyCreated(created);
+    else await loadWindows();
+    const first = created[0]?.window_date;
+    if (first) {
+      requestAnimationFrame(() => {
+        document.getElementById(`week-${mondayOf(String(first).slice(0, 10))}`)?.scrollIntoView({ block: 'start' });
+      });
+    }
+  };
+
+  const undoToast = async () => {
+    if (!toast) return;
+    if (fixture) {
+      if (toast.kind === 'delete') {
+        setWindows((prev) => [...prev, ...(toast.rows || [])]);
+      } else if (toast.ids?.length) {
+        const drop = new Set(toast.ids);
+        setWindows((prev) => prev.filter((row) => !drop.has(row.id)));
+        setFreshIds(new Set());
+      }
+      setToast(null);
+      return;
+    }
+    if (toast.kind === 'delete') {
+      await authedFetch(`/api/availability/${effectiveId}/windows/batch`, {
+        method: 'POST',
+        body: JSON.stringify({ undo: true, windows: toast.rows }),
+      });
+    } else if (toast.seriesId || toast.ids?.length) {
+      const params = new URLSearchParams();
+      if (toast.seriesId) params.set('series_id', toast.seriesId);
+      if (toast.ids?.length) params.set('ids', toast.ids.join(','));
+      await authedFetch(`/api/availability/${effectiveId}/windows?${params.toString()}`, { method: 'DELETE' });
+    }
+    setToast(null);
+    await loadWindows();
+  };
+
+  const removeRows = async (rows, label) => {
+    const ids = rows.map((row) => row.id);
+    const params = new URLSearchParams({ ids: ids.join(',') });
+    const res = await authedFetch(`/api/availability/${effectiveId}/windows?${params.toString()}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setRowNote("Couldn't delete that. Nothing was changed.");
+      return;
+    }
+    const kept = data.kept || [];
+    setToast({
+      text: kept.length
+        ? `Deleted ${data.deleted?.length || 0}. ${kept.length} booked window${kept.length === 1 ? '' : 's'} kept.`
+        : label,
+      undo: (data.deleted || []).length > 0,
+      kind: 'delete',
+      rows: data.deleted || [],
+    });
+    setSelecting(false);
+    setSelectedIds([]);
+    setConfirmDelete(null);
+    await loadWindows();
+  };
+
+  const deleteOne = async (row) => {
+    if (Number(row.booked_count) > 0) {
+      setRowNote(`${row.booked_count} visit${row.booked_count === 1 ? ' is' : 's are'} booked in that window. Cancel the visit before deleting this window.`);
+      return;
+    }
+    if (fixture) {
+      setWindows((prev) => prev.filter((item) => item.id !== row.id));
+      setToast({ text: 'Deleted.', undo: true, kind: 'delete', rows: [row] });
+      return;
+    }
+    const res = await authedFetch(`/api/availability/windows/${row.id}`, { method: 'DELETE' });
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 409) {
+      setRowNote(data.message || 'Cancel the visit before deleting this window.');
+      return;
+    }
+    if (!res.ok) {
+      setRowNote("Couldn't delete that. Nothing was changed.");
+      return;
+    }
+    setToast({
+      text: 'Deleted.',
+      undo: true,
+      kind: 'delete',
+      rows: data.deleted || [row],
+    });
+    await loadWindows();
+  };
+
+  const saveEdit = async (event) => {
+    event.preventDefault();
+    setEditError('');
+    const res = await authedFetch(`/api/availability/windows/${editing.id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({
+        start_time: editing.start_time,
+        end_time: editing.end_time,
+        slot_duration_minutes: Number(editing.slot_duration_minutes),
+        buffer_minutes: Number(editing.buffer_minutes || 0),
+        window_date: String(editing.window_date).slice(0, 10),
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setEditError(data.message || "Couldn't save that change.");
+      if (res.status === 409) await loadWindows();
+      return;
+    }
+    setEditing(null);
+    setToast({ text: 'Saved the change.', undo: false });
+    await loadWindows();
+  };
+
+  const hideLegacy = async (leader) => {
+    await authedFetch('/api/admin/legacy-slots/hide', {
+      method: 'POST',
+      body: JSON.stringify({ leader_id: leader.leader_id, hidden: !leader.hidden }),
+    });
+    setLegacy((prev) => prev.map((item) => (item.leader_id === leader.leader_id ? { ...item, hidden: !item.hidden } : item)));
+  };
+
+  const convertLegacy = (leader) => {
+    const pattern = legacyPatternFromSlots(leader.slots);
+    if (!pattern) return;
+    setTargetId(leader.leader_id);
+    setPrefill({ ...pattern, from: today, to: addDaysISO(today, 56) });
+    setEditor('pattern');
+  };
+
+  const monthCells = useMemo(() => {
+    const [y, m] = today.split('-').map(Number);
+    const first = new Date(Date.UTC(y, m - 1, 1));
+    const startPad = first.getUTCDay();
+    const days = new Date(Date.UTC(y, m, 0)).getUTCDate();
+    const cells = Array(startPad).fill(null);
+    for (let day = 1; day <= days; day += 1) cells.push(`${y}-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
+    return cells;
+  }, [today]);
+
+  const countsByDate = useMemo(() => {
     const map = {};
-    for (const w of windows) {
-      const d = String(w.window_date).slice(0, 10);
-      if (!map[d]) map[d] = [];
-      map[d].push(w);
+    for (const row of windows) {
+      const date = String(row.window_date).slice(0, 10);
+      map[date] = (map[date] || 0) + 1;
     }
     return map;
   }, [windows]);
 
-  const cells = useMemo(
-    () => buildMonthCells(displayedMonth.getFullYear(), displayedMonth.getMonth()),
-    [displayedMonth]
-  );
-
-  const monthLabel = displayedMonth.toLocaleDateString('en-US', {
-    month: 'long',
-    year: 'numeric',
-  });
-
-  const today = new Date();
-  const todayMidnight = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-
-  const prevMonth = () =>
-    setDisplayedMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1));
-  const nextMonth = () =>
-    setDisplayedMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1));
-  const goToday = () => {
-    const now = new Date();
-    setDisplayedMonth(new Date(now.getFullYear(), now.getMonth(), 1));
-  };
-
-  const toggleDate = (dateStr) => {
-    setSelectedDates((prev) =>
-      prev.includes(dateStr) ? prev.filter((d) => d !== dateStr) : [...prev, dateStr]
-    );
-  };
-
-  const clearSelectedDates = () => setSelectedDates([]);
-
-  // monthOffset 0 => "this month" (the displayed month), 1 => next month.
-  // Only future Sundays are selectable (past dates are disabled on the grid).
-  const selectSundays = (monthOffset) => {
-    const target = new Date(
-      displayedMonth.getFullYear(),
-      displayedMonth.getMonth() + monthOffset,
-      1
-    );
-    const days = sundaysInMonth(target.getFullYear(), target.getMonth())
-      .filter((dt) => dt >= todayMidnight)
-      .map((dt) => toISODate(dt));
-    setSelectedDates(days);
-  };
-
-  const sortedSelectedDates = useMemo(
-    () => [...selectedDates].sort(),
-    [selectedDates]
-  );
-
-  // Windows already published on the currently selected dates.
-  const selectedWindows = useMemo(() => {
-    const list = [];
-    for (const d of sortedSelectedDates) {
-      for (const w of windowsByDate[d] || []) {
-        list.push({ ...w, date: d });
-      }
-    }
-    return list;
-  }, [sortedSelectedDates, windowsByDate]);
-
-  const handleApplyPreset = (preset) => {
-    setStartTime(preset.start);
-    setEndTime(preset.end);
-    setFormError('');
-  };
-
-  const handleAddBatch = async (e) => {
-    e.preventDefault();
-    setFormError('');
-
-    if (sortedSelectedDates.length === 0) {
-      setFormError('Select at least one date on the calendar.');
-      return;
-    }
-    if (!startTime || !endTime) {
-      setFormError('Start and end times are required.');
-      return;
-    }
-    if (endTime <= startTime) {
-      setFormError('End time must be after start time.');
-      return;
-    }
-
-    const dates = expandDates(sortedSelectedDates, repeatWeekly, repeatWeeks);
-    const payload = {
-      windows: dates.map((window_date) => ({
-        window_date,
-        start_time: startTime,
-        end_time: endTime,
-        slot_duration_minutes: slotDuration,
-        buffer_minutes: bufferMinutes,
-      })),
-    };
-
-    setSaving(true);
-    try {
-      const res = await authedFetch(`/api/availability/${leaderId}/windows/batch`, {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        throw new Error(data?.error || 'Failed to add windows');
-      }
-      await loadWindows();
-      // Keep the dates selected so the user can review what was just added.
-    } catch (err) {
-      setFormError(err.message || 'Failed to add windows');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    const res = await authedFetch(`/api/availability/windows/${id}`, {
-      method: 'DELETE',
-    });
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data?.error || 'Failed to delete window');
-    }
-    await loadWindows();
-  };
-
-  if (!isAllowed) {
-    return (
-      <div className="bg-white rounded-xl border border-warm-border p-10 text-center">
-        <p className="text-lg font-serif font-semibold text-rose">Access denied</p>
-        <p className="text-sm text-brown-light mt-2">
-          Only presidency members can publish availability.
-        </p>
-      </div>
-    );
-  }
-
-  const expandedCount = expandDates(sortedSelectedDates, repeatWeekly, repeatWeeks).length;
-  const publishLabel = saving
-    ? 'Publishing…'
-    : `Publish ${expandedCount} window${expandedCount === 1 ? '' : 's'}`;
-
   return (
-    <div className="space-y-6 pb-28 sm:pb-6">
-      {/* Header */}
-      <div>
-        <SectionLabel>Admin · Availability</SectionLabel>
-        <h1 className="text-3xl font-serif font-bold text-burgundy mt-1">Availability</h1>
-        <p className="text-brown-light mt-1 max-w-xl">
-          Select dates on the calendar, set a time, and publish your availability in a
-          single tap.
-        </p>
-      </div>
-
-      {error && (
-        <div className="bg-white rounded-xl border border-warm-border p-5">
-          <p className="text-sm text-rose">{error}</p>
-          <button
-            onClick={loadWindows}
-            className="mt-3 min-h-[48px] inline-flex items-center gap-2 px-5 rounded-lg border-[1.5px] border-warm-border bg-warm-white text-brown text-sm font-semibold hover:bg-cream transition-colors"
-          >
-            Retry
-          </button>
+    <div className="lg:grid lg:grid-cols-5 lg:gap-6 lg:items-start">
+      <div className={`space-y-5 min-w-0 ${editor ? 'lg:col-span-3' : 'lg:col-span-5'}`}>
+        <div>
+          <SectionLabel>Your availability</SectionLabel>
+          <h1 className="text-3xl font-serif font-bold text-burgundy mt-1">Your availability</h1>
+          <p className="text-brown-light mt-1 max-w-xl">
+            {upcoming.length
+              ? `You have ${upcoming.length} upcoming window${upcoming.length === 1 ? '' : 's'} through ${through}.`
+              : 'Set a weekly pattern once and elders can start booking.'}
+          </p>
         </div>
-      )}
 
-      {/* Subscribe to your ministering calendar — the /ical/leader feed. */}
-      {feedUrl && (
-        <SubscribePanel
-          feedUrl={feedUrl}
-          description="Published availability and booked visits sync automatically — no Google account connection needed. Add it once and your calendar refreshes itself."
-        />
-      )}
-
-      {/* Calendar */}
-      <div className="bg-white rounded-xl border border-warm-border shadow-sm p-5">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <h2 className="text-xl font-serif font-bold text-burgundy">{monthLabel}</h2>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={prevMonth}
-              aria-label="Previous month"
-              className="min-h-[48px] min-w-[48px] inline-flex items-center justify-center rounded-lg border border-warm-border text-brown hover:bg-cream transition-colors"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6" />
-              </svg>
-            </button>
-            <button
-              onClick={goToday}
-              className="min-h-[48px] px-4 rounded-lg border-[1.5px] border-warm-border text-brown text-sm font-semibold hover:bg-cream transition-colors"
-            >
-              Today
-            </button>
-            <button
-              onClick={nextMonth}
-              aria-label="Next month"
-              className="min-h-[48px] min-w-[48px] inline-flex items-center justify-center rounded-lg border border-warm-border text-brown hover:bg-cream transition-colors"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
+        {!googleConnected && !bannerHidden && (
+          <div className="rounded-xl border border-gold/40 bg-gold-light p-4">
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="font-serif font-bold text-brown">Confirmations are off</h2>
+              <button type="button" onClick={dismissBanner} className="min-h-[44px] min-w-[44px] text-sm font-semibold text-brown">Dismiss</button>
+            </div>
+            <p className="text-sm text-brown mt-1">
+              Elders who book with you won't get a calendar invite or confirmation email until you connect your Google account. Your calendar feed works either way.
+            </p>
+            <button type="button" onClick={connectGoogle} className="mt-3 min-h-[44px] px-4 rounded-lg bg-burgundy text-white text-sm font-semibold">
+              Connect Google
             </button>
           </div>
+        )}
+
+        {isAdmin && legacy.length > 0 && (
+          <div className="rounded-xl border border-warm-border bg-white p-4 space-y-3">
+            <h2 className="font-serif font-bold text-burgundy">Older weekly slots</h2>
+            <p className="text-sm text-brown-light">These are still offered to members until you convert or hide them. Nothing is deleted automatically.</p>
+            {legacy.map((leader) => (
+              <div key={leader.leader_id} className="rounded-lg border border-warm-border p-3">
+                <p className="font-semibold text-brown">{leader.name}: {leader.slots.length} weekly slot{leader.slots.length === 1 ? '' : 's'}{leader.hidden ? ' (hidden from booking)' : ''}</p>
+                <p className="text-sm text-brown-light mt-1">
+                  {leader.slots.map((slot) => `${WEEKDAY_SHORT[slot.day_of_week]} ${formatTime12(slot.start_time)}`).join(', ')}
+                </p>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <button type="button" onClick={() => convertLegacy(leader)} className="min-h-[44px] px-3 rounded-lg bg-burgundy text-white text-sm font-semibold">Convert to dated windows</button>
+                  <button type="button" onClick={() => hideLegacy(leader)} className="min-h-[44px] px-3 rounded-lg border border-warm-border text-sm font-semibold">
+                    {leader.hidden ? 'Show in booking' : 'Hide from booking'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            ref={patternButtonRef}
+            type="button"
+            onClick={() => { setPrefill(null); setEditor('pattern'); }}
+            className="min-h-[44px] px-4 rounded-lg bg-burgundy text-white font-semibold"
+          >
+            Set weekly pattern
+          </button>
+          <button type="button" onClick={() => { setPrefill(null); setEditor('single'); }} className="min-h-[44px] px-4 rounded-lg border border-burgundy text-burgundy font-semibold">
+            Add a single date
+          </button>
+          <button type="button" onClick={() => setShowPast((v) => !v)} aria-pressed={showPast} className="min-h-[44px] px-4 rounded-lg border border-warm-border font-semibold text-brown">
+            {showPast ? 'Hide past' : 'Show past'}
+          </button>
+          <button type="button" onClick={() => setShowCalendar((v) => !v)} aria-pressed={showCalendar} className="min-h-[44px] px-4 rounded-lg border border-warm-border font-semibold text-brown">
+            Calendar
+          </button>
         </div>
 
-        {/* Date shortcuts */}
-        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => selectSundays(0)}
-            className="min-h-[48px] w-full sm:w-auto px-4 rounded-lg border-[1.5px] border-warm-border bg-warm-white text-brown text-sm font-semibold hover:border-burgundy transition-colors"
-          >
-            All Sundays This Month
-          </button>
-          <button
-            type="button"
-            onClick={() => selectSundays(1)}
-            className="min-h-[48px] w-full sm:w-auto px-4 rounded-lg border-[1.5px] border-warm-border bg-warm-white text-brown text-sm font-semibold hover:border-burgundy transition-colors"
-          >
-            All Sundays Next Month
-          </button>
-          <button
-            type="button"
-            onClick={clearSelectedDates}
-            disabled={selectedDates.length === 0}
-            className="min-h-[48px] w-full sm:w-auto px-4 rounded-lg border-[1.5px] border-warm-border bg-warm-white text-brown text-sm font-semibold hover:border-burgundy disabled:opacity-40 transition-colors"
-          >
-            Clear Selected Dates
-          </button>
-        </div>
+        {loadError && (
+          <div className="rounded-xl border border-warm-border bg-white p-5">
+            <p className="text-sm text-rose">{loadError}</p>
+            <button type="button" onClick={loadWindows} className="mt-3 min-h-[44px] px-4 rounded-lg border border-warm-border font-semibold">Retry</button>
+          </div>
+        )}
 
-        {/* Day-of-week header */}
-        <div className="grid grid-cols-7 gap-1 mb-1">
-          {DAY_LABELS.map((d) => (
-            <div key={d} className="text-center text-xs font-semibold text-brown-light uppercase tracking-wider py-1">
-              {d}
-            </div>
-          ))}
-        </div>
+        {loading && <WeekSkeleton />}
 
-        {/* Grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {cells.map((cell, i) => {
-            if (!cell) {
-              return <div key={`blank-${i}`} className="min-h-[48px] sm:min-h-[56px]" />;
-            }
-            const dateStr = toISODate(cell);
-            const isPast = cell < todayMidnight;
-            const isToday = isSameDay(cell, today);
-            const isSelected = selectedDates.includes(dateStr);
-            const count = (windowsByDate[dateStr] || []).length;
+        {!loading && !loadError && upcoming.length === 0 && !showPast && (
+          <div className="rounded-xl border border-warm-border bg-white p-6">
+            <h2 className="text-xl font-serif font-bold text-burgundy">No availability yet</h2>
+            <p className="text-sm text-brown-light mt-2">Set a weekly pattern once and elders can start booking. Most leaders do this once a quarter.</p>
+          </div>
+        )}
 
-            return (
-              <button
-                key={dateStr}
-                disabled={isPast}
-                onClick={() => toggleDate(dateStr)}
-                aria-pressed={isSelected}
-                className={`relative min-h-[48px] sm:min-h-[56px] rounded-lg border flex flex-col items-center justify-center transition-colors ${
-                  isPast
-                    ? 'bg-cream text-brown-light border-warm-border cursor-not-allowed opacity-50'
-                    : isSelected
-                      ? 'bg-burgundy text-white border-burgundy'
-                      : isToday
-                        ? 'bg-burgundy-ghost text-burgundy border-burgundy'
-                        : 'bg-warm-white text-brown border-warm-border hover:border-burgundy'
-                }`}
-              >
-                <span className="text-sm font-semibold leading-none">{cell.getDate()}</span>
-                {count > 0 && (
-                  <span
-                    className={`absolute top-1 right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold inline-flex items-center justify-center ${
-                      isSelected ? 'bg-white text-burgundy' : 'bg-sage text-white'
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
+        {!loading && weeks.length > 0 && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => setSelecting((v) => !v)} aria-pressed={selecting} className="min-h-[44px] px-3 rounded-lg border border-warm-border text-sm font-semibold">
+                {selecting ? 'Cancel select' : 'Select'}
               </button>
-            );
-          })}
-        </div>
-
-        <p className="text-xs text-brown-light text-center mt-4">
-          Click dates to toggle selection. {selectedDates.length} date
-          {selectedDates.length === 1 ? '' : 's'} selected.
-        </p>
-        {loading && <p className="text-sm text-brown-light text-center mt-2">Loading windows…</p>}
-      </div>
-
-      {/* Publish form */}
-      <div className="bg-white rounded-xl border border-warm-border shadow-sm p-5">
-        <h2 className="text-xl font-serif font-bold text-burgundy mb-1">Publish availability</h2>
-        <p className="text-sm text-brown-light mb-4">
-          Applies to every selected date{repeatWeekly ? ' and the following weeks' : ''}.
-        </p>
-
-        {/* Selected date chips */}
-        <div className="mb-4">
-          <span className="text-xs font-semibold text-brown-light uppercase tracking-wider">
-            Selected dates
-          </span>
-          {sortedSelectedDates.length === 0 ? (
-            <p className="text-sm text-brown-light italic mt-1">
-              No dates selected — use the calendar or a shortcut above.
-            </p>
-          ) : (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {sortedSelectedDates.map((d) => (
-                <span
-                  key={d}
-                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cream text-brown text-xs font-semibold border border-warm-border"
-                >
-                  {formatShortDate(d)}
+              {selecting && (
+                <>
+                  <label className="text-sm font-semibold text-brown flex items-center gap-2">From
+                    <input type="date" value={rangeFrom} onChange={(e) => setRangeFrom(e.target.value)} className="min-h-[44px] px-2 rounded-md border border-warm-border" />
+                  </label>
+                  <label className="text-sm font-semibold text-brown flex items-center gap-2">To
+                    <input type="date" value={rangeTo} onChange={(e) => setRangeTo(e.target.value)} className="min-h-[44px] px-2 rounded-md border border-warm-border" />
+                  </label>
                   <button
                     type="button"
-                    onClick={() => toggleDate(d)}
-                    aria-label={`Remove ${d}`}
-                    className="text-brown-light hover:text-rose transition-colors"
+                    disabled={!selectedIds.length && !(rangeFrom && rangeTo)}
+                    onClick={() => {
+                      const rows = rangeFrom && rangeTo
+                        ? visible.filter((row) => {
+                          const date = String(row.window_date).slice(0, 10);
+                          return date >= rangeFrom && date <= rangeTo;
+                        })
+                        : visible.filter((row) => selectedIds.includes(row.id));
+                      setConfirmDelete({
+                        rows,
+                        text: `Delete ${rows.length} windows${rangeFrom && rangeTo ? ` from ${formatMonthDay(rangeFrom)} to ${formatMonthDay(rangeTo)}` : ''}?`,
+                      });
+                    }}
+                    className="min-h-[44px] px-3 rounded-lg border border-rose text-rose text-sm font-semibold disabled:opacity-40"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
+                    Delete selected
                   </button>
-                </span>
-              ))}
+                </>
+              )}
             </div>
-          )}
-        </div>
+            {rowNote && <p className="text-sm rounded-lg px-3 py-2 bg-rose-light text-rose" role="alert">{rowNote}</p>}
+            {weeks.map((week) => {
+              const visits = week.rows.reduce((sum, row) => sum + visitCount(row.start_time, row.end_time, row.slot_duration_minutes, row.buffer_minutes), 0);
+              return (
+                <section key={week.week} id={`week-${week.week}`} className="rounded-xl border border-warm-border bg-white p-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="font-serif font-bold text-burgundy">Week of {week.label}</h2>
+                    {selecting && (
+                      <button
+                        type="button"
+                        className="min-h-[44px] text-sm font-semibold text-burgundy"
+                        onClick={() => {
+                          const ids = week.rows.map((row) => row.id);
+                          setSelectedIds((prev) => (ids.every((id) => prev.includes(id)) ? prev.filter((id) => !ids.includes(id)) : [...new Set([...prev, ...ids])]));
+                        }}
+                      >
+                        Select week
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-sm text-brown-light mb-2">{week.rows.length} windows, {visits} visits</p>
+                  <ul className="space-y-2">
+                    {week.rows.map((row) => {
+                      const date = String(row.window_date).slice(0, 10);
+                      const label = `${formatWeekdayMonthDay(date)}, ${formatTime12(row.start_time)} to ${formatTime12(row.end_time)}`;
+                      const isNew = freshIds.has(row.id);
+                      return (
+                        <li
+                          key={row.id}
+                          className={`flex items-center gap-2 rounded-lg border border-warm-border p-2 ${isNew ? 'bg-gold-light' : 'bg-cream'}`}
+                        >
+                          {selecting && (
+                            <input
+                              type="checkbox"
+                              className="h-5 w-5"
+                              checked={selectedIds.includes(row.id)}
+                              aria-label={`Select ${label}`}
+                              onChange={() => setSelectedIds((prev) => (prev.includes(row.id) ? prev.filter((id) => id !== row.id) : [...prev, row.id]))}
+                            />
+                          )}
+                          <button type="button" onClick={() => { setEditing({ ...row, window_date: date, start_time: String(row.start_time).slice(0, 5), end_time: String(row.end_time).slice(0, 5) }); setEditError(''); }} className="flex-1 min-h-[44px] text-left">
+                            <span className="block text-sm font-semibold text-brown">
+                              {formatWeekdayMonthDay(date)}
+                              {isNew && <span className="ml-2 text-xs font-bold uppercase tracking-wide text-amber">New</span>}
+                            </span>
+                            <span className="block text-sm text-brown">
+                              {formatTime12(row.start_time)}–{formatTime12(row.end_time)}, {row.slot_duration_minutes} min
+                              {Number(row.booked_count) > 0 ? `, ${row.booked_count} booked` : ''}
+                            </span>
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`More actions for ${label}`}
+                            onClick={() => setMenuFor(menuFor === row.id ? null : row.id)}
+                            className="min-h-[44px] min-w-[44px] rounded-lg border border-warm-border font-bold"
+                          >
+                            ···
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Delete ${label}`}
+                            onClick={() => deleteOne(row)}
+                            className="min-h-[44px] min-w-[44px] rounded-lg text-rose"
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                          </button>
+                          {menuFor === row.id && (
+                            <div className="w-full basis-full">
+                              <button
+                                type="button"
+                                disabled={!row.series_id}
+                                onClick={() => {
+                                  const rows = windows.filter((item) => item.series_id && item.series_id === row.series_id);
+                                  setConfirmDelete({ rows, text: `Delete this series (${rows.length} windows)?` });
+                                  setMenuFor(null);
+                                }}
+                                className="min-h-[44px] text-sm font-semibold text-rose disabled:opacity-40"
+                              >
+                                {row.series_id ? 'Delete this series' : 'Delete this series (available after the schedule update)'}
+                              </button>
+                            </div>
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              );
+            })}
+          </div>
+        )}
 
-        <form onSubmit={handleAddBatch} className="space-y-4">
-          {/* Time presets */}
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-brown-light uppercase tracking-wider">
-              Quick time presets
-            </span>
-            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2">
-              {TIME_PRESETS.map((p) => (
+        {showCalendar && (
+          <div className="rounded-xl border border-warm-border bg-white p-4">
+            <h2 className="font-serif font-bold text-burgundy mb-2">This month</h2>
+            <div className="grid grid-cols-7 gap-1">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
+                <div key={day} className="text-center text-xs font-semibold text-brown-light">{day}</div>
+              ))}
+              {monthCells.map((date, index) => date ? (
                 <button
-                  key={p.label}
+                  key={date}
                   type="button"
-                  onClick={() => handleApplyPreset(p)}
-                  className="min-h-[48px] w-full sm:w-auto px-4 rounded-lg border-[1.5px] border-warm-border bg-warm-white text-brown text-sm font-semibold hover:border-burgundy transition-colors"
+                  aria-label={`${formatLongDate(date)}, ${countsByDate[date] || 0} window${countsByDate[date] === 1 ? '' : 's'}`}
+                  onClick={() => document.getElementById(`week-${mondayOf(date)}`)?.scrollIntoView({ block: 'start' })}
+                  className="min-h-[44px] rounded-lg border border-warm-border text-sm font-semibold"
                 >
-                  {p.label}
-                  <span className="ml-1.5 text-xs font-normal text-brown-light">
-                    {formatTime12(p.start)}–{formatTime12(p.end)}
-                  </span>
+                  {Number(date.slice(-2))}
+                  {countsByDate[date] > 0 && <span className="block text-[10px] text-sage">{countsByDate[date]}</span>}
+                </button>
+              ) : <div key={`blank-${index}`} />)}
+            </div>
+          </div>
+        )}
+
+        <details className="lg:hidden rounded-xl border border-warm-border bg-white p-4">
+          <summary className="min-h-[44px] cursor-pointer font-semibold text-burgundy">Add to my calendar</summary>
+          {feedUrl && <SubscribePanel feedUrl={feedUrl} description={FEED_COPY} className="border-0 shadow-none p-0 mt-3" />}
+        </details>
+        {feedUrl && (
+          <div className="hidden lg:block">
+            <SubscribePanel feedUrl={feedUrl} description={FEED_COPY} />
+          </div>
+        )}
+      </div>
+
+      {editor && (
+        <div className="lg:col-span-2 lg:sticky lg:top-20">
+          <WeeklyPatternEditor
+            mode={editor}
+            existing={windows}
+            windowsReady={!loading && !loadError}
+            initial={prefill}
+            triggerRef={patternButtonRef}
+            onClose={closeEditor}
+            onSave={handleSave}
+          />
+        </div>
+      )}
+
+      {editing && (
+        <div role="dialog" aria-modal="true" aria-labelledby="edit-window-title" className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-ink/40 p-4">
+          <form onSubmit={saveEdit} className="w-full max-w-md rounded-xl bg-white p-5 space-y-3">
+            <h2 id="edit-window-title" className="font-serif text-xl font-bold text-burgundy">Edit {formatWeekdayMonthDay(editing.window_date)}</h2>
+            <p className="text-sm text-brown-light">All times Mountain Time.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="text-sm font-semibold text-brown">Start
+                <input type="time" step={900} value={editing.start_time} onChange={(e) => setEditing({ ...editing, start_time: e.target.value })} className="mt-1 w-full min-h-[44px] px-3 rounded-md border border-warm-border" />
+              </label>
+              <label className="text-sm font-semibold text-brown">End
+                <input type="time" step={900} value={editing.end_time} onChange={(e) => setEditing({ ...editing, end_time: e.target.value })} className="mt-1 w-full min-h-[44px] px-3 rounded-md border border-warm-border" />
+              </label>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {UI_SLOT_LENGTHS.map((mins) => (
+                <button key={mins} type="button" aria-pressed={Number(editing.slot_duration_minutes) === mins} onClick={() => setEditing({ ...editing, slot_duration_minutes: mins })} className={`min-h-[44px] px-3 rounded-lg border text-sm font-semibold ${Number(editing.slot_duration_minutes) === mins ? 'bg-burgundy text-white border-burgundy' : 'border-warm-border'}`}>
+                  {mins}m
                 </button>
               ))}
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-brown-light uppercase tracking-wider">Start</span>
-              <input
-                type="time"
-                required
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                className="min-h-[48px] px-3 py-2 border-[1.5px] border-warm-border rounded-md bg-warm-white text-brown text-base focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs font-semibold text-brown-light uppercase tracking-wider">End</span>
-              <input
-                type="time"
-                required
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                className="min-h-[48px] px-3 py-2 border-[1.5px] border-warm-border rounded-md bg-warm-white text-brown text-base focus:border-burgundy focus:ring focus:ring-burgundy-light outline-none transition-all"
-              />
-            </label>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-brown-light uppercase tracking-wider">Slot duration</span>
-            <div className="flex flex-wrap gap-2">
-              {SLOT_DURATIONS.map((mins) => {
-                const isSelected = slotDuration === mins;
-                return (
-                  <button
-                    key={mins}
-                    type="button"
-                    onClick={() => setSlotDuration(mins)}
-                    aria-pressed={isSelected}
-                    className={`min-h-[48px] flex-1 min-w-[64px] px-4 rounded-lg border-[1.5px] text-sm font-semibold transition-colors ${
-                      isSelected
-                        ? 'bg-burgundy text-white border-burgundy'
-                        : 'bg-warm-white text-brown border-warm-border hover:border-burgundy'
-                    }`}
-                  >
-                    {mins}m{mins === 30 ? ' (default)' : ''}
-                  </button>
-                );
-              })}
+            {editError && <p className="text-sm text-rose" role="alert">{editError}</p>}
+            <div className="flex gap-2">
+              <button type="submit" className="min-h-[44px] flex-1 rounded-lg bg-burgundy text-white font-semibold">Save change</button>
+              <button type="button" onClick={() => setEditing(null)} className="min-h-[44px] px-4 rounded-lg border border-warm-border font-semibold">Cancel</button>
             </div>
-          </div>
-
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-brown-light uppercase tracking-wider">Buffer time</span>
-            <div className="flex flex-wrap gap-2">
-              {[0, 5, 10].map((mins) => {
-                const isSelected = bufferMinutes === mins;
-                return (
-                  <button
-                    key={mins}
-                    type="button"
-                    onClick={() => setBufferMinutes(mins)}
-                    aria-pressed={isSelected}
-                    className={`min-h-[48px] flex-1 min-w-[64px] px-4 rounded-lg border-[1.5px] text-sm font-semibold transition-colors ${
-                      isSelected
-                        ? 'bg-burgundy text-white border-burgundy'
-                        : 'bg-warm-white text-brown border-warm-border hover:border-burgundy'
-                    }`}
-                  >
-                    {mins === 0 ? 'None' : `${mins}m`}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Repeat weekly */}
-          <div className="flex flex-col gap-2 rounded-lg border border-warm-border bg-cream p-4">
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={repeatWeekly}
-                onChange={(e) => setRepeatWeekly(e.target.checked)}
-                className="h-5 w-5 rounded border-warm-border text-burgundy focus:ring-burgundy"
-              />
-              <span className="text-sm font-semibold text-brown">Repeat weekly for</span>
-              <input
-                type="number"
-                min={2}
-                max={52}
-                value={repeatWeeks}
-                onChange={(e) => setRepeatWeeks(e.target.value)}
-                disabled={!repeatWeekly}
-                className="w-20 min-h-[40px] px-2 py-1 border-[1.5px] border-warm-border rounded-md bg-white text-brown text-sm text-center disabled:opacity-40 focus:border-burgundy outline-none"
-              />
-              <span className="text-sm text-brown">weeks</span>
-            </label>
-            <p className="text-xs text-brown-light">
-              {repeatWeekly
-                ? `Each selected date also publishes the same window for the following ${Math.max(1, Number(repeatWeeks) - 1)} week(s).`
-                : 'When checked, each selected date also repeats on the following weeks.'}
-            </p>
-          </div>
-
-          {formError && (
-            <p className="text-sm rounded-lg px-3 py-2 bg-rose-light text-rose">{formError}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={saving || sortedSelectedDates.length === 0}
-            className="hidden sm:block w-full min-h-[48px] rounded-lg bg-burgundy text-white font-semibold hover:bg-burgundy-light disabled:opacity-40 transition-colors"
-          >
-            {publishLabel}
-          </button>
-
-          {/* Sticky bottom action bar — always under the thumb on mobile */}
-          <div className="sm:hidden fixed bottom-0 left-0 right-0 p-4 bg-white/95 backdrop-blur border-t border-warm-border z-20">
-            <button
-              type="submit"
-              disabled={saving || sortedSelectedDates.length === 0}
-              className="w-full min-h-[52px] rounded-lg bg-burgundy text-white text-base font-semibold hover:bg-burgundy-light disabled:opacity-40 transition-colors"
-            >
-              {publishLabel}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Existing windows for selected dates */}
-      {sortedSelectedDates.length > 0 && (
-        <div className="bg-white rounded-xl border border-warm-border shadow-sm p-5">
-          <h2 className="text-xl font-serif font-bold text-burgundy mb-1">Existing windows</h2>
-          <p className="text-sm text-brown-light mb-3">On your selected dates.</p>
-          {selectedWindows.length === 0 ? (
-            <p className="text-sm text-brown-light italic">No windows yet on these dates.</p>
-          ) : (
-            <ul className="space-y-2">
-              {selectedWindows.map((w) => (
-                <li
-                  key={w.id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-warm-border bg-cream"
-                >
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold text-brown">
-                      {formatFullDate(w.date)}
-                    </span>
-                    <span className="text-sm text-brown">
-                      {formatTime12(w.start_time)} – {formatTime12(w.end_time)}
-                      <span className="text-brown-light"> ({(w.slot_duration_minutes || 30)}m slots{w.buffer_minutes ? `, ${w.buffer_minutes}m buffer` : ''})</span>
-                    </span>
-                  </div>
-                  <button
-                    onClick={() => handleDelete(w.id)}
-                    aria-label={`Delete ${formatTime12(w.start_time)} window`}
-                    className="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-md text-rose hover:bg-rose-light transition-colors"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 6 5 6 21 6" />
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                    </svg>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          </form>
         </div>
       )}
+
+      {confirmDelete && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-40 flex items-end sm:items-center justify-center bg-ink/40 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-5 space-y-3">
+            <h2 className="font-serif text-xl font-bold text-burgundy">{confirmDelete.text}</h2>
+            <p className="text-sm text-brown-light">Windows with a booked visit stay on the schedule.</p>
+            <div className="flex gap-2">
+              <button type="button" onClick={() => removeRows(confirmDelete.rows, 'Deleted.')} className="min-h-[44px] flex-1 rounded-lg bg-rose text-white font-semibold">Delete</button>
+              <button type="button" onClick={() => setConfirmDelete(null)} className="min-h-[44px] px-4 rounded-lg border border-warm-border font-semibold">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {toast && <Toast toast={toast} onUndo={undoToast} onDismiss={() => setToast(null)} />}
     </div>
   );
 }
