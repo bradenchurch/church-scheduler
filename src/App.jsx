@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import React, { lazy, Suspense } from 'react';
+import { Routes, Route, Link, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Book from './pages/Book';
 import Leader from './pages/Leader';
@@ -21,6 +21,9 @@ import AdminAvailability from './pages/AdminAvailability';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminFlyer from './pages/AdminFlyer';
 import AdminNeedsAssignment from './pages/AdminNeedsAssignment';
+const AvailabilityPreview = import.meta.env.DEV
+  ? lazy(() => import('./dev/AvailabilityPreview'))
+  : null;
 
 function App() {
   return (
@@ -113,14 +116,25 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route path="/admin/availability" element={<Navigate to="/availability" replace />} />
           <Route
-            path="/admin/availability"
+            path="/availability"
             element={
               <ProtectedRoute requireRole="leader">
                 <AdminAvailability />
               </ProtectedRoute>
             }
           />
+          {import.meta.env.DEV && (
+            <Route
+              path="/dev/availability"
+              element={(
+                <Suspense fallback={null}>
+                  <AvailabilityPreview />
+                </Suspense>
+              )}
+            />
+          )}
           <Route
             path="/admin/dashboard"
             element={

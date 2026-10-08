@@ -40,13 +40,50 @@ function formatDate(dateStr) {
   });
 }
 
+async function findLeaderOAuthToken(supabaseAdmin, { leaderId, leaderEmail }) {
+  if (leaderId) {
+    const byLeader = await supabaseAdmin
+      .from('oauth_tokens')
+      .select('*')
+      .eq('leader_id', leaderId)
+      .maybeSingle();
+    if (!byLeader.error && byLeader.data) return byLeader.data;
+  }
+
+  const email = String(leaderEmail || '').toLowerCase();
+  if (email) {
+    try {
+      const { data } = await supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 200 });
+      const user = (data?.users || []).find((row) => String(row.email || '').toLowerCase() === email);
+      if (user?.id) {
+        const byUser = await supabaseAdmin
+          .from('oauth_tokens')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        if (byUser.data) return byUser.data;
+      }
+    } catch (err) {
+      console.error('[confirmation] auth user lookup failed:', err.message);
+    }
+
+    const byEmail = await supabaseAdmin
+      .from('oauth_tokens')
+      .select('*')
+      .eq('email', leaderEmail)
+      .maybeSingle();
+    if (byEmail.data) return byEmail.data;
+  }
+  return null;
+}
+
 export async function handleBookingConfirmation(supabaseAdmin, booking) {
   const bookingId = booking.id;
 
   // 1. Resolve companionship + assigned leader
   const { data: companionship, error: compError } = await supabaseAdmin
     .from('companionships')
-    .select('*, leaders(name, email)')
+    .select('*, leaders(id, name, email)')
     .eq('id', booking.companionship_id)
     .single();
 
@@ -63,6 +100,7 @@ export async function handleBookingConfirmation(supabaseAdmin, booking) {
 
   const leader = companionship.leaders;
   const leaderEmail = leader?.email || null;
+  const leaderId = leader?.id || companionship.leader_id || null;
   const leaderName = leader?.name || 'the interviewer';
   const elderEmail = companionship.companion1_email || companionship.companion2_email || null;
   const invitee = elderEmail || leaderEmail;
@@ -95,12 +133,10 @@ export async function handleBookingConfirmation(supabaseAdmin, booking) {
   const summary = 'Ministering Interview';
   const description = `Ministering interview with ${leaderName}.`;
 
-  // 3. Look up the leader's OAuth tokens
-  const { data: tokenRow } = await supabaseAdmin
-    .from('oauth_tokens')
-    .select('*')
-    .eq('email', leaderEmail)
-    .maybeSingle();
+  // 3. Look up the leader's OAuth tokens by the auth user who connected,
+  // not by the Google account email stored on the token row. A personal Gmail
+  // that differs from the sign-in email still belongs to that user.
+  const tokenRow = await findLeaderOAuthToken(supabaseAdmin, { leaderId, leaderEmail });
 
   if (!tokenRow) {
     const reason = `No Google account connected for leader ${leaderEmail || companionship.leader_id}`;

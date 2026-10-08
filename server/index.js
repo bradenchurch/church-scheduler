@@ -21,6 +21,12 @@ import { getRoster, formatAddress, splitCompanions, getUnlinkedCompanions, write
 import { requireAuth as requireSession, requireRole, requireCompanionFor } from './middleware/auth.js';
 import { parseLcrPdf } from './lcr-parser.js';
 import { registerNeedsAssignmentRoutes } from './needs-assignment.js';
+import { addDaysISO, todayInTimeZone } from '../shared/availability.js';
+import {
+  hiddenLegacyLeaderIds,
+  registerAvailabilityRoutes,
+  setLegacyLeaderHidden,
+} from './availability.js';
 
 dotenv.config();
 
@@ -494,6 +500,48 @@ function clearOAuthCookies(res) {
   const opts = { httpOnly: true, path: '/', sameSite: 'lax', secure: process.env.NODE_ENV === 'production' };
   res.clearCookie('oauth_state', opts);
   res.clearCookie('oauth_user_id', opts);
+  res.clearCookie('oauth_leader_id', opts);
+  res.clearCookie('oauth_return_to', opts);
+}
+
+async function leaderGoogleConnections(client, leaders) {
+  let hasLeaderId = true;
+  let tokenRes = await client.from('oauth_tokens').select('user_id, email, leader_id');
+  if (tokenRes.error && /leader_id/i.test(`${tokenRes.error.message || ''} ${tokenRes.error.code || ''}`)) {
+    hasLeaderId = false;
+    tokenRes = await client.from('oauth_tokens').select('user_id, email');
+  }
+  if (tokenRes.error) throw tokenRes.error;
+  const tokens = tokenRes.data || [];
+
+  const emailToUser = new Map();
+  try {
+    const { data } = await client.auth.admin.listUsers({ page: 1, perPage: 200 });
+    for (const user of data?.users || []) {
+      if (user.email) emailToUser.set(String(user.email).toLowerCase(), user.id);
+    }
+  } catch {
+    // Auth admin lookup is best-effort. leader_id on the token row still works.
+  }
+
+  return (leaders || []).map((leader) => {
+    const byLeader = hasLeaderId && tokens.some((token) => token.leader_id === leader.id);
+    const userId = emailToUser.get(String(leader.email || '').toLowerCase());
+    const byUser = userId && tokens.some((token) => token.user_id === userId);
+    return {
+      leader_id: leader.id,
+      name: leader.name,
+      connected: Boolean(byLeader || byUser),
+    };
+  });
+}
+
+function safeReturnPath(value) {
+  if (typeof value !== 'string') return '';
+  const path = value.trim();
+  if (!path.startsWith('/') || path.startsWith('//') || path.startsWith('/\\')) return '';
+  if (path.includes('\\') || path.includes('://')) return '';
+  return path.split('#')[0];
 }
 
 // GET /api/auth/google/start — returns the Google consent URL (auth required)
@@ -502,8 +550,11 @@ app.get('/api/auth/google/start', requireAuth, (req, res) => {
     const state = crypto.randomBytes(24).toString('hex');
     const url = buildAuthUrl(state);
     const opts = oauthCookieOptions(10 * 60 * 1000);
+    const returnTo = safeReturnPath(req.query.return_to) || '/settings';
     res.cookie('oauth_state', state, opts);
     res.cookie('oauth_user_id', req.user.id, opts);
+    res.cookie('oauth_leader_id', req.user.leader_id || '', opts);
+    res.cookie('oauth_return_to', returnTo, opts);
     res.json({ url });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -515,24 +566,19 @@ app.get('/api/auth/google/callback', async (req, res) => {
   const cookies = parseCookies(req);
   const { code, state, error } = req.query;
 
-  if (error) {
+  const returnTo = safeReturnPath(cookies.oauth_return_to) || '/settings';
+  const fail = (message) => {
     clearOAuthCookies(res);
-    return res.redirect(`/settings?connected=false&error=${encodeURIComponent(error)}`);
-  }
-  if (!code) {
-    clearOAuthCookies(res);
-    return res.redirect(`/settings?connected=false&error=${encodeURIComponent('missing authorization code')}`);
-  }
-  if (state !== cookies.oauth_state) {
-    clearOAuthCookies(res);
-    return res.redirect(`/settings?connected=false&error=${encodeURIComponent('state mismatch')}`);
-  }
+    const joiner = returnTo.includes('?') ? '&' : '?';
+    return res.redirect(`${returnTo}${joiner}connected=false&error=${encodeURIComponent(message)}`);
+  };
+
+  if (error) return fail(error);
+  if (!code) return fail('missing authorization code');
+  if (state !== cookies.oauth_state) return fail('state mismatch');
 
   const userId = cookies.oauth_user_id;
-  if (!userId) {
-    clearOAuthCookies(res);
-    return res.redirect(`/settings?connected=false&error=${encodeURIComponent('missing user session')}`);
-  }
+  if (!userId) return fail('missing user session');
 
   try {
     const tokens = await exchangeCode(code);
@@ -548,19 +594,24 @@ app.get('/api/auth/google/callback', async (req, res) => {
       scopes: GOOGLE_SCOPES,
       updated_at: new Date().toISOString(),
     };
+    if (cookies.oauth_leader_id) row.leader_id = cookies.oauth_leader_id;
 
-    const { error: upsertError } = await supabaseAdmin
+    let { error: upsertError } = await supabaseAdmin
       .from('oauth_tokens')
       .upsert(row, { onConflict: 'user_id' });
+    if (upsertError && /leader_id/i.test(upsertError.message || '')) {
+      delete row.leader_id;
+      ({ error: upsertError } = await supabaseAdmin
+        .from('oauth_tokens')
+        .upsert(row, { onConflict: 'user_id' }));
+    }
 
     clearOAuthCookies(res);
-    if (upsertError) {
-      return res.redirect(`/settings?connected=false&error=${encodeURIComponent(upsertError.message)}`);
-    }
-    return res.redirect('/settings?connected=true');
+    if (upsertError) return fail(upsertError.message);
+    const joiner = returnTo.includes('?') ? '&' : '?';
+    return res.redirect(`${returnTo}${joiner}connected=true`);
   } catch (err) {
-    clearOAuthCookies(res);
-    return res.redirect(`/settings?connected=false&error=${encodeURIComponent(err.message)}`);
+    return fail(err.message);
   }
 });
 
@@ -581,6 +632,62 @@ app.get('/api/auth/google/status', requireAuth, async (req, res) => {
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/admin/google-connections — per-leader "connected / not connected"
+// for the admin dashboard. Matches tokens by leader_id when that column
+// exists, otherwise by the leader's auth user (not the Google account email).
+app.get('/api/admin/google-connections', requireSession, requireRole('admin'), async (req, res) => {
+  try {
+    const { data: leaders, error } = await supabaseAdmin.from('leaders').select('id, email, name');
+    if (error) throw error;
+    const connections = await leaderGoogleConnections(supabaseAdmin, leaders || []);
+    res.json({ leaders: connections });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not load Google connections' });
+  }
+});
+
+// Legacy weekly slots (the old /leader tool). Listed for an admin decision.
+// Hide stores leader ids in config and removes them from the public booking
+// feed. Nothing is deleted.
+app.get('/api/admin/legacy-slots', requireSession, requireRole('admin'), async (req, res) => {
+  try {
+    const [{ data: slots, error: slotErr }, { data: leaders, error: leaderErr }, hidden] = await Promise.all([
+      supabaseAdmin.from('slots').select('id, leader_id, day_of_week, start_time, duration_minutes').order('leader_id').order('day_of_week').order('start_time'),
+      supabaseAdmin.from('leaders').select('id, name'),
+      hiddenLegacyLeaderIds(supabaseAdmin),
+    ]);
+    if (slotErr) throw slotErr;
+    if (leaderErr) throw leaderErr;
+    const names = new Map((leaders || []).map((leader) => [leader.id, leader.name]));
+    const grouped = new Map();
+    for (const slot of slots || []) {
+      if (!grouped.has(slot.leader_id)) {
+        grouped.set(slot.leader_id, {
+          leader_id: slot.leader_id,
+          name: names.get(slot.leader_id) || slot.leader_id,
+          hidden: hidden.includes(slot.leader_id),
+          slots: [],
+        });
+      }
+      grouped.get(slot.leader_id).slots.push(slot);
+    }
+    res.json({ leaders: [...grouped.values()] });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not load legacy slots' });
+  }
+});
+
+app.post('/api/admin/legacy-slots/hide', requireSession, requireRole('admin'), async (req, res) => {
+  const leaderId = String(req.body?.leader_id || '');
+  if (!leaderId) return res.status(400).json({ error: 'leader_id required' });
+  try {
+    const hidden = await setLegacyLeaderHidden(supabaseAdmin, leaderId, req.body?.hidden !== false);
+    res.json({ hidden });
+  } catch (err) {
+    res.status(500).json({ error: 'Could not update legacy slots' });
   }
 });
 
@@ -1170,7 +1277,7 @@ app.get('/api/admin/analytics', requireSession, requireRole('leader'), async (re
 
     // Open capacity = unbooked published windows/slots. Future-dated windows and
     // recurring slots that have no non-cancelled booking are "open".
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayInTimeZone('America/Denver');
     const bookedWindowIds = new Set(bookings.filter((b) => b.window_id).map((b) => b.window_id));
     const bookedSlotIds = new Set(bookings.filter((b) => b.slot_id).map((b) => b.slot_id));
     const openWindows = windows.filter((w) => w.window_date >= today && !bookedWindowIds.has(w.id));
@@ -1268,9 +1375,8 @@ app.get('/api/availability/:leaderId', async (req, res) => {
     // Date-specific windows for the next 90 days (Chapel-side SlotPicker shows
     // a rolling 30-day strip, so 90 days gives ample headroom). Stored as plain
     // TIME (no timezone) to match the existing `slots` convention.
-    const today = new Date();
-    const todayStr = today.toISOString().slice(0, 10);
-    const laterStr = new Date(today.getTime() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const todayStr = todayInTimeZone('America/Denver');
+    const laterStr = addDaysISO(todayStr, 90);
 
     const [leaderRes, slotsRes] = await Promise.all([
       supabaseAdmin.from('leaders').select('id, name, email, phone').eq('id', leaderId).maybeSingle(),
@@ -1282,6 +1388,9 @@ app.get('/api/availability/:leaderId', async (req, res) => {
     if (!leaderRes.data) {
       return res.status(404).json({ error: 'leader_not_found' });
     }
+
+    const hiddenLeaders = await hiddenLegacyLeaderIds(supabaseAdmin);
+    const visibleSlots = hiddenLeaders.includes(leaderId) ? [] : (slotsRes.data || []);
 
     // Date-specific windows are best-effort: if the availability_windows table
     // hasn't been migrated yet (schema.sql applied via Supabase dashboard),
@@ -1307,7 +1416,7 @@ app.get('/api/availability/:leaderId', async (req, res) => {
       name: leaderRes.data.name,
       email: leaderRes.data.email,
       phone: leaderRes.data.phone || '',
-      slots: slotsRes.data || [],
+      slots: visibleSlots,
       windows,
     });
   } catch (error) {
@@ -1315,161 +1424,12 @@ app.get('/api/availability/:leaderId', async (req, res) => {
   }
 });
 
-// GET /api/availability/:leaderId/windows — all date-specific windows for a
-// leader (no date filter). Anonymous, matching the main availability endpoint.
-// Used by the AdminAvailability page to render per-date badge counts across
-// any month (including past months).
-app.get('/api/availability/:leaderId/windows', async (req, res) => {
-  const { leaderId } = req.params;
-
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('availability_windows')
-      .select('id, leader_id, window_date, start_time, end_time, slot_duration_minutes')
-      .eq('leader_id', leaderId)
-      .order('window_date')
-      .order('start_time');
-    if (error) throw error;
-    res.json({ windows: data || [] });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Shared validation for a single availability window payload. Returns
-// { error } on invalid input, or { value: { window_date, start_time,
-// end_time, slot_duration_minutes } } with slot_duration_minutes defaulted
-// to 30 and coerced to a number.
-const SLOT_DURATIONS = [15, 20, 30, 45, 60];
-const BUFFER_MINUTES = [0, 5, 10];
-const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+// HH:MM[:SS] check used by booking slot_time validation.
 const TIME_RE = /^\d{2}:\d{2}(:\d{2})?$/;
 
-function validateWindowInput(input) {
-  const { window_date, start_time, end_time, slot_duration_minutes, buffer_minutes } = input || {};
-
-  if (!window_date || !start_time || !end_time) {
-    return { error: 'window_date, start_time, end_time required' };
-  }
-  if (!DATE_RE.test(String(window_date))) {
-    return { error: 'window_date must be YYYY-MM-DD' };
-  }
-  if (!TIME_RE.test(String(start_time)) || !TIME_RE.test(String(end_time))) {
-    return { error: 'start_time / end_time must be HH:MM[:SS]' };
-  }
-  if (String(end_time) <= String(start_time)) {
-    return { error: 'end_time must be after start_time' };
-  }
-
-  let slotDuration = 30;
-  if (slot_duration_minutes !== undefined && slot_duration_minutes !== null) {
-    const parsed = Number(slot_duration_minutes);
-    if (!Number.isInteger(parsed) || !SLOT_DURATIONS.includes(parsed)) {
-      return { error: 'slot_duration_minutes must be one of 15, 20, 30, 45, 60' };
-    }
-    slotDuration = parsed;
-  }
-
-  let bufferMinutes = 0;
-  if (buffer_minutes !== undefined && buffer_minutes !== null) {
-    const parsed = Number(buffer_minutes);
-    if (!Number.isInteger(parsed) || !BUFFER_MINUTES.includes(parsed)) {
-      return { error: 'buffer_minutes must be one of 0, 5, 10' };
-    }
-    bufferMinutes = parsed;
-  }
-
-  return {
-    value: {
-      window_date: String(window_date),
-      start_time: String(start_time),
-      end_time: String(end_time),
-      slot_duration_minutes: slotDuration,
-      buffer_minutes: bufferMinutes,
-    },
-  };
-}
-
-// POST /api/availability/:leaderId/windows — publish a date-specific window.
-// Gated: admin or the leader themselves. Uses requireSession (the MOCK_AUTH-aware
-// middleware) so smoke tests can exercise the auth gate.
-app.post('/api/availability/:leaderId/windows', requireSession, async (req, res) => {
-  if (req.user.role !== 'admin' && req.user.leader_id !== req.params.leaderId) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-  const { leaderId } = req.params;
-  const parsed = validateWindowInput(req.body);
-  if (parsed.error) return res.status(400).json({ error: parsed.error });
-
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('availability_windows')
-      .insert([{ leader_id: leaderId, ...parsed.value }])
-      .select();
-    if (error) throw error;
-    res.status(201).json(data[0]);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// POST /api/availability/:leaderId/windows/batch — publish many date-specific
-// windows in one call (used by the AdminAvailability "publish a month" flow).
-// Gated the same as the single-window endpoint: admin or the owning leader.
-app.post('/api/availability/:leaderId/windows/batch', requireSession, async (req, res) => {
-  if (req.user.role !== 'admin' && req.user.leader_id !== req.params.leaderId) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-  const { leaderId } = req.params;
-  const { windows } = req.body || {};
-
-  if (!Array.isArray(windows) || windows.length === 0) {
-    return res.status(400).json({ error: 'windows must be a non-empty array' });
-  }
-
-  const rows = [];
-  for (let i = 0; i < windows.length; i++) {
-    const parsed = validateWindowInput(windows[i]);
-    if (parsed.error) {
-      return res.status(400).json({ error: `windows[${i}]: ${parsed.error}` });
-    }
-    rows.push({ leader_id: leaderId, ...parsed.value });
-  }
-
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('availability_windows')
-      .insert(rows)
-      .select();
-    if (error) throw error;
-    res.status(201).json(data || []);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// DELETE /api/availability/windows/:id — remove a published window.
-// Gated: admin or the owning leader.
-app.delete('/api/availability/windows/:id', requireSession, async (req, res) => {
-  const { id } = req.params;
-  if (req.user.role !== 'admin') {
-    const { data: win, error: fetchErr } = await supabaseAdmin
-      .from('availability_windows')
-      .select('leader_id')
-      .eq('id', id)
-      .maybeSingle();
-    if (fetchErr || !win || win.leader_id !== req.user.leader_id) {
-      return res.status(403).json({ error: 'Forbidden' });
-    }
-  }
-  try {
-    const { error } = await supabaseAdmin.from('availability_windows').delete().eq('id', id);
-    if (error) throw error;
-    res.status(204).end();
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+// Date-specific window routes (list, save, edit, delete). The list requires a
+// session. Public booking keeps using GET /api/availability/:leaderId.
+registerAvailabilityRoutes(app, { supabaseAdmin, requireSession });
 
 // GET /api/bookings/all
 //
@@ -2100,7 +2060,7 @@ app.get('/api/admin/welcome-links', requireSession, requireRole('admin'), async 
       const db = byId.get(wl.id) || {};
       const name = db.name || wl.name;
       const email = db.email || '';
-      const availabilityUrl = `${base}/admin/availability`;
+      const availabilityUrl = `${base}/availability`;
       const smsText = `Hi ${name.split(' ')[0]}, set your EQ interview availability for the quarter here: ${availabilityUrl}`;
       return {
         id: wl.id,

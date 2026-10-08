@@ -120,6 +120,37 @@ ALTER TABLE availability_windows ADD COLUMN IF NOT EXISTS slot_duration_minutes 
 ALTER TABLE availability_windows ADD COLUMN IF NOT EXISTS buffer_minutes INTEGER NOT NULL DEFAULT 0;
 CREATE INDEX IF NOT EXISTS idx_availability_windows_leader_date ON availability_windows(leader_id, window_date);
 
+-- One save shares a series id (idempotent retry, undo, delete series).
+ALTER TABLE availability_windows ADD COLUMN IF NOT EXISTS series_id UUID;
+COMMENT ON COLUMN availability_windows.series_id IS
+  'Set once per save (pattern or single add). Used for idempotent retries, highlight-after-save, delete series, and undo.';
+
+CREATE SCHEMA IF NOT EXISTS extensions;
+CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA extensions;
+
+DO $$
+BEGIN
+  ALTER TABLE availability_windows
+    ADD CONSTRAINT availability_windows_unique_window
+    UNIQUE (leader_id, window_date, start_time, end_time);
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  EXECUTE 'SET search_path = public, extensions';
+  ALTER TABLE availability_windows
+    ADD CONSTRAINT availability_windows_no_overlap
+    EXCLUDE USING gist (
+      leader_id WITH =,
+      tsrange(window_date + start_time, window_date + end_time, '[)') WITH &&
+    );
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_availability_windows_series
+  ON availability_windows (series_id) WHERE series_id IS NOT NULL;
+
 CREATE TABLE IF NOT EXISTS bookings (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   companionship_id UUID REFERENCES companionships(id) ON DELETE CASCADE,
@@ -179,8 +210,15 @@ CREATE TABLE IF NOT EXISTS oauth_tokens (
   expires_at TIMESTAMPTZ,
   scopes TEXT[],
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  leader_id TEXT
 );
+
+-- Existing databases created before leader_id: confirmations look the token up
+-- by the presidency member, not the Google account email on the row.
+ALTER TABLE oauth_tokens ADD COLUMN IF NOT EXISTS leader_id TEXT;
+COMMENT ON COLUMN oauth_tokens.leader_id IS
+  'leaders.id of the member who connected Google. Filled from the OAuth callback so a personal Gmail still receives confirmations.';
 
 -- Delivery results for calendar invites + confirmation emails.
 CREATE TABLE IF NOT EXISTS confirmation_log (

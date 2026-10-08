@@ -14,7 +14,7 @@ const isPublicRoute = (pathname) =>
 // Sean, and Kawika need the queue without that gate.
 const MAIN_NAV = [
   { path: '/', label: 'Home' },
-  { path: '/admin/availability', label: 'Availability' },
+  { path: '/availability', label: 'Availability' },
   { path: '/admin/needs-assignment', label: 'Needs assignment' },
   { path: '/me', label: 'My Schedule' },
 ];

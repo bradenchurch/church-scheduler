@@ -17,7 +17,8 @@
   --color-burgundy-light: #A84756;
   --color-burgundy-ghost: #F5E8EA;
   --color-brown: #5C4334;
-  --color-brown-light: #8B6F5C;
+  /* Darkened from the mockup's #8B6F5C so body text clears 4.5:1 on cream. */
+  --color-brown-light: #806552;
   --color-sage: #48593D;
   --color-sage-light: #E8EDE3;
   --color-gold: #B8943E;
@@ -66,6 +67,12 @@ textarea {
 
 * {
   -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse {
+    animation: none;
+  }
 }
 
 /*

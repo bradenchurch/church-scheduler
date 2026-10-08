@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { signInWithOtp, signOut } from '../lib/auth';
 import { useAuth } from '../contexts/AuthContext';
 import SectionLabel from '../components/SectionLabel';
+import { safeNextPath } from '../lib/postAuth';
 
 export default function Login() {
   const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
@@ -17,7 +19,8 @@ export default function Login() {
     setMessage('');
 
     // In dev, assuming Vite runs on 5173 or similar, Vercel will have standard origin
-    const redirectUrl = `${window.location.origin}/auth/callback`;
+    const next = safeNextPath(location.state?.from);
+    const redirectUrl = `${window.location.origin}/auth/callback${next ? `?next=${encodeURIComponent(next)}` : ''}`;
 
     const { error } = await signInWithOtp(email, redirectUrl);
 
